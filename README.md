@@ -1,64 +1,38 @@
-# .orchestration — local-LLM optimization guidance
+# testlocalai — steering benchmarks for small local LLMs
 
-If you are an AI agent operating tooling in this directory, read
-[`AGENTS.md`](AGENTS.md) first — project-tooling behavior rules (how task
-scope is named/selected, etc.), distinct from the per-model steering under
-`models/<model>/`.
+**What this is:** a benchmark + steering harness for small local LLMs
+(the kind you can actually run on a laptop GPU, not a hosted frontier
+model). For a given task — write this C# code, edit this doc exactly,
+pick the right tool call — it measures whether a model gets it right
+out of the box, and if not, works out what prompt-level or
+decoding-level changes fix it. The output is steering guidance meant to
+be **reused by other AI-enhanced projects**, not a private scoreboard.
 
-Scratch research (gitignored). Given a set of tasks a small local LLM must
-perform, what does it take to get the outcome right? Measure, steer,
-re-measure — the findings live in the docs, the evidence lives in `bench/`.
-The point is not a private benchmark: the output is steering guidance meant
-to be **consumed by other AI-enhanced projects** to correctly steer their
-own subagents.
+If you're an AI agent operating tooling in this repo, read
+[`AGENTS.md`](AGENTS.md) first — the operating rules for how a steering
+session is run. This file is the map of what's here and how to use it.
 
-Steering is scoped narrowly on purpose, along two axes: **role** first
-(code-emitter, documenter, reasoner, tool-use, extract, review, visual —
-different models, different failure modes, different levers; see
-"Roles" below), then **task/language** within that role (C#
-code-emission needs different rules than Python would; see the
-`--rules <lang>` split in `bench.sh`). A rule earned by one model on one
-task is never assumed to generalize — see "Adding a new model" below.
+## How it works, in short
 
-**Cross-model finding, expected going forward, not just a one-off:**
-small local models at the scale tested here (~1-2B parameters) have
-repeatedly not generalized a single steering config across
-heterogeneous task shapes within one role — a fix that helps one task
-actively hurts another that needs different behavior
-(`qwen2.5-coder-1.5b`'s two-recipe split for its two code-task families;
-`qwen3.5:0.8b`'s structure-preservation fix helping a copy task while
-breaking a restructure task in the same run). Per-model steering
-sessions default to finding a **specialist** config per task first, and
-only then search for a **generalist** — with "no generalist exists" a
-fully acceptable, expected outcome to document, not a failure to keep
-chasing. See `AGENTS.md`'s quality loop, Steering phase, for the
-two-tier structure this produces.
+- **Role first, task second.** A model's failure modes differ by *role*
+  (writing code vs. editing docs vs. picking a tool) more than by task
+  within a role — see the Roles table below.
+- **Specialist before generalist.** Steering sessions default to
+  finding a working config per task first; a single config that covers
+  every task in a role is a bonus to look for after, never assumed.
+  "No generalist config exists" is a valid, expected finding to
+  document, not a failure to keep chasing.
+- **Best-first, always.** Whatever's currently validated-best for a
+  model+role+task sits under its plain name (`SPEC.md`,
+  `<lang>-rules.md`) — never buried behind a qualifier. Superseded
+  attempts move to a `history/` subdir with a note on why they lost,
+  not deleted.
+- **Evidence over assumption.** Every claim in a model's README is
+  backed by a real dispatch + verify run, not inferred from another
+  model or another task. See `models/<model>/history.md` for the
+  full trail behind each one.
 
-**Best-first presentation (standing rule):** whatever configuration is
-currently validated-best for a given model+role+task is what an end-user or
-AI reader encounters first, under its plain name (`SPEC.md`,
-`<lang>-rules.md`) — never buried behind a qualifier or sitting as a
-co-equal alternative next to something worse. Superseded variants are kept
-only when they carry real iteration/comparison value, filed under a
-`history/` subdir with a plain note on why they lost, not deleted outright.
-This is a **process** rule, not a technique endorsement: "best" is
-re-evaluated per model, per role, per task, and never assumed to transfer —
-e.g. compressed ("caveman-style") prompts currently win for
-qwen2.5-coder-1.5b on the C# code-emission tasks specifically; that is one
-model's evidence, not a recommendation to compress prompts in general.
-
-Origin: this began as a subset of the connectwise-mcp C# port repo and
-still lives inside it (`csharp/.orchestration/`), but is organized as if
-already standalone. Generic by design: usable for any AI-enhanced project
-and any local LLM, not just the C# port or qwen2.5-coder — task sets,
-reference material, and findings may come from other source repos in the
-future, not just this one. Task sets (SPECs + harnesses) live flat under
-`tasks/`, role-prefixed (`code-*`, `doc-*`, `reason-*`, `tool-*`,
-`extract-*`, `review-*`, `visual-*`) — a task's skill isn't tied to one
-source project, so it isn't nested under one. Reference material tied to a
-specific source project (SDK probes, cheat-sheets) lives under
-`tasks/<project>/` instead (e.g. `tasks/csharp/`). Per-model steering
-history lives under `models/<model>/`.
+Full reasoning, past findings, and the project's origin: [`history.md`](history.md).
 
 ## Roles
 
@@ -88,24 +62,20 @@ failure modes, not a re-labeling of another role.
 | `models/README.md` | index: which model has been tested against which role, with a status indicator |
 | `models/<model>/README.md` | that model's current steering profile (verdicts, how to optimize per role) — current-state only, see `AGENTS.md`'s README-shape rule |
 | `models/<model>/history.md` | that model's full historical narrative — round-by-round evidence, diagnosed idioms, debugging trails |
+| `models/<model>/grammars/` | per-model, per-task GBNF grammars (decoding-level structural constraints) — see `bench/pure-run.sh` |
 | `models/<model>/rules/` | that model's own steering rules — not shared across models |
 | `models/<model>/reports/` | per-run evidence — `round-<round>-<task>.md` (raw) or `report-<role>-<timestamp>.md` (enriched, via `bench/report.sh`) |
 | `templates/` | copy-to-onboard for a new project or a new model |
+| `history.md` | this project's own history — origin, cross-model findings, retired conventions |
 
-### Two kinds of history
-
-Easy to conflate: `tasks/<task>/rounds/` is scored and automatic — one
-prompt/output pair per `bench.sh` dispatch of that task, verdict from the
-harness or `verify.sh`.
-`models/<model>/{prompts,outputs,logs}/` is unscored and manual — raw
-`dispatch.sh` round-trips from onboarding a model *before* any task SPEC
-existed (see "Adding a new model" below). Treat the onboarding trail as
-provisional: once its findings land in a durable artifact (a cheat-sheet, a
-probe project, a README note), delete the raw trail rather than letting it
-sit as a stale shadow copy. (qwen2.5-coder-1.5b's onboarding trail was
-retired this way once fully superseded by
-`tasks/csharp/{sdk-cheat-sheet.md,probe/}` and `ORCHESTRATION.md`
-deviation #5 — nothing was lost, the raw transcript was just redundant.)
+Two kinds of history, easy to conflate: `tasks/<task>/rounds/` is
+scored and automatic — one prompt/output pair per `bench.sh` dispatch,
+verdict from the harness or `verify.sh`. `models/<model>/{prompts,
+outputs,logs}/` is unscored and manual — raw round-trips from onboarding
+a model *before* any task SPEC existed. Treat the onboarding trail as
+provisional: once its findings land in a durable artifact (a
+cheat-sheet, a probe project, a README note), delete the raw trail
+rather than letting it sit as a stale shadow copy.
 
 ## 5-minute setup
 
@@ -159,8 +129,8 @@ mode, so R1 outputs come back clean.
 ## Adding a new project
 
 Copy `templates/new-project/`. A task set is a directory with `SPEC.md` —
-always the current validated-best prompt, per "Best-first presentation"
-above; a superseded variant, if worth keeping, goes in `history/` — and
+always the current validated-best prompt, per "Best-first, always" above;
+a superseded variant, if worth keeping, goes in `history/` — and
 either a `harness/` holding `tests/` (ground truth), `src/` (subagent
 transcription target), and a csproj — or, for
 **doc tasks**, an `input.md`+`SPEC.md`+`expected.md` and a `verify.sh` that
