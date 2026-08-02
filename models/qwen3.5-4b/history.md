@@ -141,3 +141,75 @@ based on a 3/3-clean smoke test using trivial prompts that never
 exercised the failure mode real docs-task prompts reliably trigger.
 `README.md` corrected accordingly. Proceeding to Steering with this as
 the new reference baseline.
+
+## Steering: Tier 1 (4 runs) — one clean win, real bare-task instability surfaced
+
+Cross-model check: `qwen3.5-2b` had already tried
+`formatting-fidelity.md` on this exact `doc-adapt`/`doc-script`
+line-wrap idiom and it didn't work there either, and `boundary-
+discipline.md` caused a catastrophic repetition-loop regression on
+`doc-surgical` there — but on this model, `doc-surgical`'s defect was
+already diagnosed as line-wrapping (not instruction bleed, the idiom
+`boundary-discipline` targets), so that specific regression risk
+wasn't applicable here and was avoided by using the right lever for
+the actual defect instead of reusing the exact same fix wholesale.
+
+**Run 1** (`reports/report-docs-20260802-151822.md`, 4/9): first
+attempt for all 6 near-miss FAILs. `doc-synthesize`'s `zod`-token
+reminder worked immediately. `doc-verbatim`'s fix targeted the wrong
+blank-line location for that draw's specific defect.
+`doc-surgical`/`doc-adapt` (`formatting-fidelity.md`, reused from
+`qwen3.5-2b`) showed zero movement. `doc-script`/`doc-summarize`
+(targeted exact-token/phrase reminders) showed zero movement despite
+being about as specific as an instruction can get.
+
+**Run 2** (`reports/report-docs-20260802-152143.md`, 7/9): gated
+`doc-adapt`/`doc-script`/`doc-summarize`/`doc-surgical` to bare per the
+2nd-run rule. `doc-verbatim`'s corrected blank-line fix (before-note
+location) — **still failed, but this draw's actual defect was the
+*other* blank line** (after heading), which run 1's original
+instruction had targeted. **Real per-draw instability in which of two
+blank lines drops, not a misdiagnosis.** All 3 gated-to-bare tasks
+PASSED this draw — single-draw evidence only, explicitly flagged as
+needing Confirm before trusting.
+
+**Run 3** (`reports/report-docs-20260802-152423.md`, 4/9): tried a
+combined instruction covering both blank-line locations for
+`doc-verbatim` (still failed) and an example-based line-wrap
+instruction for `doc-surgical` (still failed, 2nd lever type, 2nd
+failure — gated to bare). **`doc-adapt`/`doc-script` (bare) flipped
+back to FAIL**, and `doc-repair` (never steered, always bare) flipped
+to FAIL for the first time this session — confirms instability is
+broad across this role's bare tasks, not confined to the ones under
+active Steering.
+
+**Run 4** (`reports/report-docs-20260802-152711.md`, 4/9):
+`doc-verbatim`'s 4th and final Tier 1 attempt — a literal line-by-line
+enumeration of all 16 expected output lines (the style that helped
+partially on other qwen3.5 configs for this same task). **Still
+failed**, same 1-line-defect shape. 4 distinct instruction styles
+tried across 4 runs (positional description ×2, combined, literal
+enumeration), none confidently beat bare — **reverted to bare.**
+`doc-restructure` (bare, PASS on literally every draw before this one,
+across the entire session) flipped to FAIL — the clearest single data
+point that this role's per-draw noise is real and broad, not an
+artifact of anything being steered.
+
+**Tier 1 closed.** Final state: `doc-synthesize` has a confirmed
+working override (PASS on all 4 post-fix draws). `doc-verbatim` and
+`doc-surgical` both reverted to bare after real, varied attempts (4
+and 2 runs respectively) found nothing that beat bare with confidence.
+Every other task (`doc-repair`, `doc-adapt`, `doc-script`,
+`doc-summarize`, `doc-crossref`, `doc-restructure`) was never steered
+— any pass/fail swings recorded above are pure bare-task per-draw
+instability, real and broad across this role, which is exactly what
+the Confirm phase exists to quantify.
+
+## Tier 2 gate: skipped (autonomous)
+
+Tasks with a current PASS on the final Steering draw = 4/9 ≈ 44%
+(`doc-synthesize`, `doc-repair`, `doc-summarize`, `doc-crossref`) —
+below the 60% threshold. Tier 2 skipped per `AGENTS.md`'s autonomous
+gate rule, no question asked. Moving to Confirm — essential here given
+the volume of per-draw instability observed across this Steering
+phase, not a formality.
