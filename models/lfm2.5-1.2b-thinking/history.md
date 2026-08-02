@@ -281,3 +281,159 @@ run-1 4-bullet state stays as this loop's current best-known state:
 0/4 stable on the steered tasks (not yet a fix, but the best content
 quality reached so far and not flaky itself), plus 2 known-unstable,
 unrelated tasks whose instability predates this session's work.
+
+## Phase 3: cross-model idiom transfer from deepseek-r1-1.5b (documenter role)
+
+`deepseek-r1-1.5b` is the only other model in this project tested
+against the docs role. Its `README.md` verdict table lists
+`doc-verbatim`/`doc-surgical`/`doc-adapt`/`doc-script`/`doc-repair` —
+**the exact same 5 tasks** lfm2.5's Phase 2 plateaued on — as "Not
+suitable — structural limit... Not a prompting problem", failing
+consistently across 3 historical R1 steering rounds. This is
+cross-model evidence (not proof) that Phase 2's diminishing returns on
+those 4 tasks (`doc-verbatim` untouched this session but shows the same
+severity) may be a real capability ceiling at this model scale, not a
+sign more prompt iteration would eventually work — consistent with
+Confirm's decision to stop iterating there rather than a coincidence.
+
+R1's `history.md` documents two directly transferable, validated fixes
+for tasks lfm2.5 has NOT yet had task-specific steering on:
+
+- **`doc-summarize`** (R1: dropped 1 of 4 required facts under the
+  length limit → restructured the SPEC's fact list into an explicit
+  numbered checklist + "count before you answer" → **fixed, now PASS**).
+  lfm2.5's `doc-summarize` failure is the same idiom: missing 2-3
+  required facts/tokens, under the word-count floor.
+- **`doc-crossref`** (R1: paraphrased the exact tool name
+  `describe_obfuscation_policy` into prose instead of preserving it
+  verbatim → explicit "treat this like a variable name you must not
+  rename" instruction, later reinforced by the STE ruleset below →
+  improved, then 4/5 with STE). lfm2.5's `doc-crossref` shows the same
+  "substance right, exact identifier wrong" shape (missing either
+  `describe_obfuscation_policy` or `obfuscated.invalid` depending on
+  draw).
+- **STE (Simplified Technical English, `rules/ste-writing.md`)**:
+  controlled vocabulary, active voice, one idea per ~20-word sentence,
+  no hedging, exact-identifier preservation as a named rule. Validated
+  on R1 across `doc-crossref` (4/5) and `reason-tradeoff` (3/5), both up
+  from ~25-33% pre-STE — R1's single highest-leverage lever found.
+- **`doc-synthesize`** (R1: failed via "placeholder-latch" — echoing the
+  SPEC's own bracketed `[one sentence: ...]` placeholders literally
+  instead of writing prose, same idiom `reason-coverage` had; fixed
+  there via prose bullets + a worked example + an explicit warning
+  against restating the template verbatim). **Confirmed the same
+  bracketed-placeholder pattern exists verbatim in lfm2.5's
+  `doc-synthesize` SPEC** (`[one sentence: who throws, who catches...]`,
+  `[what the C# host throws...]`) — same task, shared across models.
+  lfm2.5's actual failure shape differs though (extreme under-
+  elaboration, not literal placeholder-echoing) — this is a weaker
+  transfer candidate than the other two, worth trying but not assumed.
+
+**Correction before applying anything — checked the actual bare SPECs,
+not just the diagnosis, first:** `doc-crossref`'s and `doc-summarize`'s
+*bare* SPECs (`tasks/<task>/history/SPEC-pre-lfm2-steer.md`) already
+contain R1's exact validated fixes, baked into the shared task text from
+the start, not something to newly apply:
+
+- `doc-crossref`'s bare SPEC already has the full STE ruleset prepended,
+  the "treat this like a variable name you must not rename" instruction,
+  AND a self-check ("does your draft contain BOTH exact strings?").
+  lfm2.5 still fails a substantial fraction of draws despite all three
+  being present from the very first bare draw this model ever saw.
+  **Not a new lever — already tried by construction, doesn't reliably
+  transfer.** No further action taken on this task this phase.
+- `doc-summarize`'s bare SPEC already has an explicit numbered fact
+  checklist and a "count before you answer" instruction, matching R1's
+  exact fix. lfm2.5 still drops 2-3 of the 4 required facts and misses
+  the word-count floor anyway. **Same conclusion — already present,
+  already insufficient.** STE specifically was never applied to this
+  task for either model though (R1 piloted STE only on `doc-crossref`/
+  `reason-tradeoff`) — that specific combination is untested, applying
+  STE alone (not the checklist restructure, which already exists) this
+  run.
+- `doc-synthesize`'s bare SPEC has no writing-style preamble at all —
+  genuinely untested. Applying STE + an explicit warning against
+  echoing the bracketed `[...]` placeholders verbatim (the fix pattern
+  R1 used for the same placeholder-latch idiom on `reason-coverage`).
+
+`doc-verbatim` stays untouched — R1's structural-limit evidence adds
+weight to treating it as a same-family ceiling task alongside the 4
+already-plateaued ones, not worth this phase's budget.
+
+### Phase 3 run 1 result: STE negative-transfers to this model
+
+`reports/report-docs-20260802-110413.md`: **1/9 PASS** (`doc-restructure`
+only). finish_reason=stop throughout, no truncation. Single draw.
+
+- **`doc-summarize` (STE applied): got worse, not better — 10 words**
+  (down from 17 under the old blanket preamble, 20 bare, both already
+  under the required-fact count). `"TypeScript/Node chosen. OAuth
+  support justifies. Prior servers align. All confirmed."` — STE's
+  "one idea per sentence, ~20 words max" reads to this model as a
+  brevity instruction and triggers telegraphic fragment compression,
+  the opposite of R1's result on the same technique. **Confirmed
+  negative transfer, not neutral — do not use STE on this model for
+  tasks in the under-elaboration idiom family (matches Idiom A/E).**
+  Reverting `doc-summarize` to bare (empirically the best of the 3
+  variants tried on this task: bare=20 words, blanket=17, STE=10 — all
+  fail the same missing-facts check regardless, so bare's better
+  word-count compliance is the only real differentiator).
+- **`doc-synthesize` (STE + placeholder-warning applied): unchanged
+  severity** — still a single terse sentence, still missing heading/
+  JSON/bullets. The placeholder-warning didn't cause harm (no
+  placeholder-echoing appeared, wasn't happening before either) but
+  didn't fix the actual gap. Given STE is now confirmed harmful
+  elsewhere on this model, dropping it here too and keeping only the
+  placeholder-warning (untested in isolation, lower-risk than a general
+  style constraint) for one more check.
+- **`doc-crossref` (reverted to bare): reproduces the exact
+  already-documented bare-baseline idiom** (Source A tool name missing,
+  Source B fact present) — not new information, confirms the revert
+  didn't make anything worse. Bare stays the simplest defensible choice
+  here since neither blanket nor bare has ever beaten the other on pass
+  rate, and bare avoids adding unproven risk.
+
+**Broader pattern now visible across both Phase 2 and Phase 3**: on
+this model+role, *every* attempt to add instruction text — however
+well-motivated, however short, however grounded in either this model's
+own diagnosed idioms or another model's validated fixes — has either
+done nothing or made things measurably worse. Zero exceptions so far
+across ~7 experimental variants tried this session. This is itself the
+main finding worth carrying forward, not just a step on the way to one.
+
+### Phase 3 run 2 result: corrections applied, still 1/9
+
+`reports/report-docs-20260802-110808.md`: **1/9 PASS** (`doc-restructure`
+only), same headline as run 1. Corrections from run 1 (drop STE from
+`doc-summarize`, drop STE from `doc-synthesize` keeping only the
+placeholder-warning): both sub-metrics improved without flipping either
+task to PASS.
+
+- **`doc-summarize` (bare)**: 23 words — now passes the length floor
+  (was 10 under STE, 20 bare-in-comparison, 17 under the old blanket
+  preamble) — confirms bare is the right choice for this task. Still
+  missing the same 3 facts every variant has always missed
+  (`Python`, `ConnectWise MCP server`, the SDK-reference-implementation
+  fact) — that specific gap has not moved under any variant tried
+  across this entire session (bare, blanket, STE). Treat as a stable
+  content gap independent of instruction-style, not something the
+  writing-style lever can reach.
+- **`doc-synthesize` (placeholder-warning only, no STE)**: gained the
+  required section heading (missing under every prior variant including
+  Phase 3 run 1's STE version) — real, if small, improvement. Still
+  missing the fenced JSON block, bullets, and 3 required tokens.
+- **`doc-crossref` (bare)**: identical failure shape to run 1 — the
+  stable, already-documented bare idiom, not new information.
+
+**Phase 3 conclusion (2 of 5 runs used, stopping here):** no task in
+this docs role has been moved to PASS by any cross-model idiom transfer
+attempted. Real, measurable sub-metric gains landed (word-count
+compliance, a recovered heading) but none closed a task. Combined with
+Phase 2's parallel plateau, the evidence base now spans 2 full phases
+and ~9 experimental SPEC variants without a single net new PASS beyond
+the original bare 1 (`doc-restructure`) — consistent with R1's
+cross-model finding that several of these task shapes may be at or near
+this model-scale's ceiling, not a sign of insufficient prompt
+engineering. Next per the quality loop is Phase 4 (external research)
+or accepting this as the loop's plateau and moving to Confirm on this
+Phase-3 state.

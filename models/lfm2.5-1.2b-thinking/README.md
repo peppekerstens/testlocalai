@@ -87,6 +87,32 @@ of 5 runs used, the 2nd made things worse) — next step per
 for this same docs role for transferable idioms) rather than more
 bullets on this same rules file.
 
+**Phase 3 (cross-model idiom transfer from `deepseek-r1-1.5b`, 2 of 5
+runs used): no new PASS, but a clear negative result worth keeping.**
+R1's README independently lists the exact same 5 tasks
+(`doc-verbatim`/`doc-surgical`/`doc-adapt`/`doc-script`/`doc-repair`) as
+a structural ceiling at that model's scale — cross-model support for
+Phase 2's plateau being a real limit, not under-steering. R1's other two
+validated fixes (STE writing style, fact-checklist-with-count) turned
+out to already be baked into `doc-crossref`/`doc-summarize`'s shared
+bare SPECs and were already failing for lfm2.5 regardless — not new
+levers. **Applying STE fresh where it wasn't already present
+(`doc-summarize`) made it measurably worse** (10 words vs. 17-20 in
+every other variant) — a confirmed negative transfer, the opposite of
+R1's result, consistent with this model's under-elaboration idiom
+(Idiom A/E) rather than R1's. **Do not apply STE to this model on tasks
+in that idiom family.** Reverted `doc-summarize`/`doc-crossref` to bare
+(bare is empirically best for both, though neither passes); kept a
+narrow placeholder-echo warning on `doc-synthesize` (no STE), which
+recovered its required heading without closing the task. Full
+breakdown: `history.md`'s "Phase 3" sections.
+
+**Running total across Phases 2+3: ~9 SPEC variants tried, one
+consistent pattern — additional instruction text has never net-improved
+this model's docs-role performance, and has regressed it more than once**
+(Idiom E, Idiom F, and now STE's negative transfer). Worth treating as
+the headline finding for this role, not just a step toward one.
+
 **A real infrastructure bug was found and fixed during this pass**, not
 specific to this model's quality: LFM2.5 embeds its `<think>...</think>`
 block *inline* in `content` (unlike R1, which returns it in a separate
