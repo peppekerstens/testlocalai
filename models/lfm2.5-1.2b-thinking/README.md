@@ -23,10 +23,25 @@ meta-commentary suppression, exact-identifier preservation, completeness
 self-checking, and verbatim-copy fidelity), applied to all 15 bare
 failures: 0/15 on the next draw.** Not a clean win, but not a wash either
 — see `history.md` for the honest per-task breakdown (real regressions,
-real improvement, and several unchanged). **This model's steering is
-unfinished** — the blanket rules block was a first-pass diagnostic tool,
-not a validated recipe; no task-specific follow-up steering has been done
-yet.
+real improvement, and several unchanged).
+
+**Docs-only re-test + bare-vs-steered comparison (2026-08-02, session
+2): 1/9 PASS with the blanket preamble still applied, 0/8 flipped to
+PASS on a re-dispatched bare comparison — but the comparison surfaced a
+new idiom.** The blanket `output-discipline.md` preamble measurably
+*shortens* this model's output (6–14x smaller) on `doc-surgical`,
+`doc-adapt`, `doc-script`, and `doc-repair`, without fixing the
+underlying content errors (forbidden/missing tokens persist in the
+longer bare answers too) — see `history.md`'s "Idiom E: preamble-induced
+compression." **This changes the diagnosis from session 1's "unfinished,
+needs task-specific follow-up on top of the blanket block" to "the
+blanket block itself needs to go for the affected tasks before any
+task-specific follow-up is worth doing."** Not yet acted on — the next
+step is dropping the preamble on those 4 tasks and pairing narrower,
+task-specific instructions instead. `doc-verbatim`/`doc-synthesize` are
+unaffected by the preamble either way; something else drives those.
+Single comparison draw per task — see `history.md` for the sample-size
+caveat before treating this as a settled rate.
 
 **A real infrastructure bug was found and fixed during this pass**, not
 specific to this model's quality: LFM2.5 embeds its `<think>...</think>`

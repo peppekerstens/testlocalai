@@ -109,3 +109,65 @@ lever applied uniformly. That task-specific follow-up pass has not been
 done yet — this model's steering work stopped here, mid-iteration, when
 session attention moved to other project work (the four new roles,
 report-generation tooling, this documentation restructure).
+
+## Docs-role re-test (2026-08-02, session 2) and the blanket-preamble comparison
+
+Fresh docs-only run (`bash bench/report.sh lfm2.5:1.2b-thinking docs`,
+`models/lfm2.5-1.2b-thinking/reports/report-docs-20260802-100539.md`)
+against the still-steered SPEC.md files from session 1: **1/9 PASS**
+(only `doc-restructure`, the one task never steered). All 8 failures
+showed the same shape — very short final answers (105–156 bytes) despite
+748–2808 completion tokens spent, `finish_reason=stop` (not truncation,
+the model chose to stop that short) — worse than session 1's own record
+for several of these same tasks (`doc-verbatim` dropped the *entire*
+document this time, not just a blank line; `doc-repair` kept 2 lines, not
+most of the table). Single draw; see the report for full per-task
+idiom classification.
+
+That regression prompted a same-day **bare-vs-steered comparison**: the 8
+archived pre-steer SPECs (`tasks/<task>/history/SPEC-pre-lfm2-steer.md`)
+were re-dispatched against the same running model/session state as the
+steered run above, isolating one variable (presence of the blanket
+`output-discipline.md` preamble) while holding everything else constant.
+
+**Result: 0/8 flipped to PASS on bare either** — this is not "bare fixes
+it." But output *shape* differed sharply and consistently in one
+direction:
+
+| Task | Steered bytes | Bare bytes | Byte ratio |
+|---|---|---|---|
+| `doc-verbatim` | 145 | 147 | ~1x — no difference |
+| `doc-surgical` | 64 | 891 | ~14x |
+| `doc-adapt` | 523 | 1193 | ~2.3x |
+| `doc-script` | 156 | 2007 | ~13x |
+| `doc-synthesize` | 125 | 203 | ~1.6x |
+| `doc-repair` | 40 | 558 | ~14x |
+| `doc-summarize` | 17 words (fails 20-word floor) | 20 words (passes) | marginal |
+| `doc-crossref` | Source A right, B missing | Source A missing, B right | flipped, not added |
+
+For `doc-surgical`, `doc-adapt`, `doc-script`, and `doc-repair`, removing
+the preamble produced dramatically more complete output — real content
+instead of a near-empty stub — while still failing on the *same kind* of
+content error either way (wrong/forbidden tokens, not missing
+elaboration). `doc-verbatim` and `doc-synthesize` were unaffected by the
+preamble either way — something else is truncating those regardless.
+`doc-crossref` reproduced the exact bare-baseline idiom from session 1
+(`describe_obfuscation_policy` missing, email/`obfuscated.invalid`
+correct) — confirms that specific gap is stable on bare SPEC — but under
+the steered SPEC that gap *relocates* to the other fact instead of
+closing. `doc-summarize` marginally clears the word-count floor bare but
+still misses the same required facts either way.
+
+**New idiom, not previously documented for this model — Idiom E:
+preamble-induced compression.** The blanket `output-discipline.md` block,
+prepended ahead of the task instructions on every steered SPEC, appears
+to measurably shorten this model's final answer on tasks where the model
+would otherwise produce substantial content, without buying back any
+correctness on the errors it was meant to fix (forbidden tokens, exact
+identifiers) — those same errors persist in the *longer* bare answers
+too. This reframes session 1's "no task-specific follow-up done yet"
+takeaway: before doing per-task steering on top of the blanket preamble,
+the preamble itself needs to be treated as a suspect, not a settled
+foundation. Single comparison draw per task — this needs 2-3 more draws
+each before the "preamble hurts these 4 tasks" read is trusted as a
+rate rather than a same-day sample.
