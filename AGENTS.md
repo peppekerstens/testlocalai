@@ -233,16 +233,17 @@ after (see the rule just above this one).
 
 **Always check for prior work on this exact model+role before starting
 a loop.** Read `models/<model>/reports/report-<role>-*.md`,
-`README.md`, and `history.md` first. The Steering phase's max-10 run
-budget is cumulative for a given model+role, not reset every time the
-loop is invoked (in a new session, after a `/loop`, whatever) — prior
-runs are real evidence regardless of whether they were originally run
-under this exact phase structure. Map them onto the phases
-retroactively instead of re-running work already done: the most recent
-report from before the current invocation's changes is Phase 1's
-reference run; already-applied steering (task-specific, borrowed from
-another model, or from external research) counts against the Steering
-phase's budget. Continue the loop from wherever prior work left off —
+`README.md`, and `history.md` first. The Steering phase's run budgets
+(4 per task in Tier 1, 5 for Tier 2) are cumulative for a given
+model+task or model+role, not reset every time the loop is invoked (in
+a new session, after a `/loop`, whatever) — prior runs are real evidence
+regardless of whether they were originally run under this exact phase
+structure. Map them onto the phases retroactively instead of re-running
+work already done: the most recent report from before the current
+invocation's changes is Phase 1's reference run; already-applied
+steering (task-specific, borrowed from another model, or from external
+research) counts against the relevant task's Tier 1 budget or Tier 2's
+budget. Continue the loop from wherever prior work left off —
 don't discard it and restart at Phase 1 just because it predates this
 section.
 
@@ -292,29 +293,57 @@ must also name any helper tooling identified as potentially useful
 going forward (a linter/formatter, an MCP tool, a schema validator) —
 even tooling not implemented yet — so the finding isn't lost.
 
-**Steering phase (max 10 full role re-test runs).** Apply fixes, re-test,
-repeat. Order of preference: cross-model-validated fixes and
-research-informed techniques first (from the Research phase above),
-then genuinely novel task-specific fixes for whatever's left — grounded
-in the actual diagnosed idiom (exact `verify.sh` quotes), never a
-general-purpose blanket rules block prepended to everything (measurably
-*hurt* several tasks for `lfm2.5:1.2b-thinking`, see Idiom E). **Batch
-every currently-addressable idiom into each run** rather than fixing one
-task per run — a run already re-tests the whole role regardless, so
-testing fixes for 4 tasks costs the same one run as testing a fix for 1.
-**Don't abandon a lever after a single ambiguous draw.** Per-draw noise
-is real and has repeatedly flipped verdicts on unchanged SPECs this
-project (`doc-crossref`, `doc-summarize`) — if a run's result isn't
-*clearly* better or worse, get 1-2 more draws of that same state before
-deciding to keep or discard it. Only an unambiguous regression (sharply
-worse on every affected task, like Idiom E or F) justifies abandoning a
-lever on one draw. This costs more of the phase's budget per lever
-tested (hence the higher cap than before) in exchange for not
-mistaking noise for signal — the dedicated Confirm phase below still
-does one final broader check, this isn't a replacement for it, just
-fewer false starts feeding into it. Stop the phase early (move to
-Confirm) once a batch of runs stops producing any further improvement,
-or once every task in the role passes.
+**Steering phase — two tiers, specialist first, then a generalist
+search.** Optimizations for one task can directly conflict with what
+another task needs (a "preserve structure exactly" fix helped
+`doc-verbatim`/`doc-repair` for `qwen3.5:0.8b` but broke
+`doc-restructure`, whose entire job is to *change* structure) — batching
+a fix across tasks that turn out to need opposite behavior hides that
+conflict behind one flat headline number instead of surfacing it. Order
+of preference within both tiers: cross-model-validated fixes and
+research-informed techniques first (from the Research phase above), then
+genuinely novel task-specific fixes grounded in the actual diagnosed
+idiom (exact `verify.sh` quotes) — never a general-purpose blanket rules
+block prepended to everything (measurably *hurt* several tasks for
+`lfm2.5:1.2b-thinking`, see Idiom E).
+
+*Tier 1 — Per-task specialist optimization.* Every currently-failing
+task gets its own independent optimization attempt, unconstrained by
+what any other task needs, stored as its own
+`models/<model-dir>/task-overrides/<task>.md`. Budget: up to 4 runs per
+task (a "run" is still one full role re-test — not every task's
+override necessarily changes every run, so track each task's own
+attempt count separately from the shared run counter). **Gate on the
+2nd run**: give every task a genuine first attempt; after that result,
+only keep investing further runs (up to the 4-run cap) in a task that
+showed *some* real promise (a clear partial improvement, even short of
+a full PASS — `doc-verbatim` going from "drops the whole table" to "one
+tiny remaining defect" counts). A task that's flat or regressed after
+run 1 gets gated out — stop, revert its override to bare (or whatever
+prior state was best), move on. Don't burn the full per-task budget on
+tasks showing no signal. It's fine, and expected, for a batched
+diagnostic run to test a shared candidate fix across several
+plausibly-similar tasks at once as the *first* probe (conserves
+budget) — but the moment that batch's result is mixed, not uniform,
+immediately split into independent per-task branches instead of
+continuing to treat it as one lever.
+
+*Tier 2 — Generalist search (max 5 runs).* Once Tier 1 settles (every
+task either has a working specialist override or was gated out to
+bare), search for a single shared config usable by an end user who
+doesn't know in advance which task shape they'll hit. **"No generalist
+exists" is a fully acceptable, expected outcome for a small local
+model, not a failure of this phase** — state it plainly in the report
+and README rather than shipping a mediocre compromise nobody actually
+wants. This mirrors `qwen2.5-coder-1.5b`'s own independent finding
+("two different recipes for two task families — do not mix them," a
+shared rules file that helps one family actively hurts the other) —
+small models at the scale tested in this project have repeatedly not
+generalized a single steering config across heterogeneous task shapes
+within one role. Expect this outcome, don't fight it.
+
+Stop either tier early (move to Confirm) once further runs stop
+producing improvement, or once every task in the role passes.
 
 ## Confirm — check the optimization is real, not one lucky draw
 
@@ -436,8 +465,18 @@ traversable, not accumulate into a chronological log. Concretely:
   vs. mainstream LLM | Details` (Details = a markdown link to that
   role's own heading further down). Below the table: per-role sections
   with a verdict/status, direct "how to optimize for role X"
-  instructions, setup facts. Ends with links to `history.md` and
-  `reports/`. If a sentence is telling a story ("first we tried X, then
+  instructions, setup facts. **If the role went through Tier 1/Tier 2
+  Steering (per-task specialist optimization), that role's section also
+  needs a per-task table**: `Task | Specialist result | Specialist
+  config | Generalist result` (Specialist config = a link to
+  `task-overrides/<task>.md` or "bare" if gated out; Generalist
+  result/config = whatever Tier 2 settled on, or "no generalist —
+  n/a" if Tier 2 found none) — the role-level Overview row is one
+  aggregate number, this table is where the actual per-task,
+  per-strategy picture lives, without which "no generalist found" reads
+  as a bare failure instead of the specific, useful per-task result it
+  actually is. Ends with links to `history.md` and `reports/`. If a
+  sentence is telling a story ("first we tried X, then
   Y happened, so we tried Z") instead of stating a current fact or
   instruction, it belongs in `history.md`, not here — this includes
   phase-by-phase progress updates: don't append "here's what changed

@@ -20,6 +20,20 @@ code-emission needs different rules than Python would; see the
 `--rules <lang>` split in `bench.sh`). A rule earned by one model on one
 task is never assumed to generalize — see "Adding a new model" below.
 
+**Cross-model finding, expected going forward, not just a one-off:**
+small local models at the scale tested here (~1-2B parameters) have
+repeatedly not generalized a single steering config across
+heterogeneous task shapes within one role — a fix that helps one task
+actively hurts another that needs different behavior
+(`qwen2.5-coder-1.5b`'s two-recipe split for its two code-task families;
+`qwen3.5:0.8b`'s structure-preservation fix helping a copy task while
+breaking a restructure task in the same run). Per-model steering
+sessions default to finding a **specialist** config per task first, and
+only then search for a **generalist** — with "no generalist exists" a
+fully acceptable, expected outcome to document, not a failure to keep
+chasing. See `AGENTS.md`'s quality loop, Steering phase, for the
+two-tier structure this produces.
+
 **Best-first presentation (standing rule):** whatever configuration is
 currently validated-best for a given model+role+task is what an end-user or
 AI reader encounters first, under its plain name (`SPEC.md`,

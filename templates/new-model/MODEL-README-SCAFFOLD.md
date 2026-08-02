@@ -48,9 +48,19 @@ match the table's Details link.
   (3) usability score with optimizations, (4) a stated comparison
   against a mainstream frontier LLM with explicit restrictions, (5) a
   final verdict sentence.
+- If this role went through Tier 1/Tier 2 Steering (per-task specialist
+  optimization, see AGENTS.md's quality loop), include the per-task
+  table below. This is where the real picture lives — the Overview
+  table above is one aggregate number, "no generalist found" reads as a
+  bare failure without this table showing which tasks DO have a working
+  specialist config.
 - Either way: end with a pointer like "Full narrative: history.md's
   '<section name>'" rather than summarizing the narrative here.
 -->
+
+| Task | Specialist result | Specialist config | Generalist result |
+|---|---|---|---|
+| <task> | <e.g. "near-pass, 1 defect" / "PASS" / "FAIL, gated out run 1"> | <link to `task-overrides/<task>.md`, or "bare — steering hurt this task"> | <how it does under the Tier 2 generalist, or "n/a — no generalist found for this role"> |
 
 ## How to optimize (verify before trusting)
 
