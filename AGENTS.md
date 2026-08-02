@@ -610,6 +610,25 @@ An unattended loop running in this repo cannot push anywhere else, even
 by mistake — this isn't a policy an agent has to remember to follow, it's
 enforced at the GitHub key level.
 
+**Service restarts/reloads are authorized when in service of a quality
+loop lever (2026-08-02).** Some genuine steering levers are
+server-startup flags, not per-request dispatch overrides — e.g.
+llama-server's `--reasoning-budget N` (caps reasoning tokens, forcing a
+clean `</think>` instead of running unrestricted to the context
+ceiling) is set via the systemd service's `ExecStart`, not an env var
+`bench/dispatch.sh` can pass per-call. Testing different values means
+editing the service file and running `systemctl --user daemon-reload`
++ `restart` between attempts. This is explicitly authorized, not
+something to ask about each time: a restart takes a few seconds,
+trivial next to the cost of *not* testing a real lever — a single
+runaway-thinking task this project measured took 211 seconds. Document
+any such change per the existing "every dispatch-level tweak must be
+documented" rule (the systemd service's flags are exactly the kind of
+setup fact that rule already requires recording in the model's own
+`README.md`), and restore the previous flag value/config afterward if
+the value being tested doesn't end up as the kept configuration —
+don't leave an untested or rejected value live in the service file.
+
 ## See also
 
 - [`README.md`](README.md) — project purpose, layout, best-first
