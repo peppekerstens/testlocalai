@@ -10,11 +10,24 @@ steering not assumed to transfer untested.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — Phase 0 done, Phase 1 starting | n/a | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | 🔬 Preliminary — Phase 1 baseline done, Steering starting | 2/9 → not yet steered | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
 
 ## Documenter role: current status (preliminary)
 
-Not yet tested. See "Setup" for the required dispatch overrides.
+**Bare baseline, docs role: 2/9 PASS** (`doc-summarize`,
+`doc-restructure`) — `reports/report-docs-20260802-132935.md`, better
+than either 0.8B variant's bare baseline (both 1/9). No truncation.
+
+**Idiom picture differs meaningfully from the 0.8B variants** — not a
+scaled-up copy of the same failures. Q1 (structural dropping) and Q2
+(instruction bleed) still present, same shape as 0.8B. **Q3
+(substitution not applied) is largely resolved at this size** —
+`doc-adapt`/`doc-script` get the actual substitution content right,
+only failing on formatting. **New idiom Q5 (backwards semantic
+attribution)**: `doc-crossref` gets both required facts present but
+describes the tool as performing the obfuscation rather than reporting
+it — a logic error, not a missing-fact error, never seen on 0.8B. Full
+breakdown: `history.md`.
 
 ## Setup
 
