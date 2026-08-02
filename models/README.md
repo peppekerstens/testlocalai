@@ -38,17 +38,18 @@ Real small-model smoke tests were run against these during initial setup
 `deepseek-r1-1.5b/history.md` and the qwen3.5 investigation), but no task
 suite has been run against them yet, so there's no role/status to report:
 
-- `lfm2.5:1.2b-thinking-bf16` variants and `qwen3.5:0.8b` /
-  `qwen3.5:2b` / `qwen3.5:0.8b-bf16` — downloaded 2026-08-02, whitelisted
-  in `bench/dispatch.sh`, systemd services wired (ports 8083–8085). A
-  known finding worth flagging before testing further: `qwen3.5`'s
-  default thinking mode showed a runaway-reasoning failure mode on a
-  trivial prompt across all three configs tested (0.8B Q4, 0.8B BF16, 2B
-  Q4) — burned the full 8192-token context on reasoning without ever
-  producing an answer, 3/3 reproductions. `enable_thinking:false` does
-  work correctly on this model family (confirmed both directions on the
-  0.8B, unlike deepseek-r1's broken toggle) but is not yet wired into
-  `dispatch.sh`.
+- `lfm2.5:1.2b-thinking-bf16` variants, `qwen3.5:2b`, and
+  `qwen3.5:0.8b-bf16` — downloaded 2026-08-02, whitelisted in
+  `bench/dispatch.sh`, systemd services wired (ports 8084–8085). Same
+  known runaway-thinking finding as `qwen3.5:0.8b` below applies to
+  these too (same model family) — not yet re-verified per-config.
+- `qwen3.5:0.8b` — quality-loop setup started 2026-08-02
+  (`models/qwen3.5-0.8b/README.md`), Phase 1 reference baseline not run
+  yet, so no row above. `enable_thinking:false` is now wired into
+  `dispatch.sh` (`DISPATCH_ENABLE_THINKING`, 2026-08-02) and confirmed
+  fixing the runaway-thinking failure via smoke test — see that model's
+  README "Setup" section for the exact required dispatch overrides
+  before testing it further.
 
 ## Adding a model here
 
