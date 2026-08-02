@@ -1,16 +1,43 @@
 # qwen3.5:0.8b — steering profile
 
-**Status: quality loop starting — Phase 1 (reference baseline) not run
-yet.** Whitelisted, service wired, dispatch-level fix applied; no task
-suite has been run against it yet.
+**Status: preliminary — Phase 1 reference baseline done, Phase 2 not
+started.** Treat everything below as an early read.
 
 **Role: documenter** (docs role, `tasks/doc-*`). Not yet tested against
 any other role.
 
 ## Current status
 
-Not yet tested. See "Setup" below for what had to be fixed before a
-baseline run would produce any signal at all.
+**Bare baseline (with the mandatory `enable_thinking=false` +
+non-thinking sampling params, no content-level steering), docs role: 1/9
+PASS** (`doc-summarize`) — `reports/report-docs-20260802-113029.md`. No
+truncation across all 9 tasks, confirming the dispatch fix (see Setup)
+holds for a full role, not just one prompt.
+
+**Five idioms diagnosed from this single baseline draw** (n=1 — not yet
+a rate, see `history.md`):
+1. **Idiom Q1 — structural-element dropping** (headings, table
+   separator rows) — the most common failure this run (3 of 8 FAILs:
+   `doc-verbatim`, `doc-repair`, `doc-restructure`), otherwise strong
+   content fidelity. `doc-repair` performed both required repairs
+   correctly and failed purely on this. **Highest-leverage first Phase
+   2 target.**
+2. **Idiom Q2 — instruction/prompt bleed** (`doc-surgical` copied the
+   edit-instructions block itself into its output, past the `[DOC_END]`
+   marker, on top of not applying any edits) — new, not seen on the
+   other 2 models tested in this project.
+3. **Idiom Q3 — substitution not applied** (`doc-adapt`, `doc-script`)
+   — matches the already-documented idiom on both other models tested
+   here; `deepseek-r1-1.5b` calls this a structural ceiling for its
+   scale, not a prompting problem.
+4. **Idiom Q4 — `doc-crossref`'s `describe_obfuscation_policy` drop,
+   now confirmed independently on 3 of 3 models tested in this
+   project** (`deepseek-r1-1.5b`, `lfm2.5-1.2b-thinking`, this model) —
+   same exact fact dropped, same exact other fact kept, every time.
+   Worth treating as a cross-model finding.
+5. **`doc-synthesize`** shows the best partial bare performance of any
+   model tested here so far (fenced JSON block present) — a relative
+   strength, not just a FAIL.
 
 ## Setup
 
@@ -60,6 +87,8 @@ baseline run would produce any signal at all.
 
 ## Further reading
 
+- `history.md` — full per-task diagnostic breakdown of the baseline run
+  and the runaway-thinking bug investigation.
 - `models/README.md` — cross-model index and role-coverage table.
 - `reports/` — per-run evidence (`bash bench/report.sh qwen3.5:0.8b
   <role>`, with the env vars above).

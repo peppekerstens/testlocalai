@@ -13,6 +13,7 @@ in general; this table is model-specific results.
 | [`deepseek-r1-1.5b`](deepseek-r1-1.5b/) | reasoner | ⚠️ Mixed — 1/3 task types solid, rest need steering or are past this model's ceiling | `deepseek-r1-1.5b/README.md` |
 | [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | documenter | ❌ Not suitable — quality loop closed 2026-08-02, 1/9 bare and with optimizations (see Final report) | `lfm2.5-1.2b-thinking/README.md` |
 | [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | reasoner | 🔬 Preliminary — one bare baseline + one steering pass, work paused mid-iteration (not part of the closed docs-role loop) | `lfm2.5-1.2b-thinking/README.md` |
+| [`qwen3.5-0.8b`](qwen3.5-0.8b/) | documenter | 🔬 Preliminary — Phase 1 baseline only, 1/9 PASS, 5 idioms diagnosed | `qwen3.5-0.8b/README.md` |
 | [`qwen3.5:0.8b`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
 | [`qwen3.5:2b`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
 | [`qwen3.5:0.8b-bf16`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
@@ -43,13 +44,10 @@ suite has been run against them yet, so there's no role/status to report:
   `bench/dispatch.sh`, systemd services wired (ports 8084–8085). Same
   known runaway-thinking finding as `qwen3.5:0.8b` below applies to
   these too (same model family) — not yet re-verified per-config.
-- `qwen3.5:0.8b` — quality-loop setup started 2026-08-02
-  (`models/qwen3.5-0.8b/README.md`), Phase 1 reference baseline not run
-  yet, so no row above. `enable_thinking:false` is now wired into
-  `dispatch.sh` (`DISPATCH_ENABLE_THINKING`, 2026-08-02) and confirmed
-  fixing the runaway-thinking failure via smoke test — see that model's
-  README "Setup" section for the exact required dispatch overrides
-  before testing it further.
+- `qwen3.5:0.8b` now has a real row above (Phase 1 baseline done
+  2026-08-02) — see `qwen3.5-0.8b/README.md` for the required dispatch
+  overrides (`enable_thinking=false` is mandatory for this model, not
+  optional) before testing it further.
 
 ## Adding a model here
 
