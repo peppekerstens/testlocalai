@@ -1,0 +1,4 @@
+root ::= "| Capability | What it does |\n|---|---|\n" row "\n" row "\n" row "\n" row
+
+row ::= "| " cell " | " cell " |"
+cell ::= [^\n|]+

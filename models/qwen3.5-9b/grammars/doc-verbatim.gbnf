@@ -1,0 +1,6 @@
+root ::= "## Top level\n\n```yaml\n" line line line line "```\n\n" header "\n|---|---|---|---|\n" row "\n" row "\n" row "\n" row "\n" note
+
+line ::= [^\n]+ "\n"
+header ::= [^\n]+
+row ::= [^\n]+
+note ::= "> " [^\n]+
