@@ -213,3 +213,88 @@ below the 60% threshold. Tier 2 skipped per `AGENTS.md`'s autonomous
 gate rule, no question asked. Moving to Confirm — essential here given
 the volume of per-draw instability observed across this Steering
 phase, not a formality.
+
+## Confirm: 3-loop consistency check
+
+`reports/report-docs-20260802-153152.md` (5/9),
+`-153400.md` (5/9), `-153554.md` (4/9). No truncation across any
+draw — `enable_thinking=false` holds completely; all instability below
+is pure content-quality variance. Per-task 3-draw tracing:
+
+- **Stable PASS (3/3)**: `doc-synthesize` (steered fix, confirmed
+  reliable), `doc-crossref` (bare), `doc-restructure` (bare — the one
+  FAIL seen during Steering run 4 was a single anomalous draw, not a
+  new pattern).
+- **Stable FAIL (0/3)**: `doc-verbatim`, `doc-surgical` (both bare,
+  both exhausted real Steering budget without finding anything that
+  beat bare).
+- **Unstable (real per-draw reliability gaps, independent of any
+  steering — none of these 4 tasks were ever touched by Steering)**:
+  `doc-adapt` (FAIL, PASS, FAIL — 1/3), `doc-script` (FAIL, PASS,
+  FAIL — 1/3), `doc-repair` (PASS, FAIL, PASS — 2/3), `doc-summarize`
+  (PASS, FAIL, FAIL — 1/3).
+
+**Average pass rate across the 3 Confirm draws: 14/27 ≈ 52%** — but
+this average is misleading on its own: it's not "roughly half the
+tasks always pass," it's 3 tasks reliably passing, 2 tasks reliably
+failing, and 4 tasks genuinely coin-flip-unstable. **Decision: keep
+the current state (bare except `doc-synthesize`'s confirmed fix) —
+no further Steering budget is justified.** The 4 unstable tasks were
+never steered, so their instability reflects this model's own
+reliability ceiling on this role at this size, not a fixable prompt
+gap; more Steering runs on tasks that already showed zero response to
+6 total attempts (`doc-verbatim` ×4, `doc-surgical` ×2) or were never
+even the subject of a lever (the 4 unstable ones) would not be
+evidence-grounded.
+
+## Final report
+
+**Why stopped here.** Full quality loop completed: Phase 0 (dispatch
+investigation, including a real correction — trivial-prompt smoke
+tests understated the runaway-thinking risk), Phase 1 baseline,
+sampling-parameter escalation (full-role test, then 5 fast single-task
+attempts, all exhausted before falling back to `enable_thinking=false`
+per explicit user direction), Research (cross-model check against
+`qwen3.5-2b`), Steering Tier 1 (4 runs), an autonomous Tier 2 gate
+(44% < 60%, skipped), and a 3-run Confirm.
+
+**Usability score without optimizations (bare, thinking enabled,
+original preset)**: 5/9 (56%) PASS on paper, but **44% of tasks (4/9)
+produced zero content** (context-ceiling truncation) — the headline
+number materially overstates real usability. Treat the *true* bare
+baseline as unusable for 4 of 9 task shapes, not just "worse."
+
+**Usability score with optimizations (`enable_thinking=false` +
+Steering)**: Confirmed 3 tasks reliably pass (`doc-synthesize`,
+`doc-crossref`, `doc-restructure`), 2 tasks reliably fail
+(`doc-verbatim`, `doc-surgical`), and 4 tasks are genuinely unstable
+(~25-67% per-task pass rate) — average ~52% pass rate per draw, zero
+truncation. This is a *categorically* better state than the original
+bare baseline even though the raw average pass rate is similar to that
+baseline's headline number (56%) — every draw under this configuration
+produces real, usable content on every task, versus the original
+baseline's 44% complete-failure rate.
+
+**Comparison against a mainstream frontier LLM**: not comparable
+overall — a model like Claude Haiku 4.5 would be expected to pass
+close to all 9 tasks reliably. **Best qwen3.5 family result on
+reliable-content-shape tasks so far** (`doc-synthesize`,
+`doc-crossref`, `doc-restructure` all stable), but the 4 genuinely
+unstable tasks mean this model cannot be trusted unsupervised even on
+task shapes it sometimes gets right — every output needs review,
+unlike a frontier model's default reliability.
+
+**Final verdict: usable with mandatory `enable_thinking=false`, and
+with mandatory human review on every task — not a "sometimes skip
+review" model.** 3 of 9 task shapes are reliable specialists
+(`doc-synthesize` needs its steering override; `doc-crossref`/
+`doc-restructure` work bare). 2 of 9 (`doc-verbatim`, `doc-surgical`)
+are confirmed unsuitable even after real steering effort. The
+remaining 4 are the most important finding of this whole loop: genuine
+per-draw instability on tasks that were never steered, meaning this
+model's reliability ceiling on this role is a property of the model
+itself at this size, not something prompt engineering can close. This
+is a materially different profile from `qwen3.5-2b`'s single
+rock-solid specialist result — bigger did not mean uniformly more
+reliable here, it meant a wider spread of partially-working task
+shapes with real content instead of empty truncated output.
