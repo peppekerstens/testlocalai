@@ -365,6 +365,30 @@ find out. The fix (2026-08-02) split every model's README along this
 line; this rule is what keeps it split going forward instead of drifting
 back.
 
+## Every dispatch-level tweak must be documented, not just passed as a flag
+
+Any adjustment made to get better results out of a model that lives
+*outside* a task's `SPEC.md` — a `dispatch.sh` env var override
+(`DISPATCH_TEMPERATURE`, `DISPATCH_TOP_P`/`_TOP_K`/`_MIN_P`/
+`_PRESENCE_PENALTY`, `DISPATCH_ENABLE_THINKING`, `DISPATCH_NOTHINK`,
+backend/port selection, a systemd service's `-c`/`-ngl`/other launch
+flags, anything else passed at the command line or baked into a service
+file rather than into a tracked task file — must be written into that
+model's own `README.md` **Setup** section (the exact env
+vars/flags/values used) before a test run using it counts as reported.
+**Why:** unlike a `SPEC.md` steering change, a dispatch-level tweak
+leaves no file-level trace by default — it's just a shell argument for
+one invocation, easy to apply, get a result from, and then lose the
+moment the exact command isn't re-typed identically later. A future
+session (or a different agent) re-running the "same" test without
+knowing a specific override was needed will silently get a different,
+probably worse, result and have no way to know why. **How to apply:**
+before or alongside any report/history entry that used a non-default
+dispatch parameter, add or update a line in `models/<model>/README.md`'s
+Setup section stating the exact env var(s) and value(s) required to
+reproduce that model's test conditions — not just "some tuning was
+needed," the literal reproducible command/values.
+
 ## Don't assume the visual role is wired up
 
 `README.md`'s Roles table lists **visual** as scaffold-only

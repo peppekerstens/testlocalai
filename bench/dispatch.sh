@@ -34,6 +34,18 @@
 # correctly reason about a relationship between two facts (it skips exactly
 # the reasoning that gets that relationship right) — check per-task before
 # using; see models/deepseek-r1-1.5b/README.md.
+#
+# Optional sampling-parameter / thinking-mode overrides (backend=llamacpp
+# only), all opt-in via env var — unset means identical behavior to before
+# these existed (temperature=0.2, nothing else sent):
+#   DISPATCH_TEMPERATURE=<float>       overrides the hardcoded 0.2 default
+#   DISPATCH_TOP_P / _TOP_K / _MIN_P / _PRESENCE_PENALTY=<value>  added to
+#     the request body only if set
+#   DISPATCH_ENABLE_THINKING=true|false  sends chat_template_kwargs:
+#     {"enable_thinking": <bool>} — the only supported thinking-mode
+#     control for model families with no in-prompt /think //no_think
+#     switch (e.g. qwen3.5); confirmed working via a direct smoke test
+#     before being wired in here, see models/README.md's qwen3.5 section.
 
 set -euo pipefail
 
@@ -80,10 +92,29 @@ if [ "$NOTHINK" = "1" ] && { [ "$MODEL" != "deepseek-r1:1.5b" ] || [ "$BACKEND" 
   exit 5
 fi
 
-python3 - "$MODEL" "$PROMPT_FILE" "$MODE" "$URL" "$BACKEND" "$OUT_FILE" "$CHECK_MODEL" "$NOTHINK" <<'PY' > "$OUT_FILE"
+# Optional per-dispatch sampling-parameter / thinking-mode overrides, all
+# opt-in via env var and llamacpp-only — unset means "send exactly what
+# this script has always sent" (temperature=0.2, no top_p/top_k/min_p/
+# presence_penalty, no chat_template_kwargs), so every model that doesn't
+# set these is completely unaffected. Added for qwen3.5, whose model card
+# recommends temperature 0.6-1.0 (not 0.2) and documents the 0.8B variant
+# as "more prone to entering thinking loops... which may prevent it from
+# terminating generation properly" — chat_template_kwargs.enable_thinking
+# is the only supported control (this model family has no in-prompt
+# /think /no_think switch), confirmed working via a direct smoke test
+# before this was wired in here (see models/README.md).
+TEMPERATURE="${DISPATCH_TEMPERATURE:-0.2}"
+TOP_P="${DISPATCH_TOP_P:-}"
+TOP_K="${DISPATCH_TOP_K:-}"
+MIN_P="${DISPATCH_MIN_P:-}"
+PRESENCE_PENALTY="${DISPATCH_PRESENCE_PENALTY:-}"
+ENABLE_THINKING="${DISPATCH_ENABLE_THINKING:-}"
+
+python3 - "$MODEL" "$PROMPT_FILE" "$MODE" "$URL" "$BACKEND" "$OUT_FILE" "$CHECK_MODEL" "$NOTHINK" "$TEMPERATURE" "$TOP_P" "$TOP_K" "$MIN_P" "$PRESENCE_PENALTY" "$ENABLE_THINKING" <<'PY' > "$OUT_FILE"
 import json, re, sys, urllib.request
 
-model, prompt_file, mode, url, backend, out_file, check_model, nothink = sys.argv[1:9]
+(model, prompt_file, mode, url, backend, out_file, check_model, nothink,
+ temperature, top_p, top_k, min_p, presence_penalty, enable_thinking) = sys.argv[1:15]
 with open(prompt_file, encoding="utf-8") as f:
     prompt = f.read()
 
@@ -162,13 +193,24 @@ if nothink == "1":
     sys.exit(0)
 
 if backend == "llamacpp":
-    body = json.dumps({
+    body_dict = {
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.2,
+        "temperature": float(temperature),
         "max_tokens": 16384,
         "stream": False,
-    })
+    }
+    if top_p:
+        body_dict["top_p"] = float(top_p)
+    if top_k:
+        body_dict["top_k"] = int(top_k)
+    if min_p:
+        body_dict["min_p"] = float(min_p)
+    if presence_penalty:
+        body_dict["presence_penalty"] = float(presence_penalty)
+    if enable_thinking:
+        body_dict["chat_template_kwargs"] = {"enable_thinking": enable_thinking == "true"}
+    body = json.dumps(body_dict)
     if mode == "json":
         body = json.loads(body)
         body["response_format"] = {"type": "json_object"}
