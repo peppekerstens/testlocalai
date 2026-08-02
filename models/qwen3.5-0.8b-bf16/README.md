@@ -10,17 +10,23 @@ transfer the Q4 variant's steering results untested.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — Phase 1 not run yet | n/a | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | 🔬 Preliminary — Phase 1 baseline done, Steering starting | 1/9 → not yet steered | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
 
 ## Documenter role: current status (preliminary)
 
-Not yet tested. See "Setup" for the required dispatch overrides —
-identical requirement to the Q4_K_M variant, confirmed via smoke test
-(2026-08-02): the runaway-thinking bug reproduces here too (warm-up
-ping hit `finish_reason=length` after 8177 completion tokens, 30,290
-reasoning chars, empty output — same shape as Q4's reproduction), and
-`DISPATCH_ENABLE_THINKING=false` + the same non-thinking sampling
-params fix it (clean 3-token response, zero reasoning content).
+**Bare baseline, docs role: 1/9 PASS** (`doc-crossref`) —
+`reports/report-docs-20260802-130512.md`. No truncation. **Same 5
+idioms as the Q4_K_M variant, same task shapes affected** — strong
+cross-precision evidence these are model-architecture idioms, not
+quantization artifacts. Full breakdown: `history.md`.
+
+Dispatch fix confirmed transferring from the Q4_K_M variant: the
+runaway-thinking bug reproduces here too (warm-up ping hit
+`finish_reason=length` after 8177 completion tokens, 30,290 reasoning
+chars, empty output), and the same `DISPATCH_ENABLE_THINKING=false` +
+non-thinking sampling params fix it (clean 3-token response, zero
+reasoning content) — verified, not assumed. See "Setup" for the exact
+reproducible invocation.
 
 ## Setup
 
