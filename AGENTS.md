@@ -233,58 +233,88 @@ after (see the rule just above this one).
 
 **Always check for prior work on this exact model+role before starting
 a loop.** Read `models/<model>/reports/report-<role>-*.md`,
-`README.md`, and `history.md` first. A phase's max-5 run budget is
-cumulative for a given model+role, not reset every time the loop is
-invoked (in a new session, after a `/loop`, whatever) — prior runs are
-real evidence regardless of whether they were originally run under this
-exact phase structure. Map them onto the phases retroactively instead of
-re-running work already done: the most recent report from before the
-current invocation's changes is Phase 1's reference run; an
-already-applied task-specific steering pass is a completed Phase 2 run;
-an already-borrowed cross-model fix is a completed Phase 3 run; and so
-on. Continue the loop from wherever prior work left off — don't discard
-it and restart at Phase 1 just because it predates this section.
+`README.md`, and `history.md` first. The Steering phase's max-10 run
+budget is cumulative for a given model+role, not reset every time the
+loop is invoked (in a new session, after a `/loop`, whatever) — prior
+runs are real evidence regardless of whether they were originally run
+under this exact phase structure. Map them onto the phases
+retroactively instead of re-running work already done: the most recent
+report from before the current invocation's changes is Phase 1's
+reference run; already-applied steering (task-specific, borrowed from
+another model, or from external research) counts against the Steering
+phase's budget. Continue the loop from wherever prior work left off —
+don't discard it and restart at Phase 1 just because it predates this
+section.
+
+**Phase 0 — Pre-flight infra research (conditional, uncapped).** Before
+Phase 1, do a quick external check for dispatch-level requirements —
+recommended sampling parameters, thinking-mode control, known
+pathological behaviors (context-exhaustion loops, template quirks) —
+whenever the model is new to this project, or Phase 1's own warm-up
+shows truncation/empty output/runaway generation. **Why up front:** for
+`qwen3.5:0.8b`, skipping this would have made Phase 1 itself
+uninformative — the model's own card documents a known unterminated-
+thinking-loop failure mode that a naive baseline would have hit on
+every task. This is dispatch/infra research only (sampling params,
+`enable_thinking`, context size) — *not* prompting/steering-technique
+research, which stays in the Research phase below, because technique
+research carries real negative-transfer risk (see Idiom E) that
+infra-level fixes don't. Any dispatch-level finding applied here must be
+documented per the "every dispatch-level tweak must be documented"
+rule. Skip entirely for a model already known to this project with no
+new pathological signs.
 
 **Phase 1 — Reference run.** One baseline `bash bench/report.sh <model>
 <role>` run against the model's current state (bare, or whatever
 steering already exists) before touching anything, *or* the most recent
-existing report if the check above found one — see the rule directly
-above. This is the anchor every later phase's "did it improve"
-comparison is measured against.
+existing report if the "check for prior work" rule above found one.
+This is the anchor every later phase's "did it improve" comparison is
+measured against.
 
-**Phase 2 — Obvious-improvement runs (max 5 full role re-test runs).**
-Diagnose the reference run's failures per the report-completion rules
-(exact `verify.sh` quotes, idiom classification), apply grounded,
-task-specific steering — a short instruction targeted at the actual
-diagnosed idiom, not a general-purpose blanket rules block prepended to
-everything (a blanket preamble measurably *hurt* several tasks for
-`lfm2.5:1.2b-thinking`, see its `history.md`'s Idiom E) — then re-run the
-full role test. Repeat, up to 5 runs total in this phase. Stop early
-(move to Confirm) once a run doesn't improve on the previous one, or
-once every task in the role passes.
+**Research phase (always both parts, uncapped, before any steering).**
+Cheap relative to a dispatch run, so it always runs in full before
+spending Steering-phase budget, not as a fallback once steering plateaus:
+1. **Cross-model idiom check.** Read every other `models/<other-model>/`
+   that has been tested against this *same* role's `history.md` and
+   `README.md` for diagnosed idioms/fixes already validated there.
+2. **External research.** Search external sources (web search, the
+   model's card/official prompting guide) for prompting/steering
+   guidance specific to this exact model checkpoint.
+Both always run, regardless of what the other finds. A fix or technique
+sourced either way is a *hypothesis* for this model, not a given — it
+gets applied and verified in the Steering phase below like any other
+lever, and the report must state whether it helped, was neutral, or
+hurt, and why (a technique validated on one model backfiring on another
+is a real, useful finding — see `lfm2.5-1.2b-thinking`'s Idiom E, STE
+negative-transferred from `deepseek-r1-1.5b`). Whether or not an
+external technique found here gets applied, the report and `README.md`
+must also name any helper tooling identified as potentially useful
+going forward (a linter/formatter, an MCP tool, a schema validator) —
+even tooling not implemented yet — so the finding isn't lost.
 
-**Phase 3 — Cross-model idiom transfer (max 5 full role re-test runs).**
-Before inventing new fixes, check every other `models/<other-model>/`
-that has been tested against this *same* role's `history.md` and
-`README.md` for diagnosed idioms/fixes already validated there. Apply
-any that plausibly transfer to this model, re-test, up to 5 runs. A fix
-that worked for one model is a *hypothesis* for another, not a given —
-state in the report whether each borrowed fix helped, was neutral, or
-didn't apply here, and why.
-
-**Phase 4 — External research (max 5 full role re-test runs).** Search
-external sources (web search, the model's card/official prompting
-guide) for prompting/steering guidance specific to this exact model
-checkpoint. Apply candidate techniques, re-test, up to 5 runs. Whether
-or not an external technique found here gets applied, the report and
-`README.md` must name any helper tooling identified as potentially
-useful going forward (a linter/formatter that could catch a structural
-defect before `verify.sh` does, an MCP tool, a schema validator, etc.)
-— even tooling not implemented yet — so the finding isn't lost.
-
-Any phase (2, 3, or 4) ends early and moves to Confirm once a run
-produces no further improvement over the previous one, regardless of
-remaining budget in that phase's max-5.
+**Steering phase (max 10 full role re-test runs).** Apply fixes, re-test,
+repeat. Order of preference: cross-model-validated fixes and
+research-informed techniques first (from the Research phase above),
+then genuinely novel task-specific fixes for whatever's left — grounded
+in the actual diagnosed idiom (exact `verify.sh` quotes), never a
+general-purpose blanket rules block prepended to everything (measurably
+*hurt* several tasks for `lfm2.5:1.2b-thinking`, see Idiom E). **Batch
+every currently-addressable idiom into each run** rather than fixing one
+task per run — a run already re-tests the whole role regardless, so
+testing fixes for 4 tasks costs the same one run as testing a fix for 1.
+**Don't abandon a lever after a single ambiguous draw.** Per-draw noise
+is real and has repeatedly flipped verdicts on unchanged SPECs this
+project (`doc-crossref`, `doc-summarize`) — if a run's result isn't
+*clearly* better or worse, get 1-2 more draws of that same state before
+deciding to keep or discard it. Only an unambiguous regression (sharply
+worse on every affected task, like Idiom E or F) justifies abandoning a
+lever on one draw. This costs more of the phase's budget per lever
+tested (hence the higher cap than before) in exchange for not
+mistaking noise for signal — the dedicated Confirm phase below still
+does one final broader check, this isn't a replacement for it, just
+fewer false starts feeding into it. Stop the phase early (move to
+Confirm) once a batch of runs stops producing any further improvement,
+or once every task in the role passes.
 
 ## Confirm — check the optimization is real, not one lucky draw
 
