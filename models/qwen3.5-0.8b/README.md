@@ -57,6 +57,19 @@ signal from `deepseek-r1-1.5b`'s own "structural limit, not a prompting
 problem" verdict on the same task family — deprioritized accordingly.
 Full findings: `history.md`'s "Research phase" section.
 
+**Steering phase run 1 (Q1 fix): mixed, task-specific result, not
+uniform.** Applied `rules/structure-preservation.md` to `doc-verbatim`,
+`doc-repair`, `doc-restructure` in one batched run —
+`reports/report-docs-20260802-121601.md`. **`doc-verbatim`: clear win**,
+down to one tiny remaining defect (missing `> ` blockquote marker) —
+closest any task has come to passing for this model. **`doc-repair`:
+flat**, needs more draws. **`doc-restructure`: regressed** — the
+instruction conflicts with this task's actual job (transform structure,
+not preserve it); override removed, reverted to bare. Kept the fix on
+the 2 tasks it helped/didn't hurt, dropped it from the one it hurt —
+see `history.md` for the "diagnose task shape, not just symptom, before
+batching" lesson this produced.
+
 ## Potential helpers (documented, not yet integrated)
 
 - **API-level `stop` sequences** (e.g. `"stop": ["[DOC_END]"]` on

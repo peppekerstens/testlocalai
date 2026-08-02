@@ -159,3 +159,41 @@ version of this finding.
 Proceeding to the Steering phase: Q1 first (task-agnostic, no cross-model
 fix to borrow, affects the most tasks), Q3 deprioritized per the
 cross-model negative signal.
+
+## Steering phase run 1: Q1 fix, mixed per-task result
+
+Built `rules/structure-preservation.md` (preserve headings, table
+separator rows, fence placement exactly) and applied via
+`task-overrides/` to the 3 Q1-affected tasks (`doc-verbatim`,
+`doc-repair`, `doc-restructure`) in one batched run, per the quality
+loop's "batch every addressable task per run" rule.
+`reports/report-docs-20260802-121601.md`: 1/9 (`doc-crossref`,
+unchanged SPEC). No truncation, single draw.
+
+**Not a uniform result — 3 individually clear signals:**
+- **`doc-verbatim`: clear win.** Down to one tiny defect (missing `> `
+  blockquote marker, one extra blank line) — heading, full table, and
+  fence placement all now correct. Closest to a real fix of any task
+  tested for this model.
+- **`doc-repair`: flat.** Closing fence still dropped; repair logic
+  itself unaffected either way. Needs more draws before concluding
+  anything.
+- **`doc-restructure`: regressed.** `old bullet-list format still
+  present — not actually restructured`, table severely truncated. The
+  instruction directly conflicts with this task's actual job (change
+  structure, not preserve it) — unlike `doc-verbatim`/`doc-repair`
+  which are genuinely copy/repair-shaped, not transformation-shaped.
+  **Removed the override for this task** (`task-overrides/
+  doc-restructure.md` deleted, reverted to bare) rather than either
+  keeping a lever that hurts it or discarding a lever that clearly
+  helps the other two — per the quality loop's revised rule, a mixed
+  batch result gets task-specific judgment, not a uniform keep/discard.
+
+**Lesson for future Steering-phase batches**: batching fixes across
+multiple tasks in one run (as the quality loop now recommends) can hide
+per-task effects behind a flat headline number — the *idiom* classifying
+which tasks got batched together (Q1 = "drops structural elements") was
+still too broad, since it grouped a copy task, a repair task, and a
+transformation task under the same instruction despite one of the three
+needing the opposite behavior. Diagnose task *shape* (copy vs. repair vs.
+transform), not just symptom, before batching.
