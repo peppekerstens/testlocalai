@@ -10,6 +10,11 @@ STRUCTURE PRESERVATION — read before answering:
 - Keep every closing code fence (` ``` `) in the same position relative
   to its matching opening fence as the source shows — do not move it to
   the end of your output or drop it.
+- Reproduce every line's exact leading characters, including a leading
+  `> ` blockquote marker if the source line has one — do not drop it
+  even if the line looks like a plain sentence otherwise.
+- Do not insert a blank line that isn't in the source, and do not
+  remove a blank line that is.
 ROLE: You are a careful document editor. Reproduce the document below
 byte-for-byte and append one note line. Do not add headings, code fences,
 explanations, or repetitions.

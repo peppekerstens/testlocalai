@@ -7,7 +7,7 @@ any other role.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — Research phase done, Steering phase not started | 1/9 → 1/9 (not yet steered) | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | 🔬 Preliminary — Steering Tier 1 in progress, 1 task passing | 1/9 → 2/9 (`doc-crossref` specialist PASS; role-level bare-vs-current not directly comparable, see per-task table) | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
 
 ## Documenter role: current status (preliminary)
 
@@ -57,18 +57,29 @@ signal from `deepseek-r1-1.5b`'s own "structural limit, not a prompting
 problem" verdict on the same task family — deprioritized accordingly.
 Full findings: `history.md`'s "Research phase" section.
 
-**Steering phase run 1 (Q1 fix): mixed, task-specific result, not
-uniform.** Applied `rules/structure-preservation.md` to `doc-verbatim`,
-`doc-repair`, `doc-restructure` in one batched run —
-`reports/report-docs-20260802-121601.md`. **`doc-verbatim`: clear win**,
-down to one tiny remaining defect (missing `> ` blockquote marker) —
-closest any task has come to passing for this model. **`doc-repair`:
-flat**, needs more draws. **`doc-restructure`: regressed** — the
-instruction conflicts with this task's actual job (transform structure,
-not preserve it); override removed, reverted to bare. Kept the fix on
-the 2 tasks it helped/didn't hurt, dropped it from the one it hurt —
-see `history.md` for the "diagnose task shape, not just symptom, before
-batching" lesson this produced.
+**Steering phase (Tier 1, specialist), current state: 1 task PASSING
+(`doc-crossref`), 2 gated out, 4 still in progress.** Two runs so far —
+full narrative in `history.md`'s "Steering run 1"/"Steering run 2"
+sections. Per-task detail:
+
+| Task | Specialist result | Specialist config | Generalist result |
+|---|---|---|---|
+| `doc-crossref` | **PASS** | [`task-overrides/doc-crossref.md`](task-overrides/doc-crossref.md) — exact-fact reminder for the historically-dropped tool name | n/a — Tier 2 not started |
+| `doc-summarize` | 1 missing fact (down from 2) | [`task-overrides/doc-summarize.md`](task-overrides/doc-summarize.md) | n/a |
+| `doc-surgical` | Q2 (instruction bleed) mostly fixed; Q3 (substitution) unchanged | [`task-overrides/doc-surgical.md`](task-overrides/doc-surgical.md) | n/a |
+| `doc-verbatim` | Ambiguous — one defect fixed, two new ones appeared | [`task-overrides/doc-verbatim.md`](task-overrides/doc-verbatim.md) | n/a |
+| `doc-script` | Ambiguous — needs one more draw | [`task-overrides/doc-script.md`](task-overrides/doc-script.md) | n/a |
+| `doc-repair` | Gated out (flat after run 1) | bare — steering didn't help | n/a |
+| `doc-adapt` | Gated out (flat after run 1, matches R1's cross-model "structural limit" signal) | bare — steering didn't help | n/a |
+| `doc-synthesize` | Gated out (regressed) | bare — steering hurt this task | n/a |
+| `doc-restructure` | Gated out in run 1 (instruction conflicted with the task's actual job) | bare — steering hurt this task | n/a |
+
+Tier 2 (generalist search) hasn't started — Tier 1 is still active on 4
+tasks. Given the pattern so far (per-task fixes, several gated out as
+actively harmful), a working generalist for this role is not expected —
+consistent with this project's now-standing finding that small models
+don't generalize a single config across heterogeneous task shapes (see
+root `README.md`).
 
 ## Potential helpers (documented, not yet integrated)
 

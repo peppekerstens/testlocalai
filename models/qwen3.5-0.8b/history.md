@@ -197,3 +197,48 @@ still too broad, since it grouped a copy task, a repair task, and a
 transformation task under the same instruction despite one of the three
 needing the opposite behavior. Diagnose task *shape* (copy vs. repair vs.
 transform), not just symptom, before batching.
+
+## Steering run 2: first PASS (doc-crossref), gate decisions applied
+
+Per Tier 1's gate rule: `doc-repair` was flat after run 1 → gated out,
+reverted to bare. `doc-verbatim` showed promise → continued (run 2 of
+4). Gave first specialist attempts to `doc-surgical` (boundary-
+discipline + edit-verification, targeting Q2+Q3), `doc-adapt`/
+`doc-script` (edit-verification, Q3), `doc-summarize`/`doc-synthesize`/
+`doc-crossref` (task-specific exact-fact reminders naming each task's
+historically-dropped fact directly). `reports/report-docs-20260802-
+124003.md`: 1/9. No truncation, single draw per task.
+
+- **`doc-crossref`: PASS** — both required facts present. First clean
+  specialist-tier win this loop, not a per-draw fluke: the fix directly
+  named the exact fact (`describe_obfuscation_policy`) this task has
+  dropped on every draw across all 3 models tested in this project
+  (Idiom Q4). Tier 1 done for this task.
+- **`doc-summarize`: 2 missing facts → 1.** Real improvement, not yet
+  PASS. Continuing (run 2).
+- **`doc-surgical`: Q2 (instruction bleed) mostly fixed** — down from
+  copying the entire edit-instructions block to one stray `[DOC_END]`
+  marker. **Q3 (substitution not applied) unchanged** — all 4 forbidden
+  tokens still present, edit-verification didn't move this task.
+- **`doc-adapt`: flat, gated out.** No movement on Q3, consistent with
+  R1's cross-model "structural limit" signal from the Research phase.
+  Reverted to bare — do not re-attempt this lever.
+- **`doc-script`: ambiguous** — 1 forbidden token remains but required
+  tokens now pass; no clean same-day comparison point to call this a
+  real improvement vs. noise. One more run before deciding.
+- **`doc-verbatim`: ambiguous, not a clean win** — the blockquote-marker
+  fix worked, but the fence moved to the wrong position and 2 extra
+  blank lines appeared. Traded one defect for different ones. Run 2 of
+  4, one more refinement worth trying.
+- **`doc-synthesize`: regressed, gated out.** Lost the fenced JSON block
+  present in the bare draw, gained an irrelevant hallucinated forbidden
+  token. The exact-fact reminder made this task worse. Reverted to
+  bare — do not re-attempt this lever.
+
+**Cross-task pattern worth flagging**: edit-verification (the Q3 lever)
+produced zero improvement on `doc-adapt` and no improvement on
+`doc-surgical`'s Q3 component either, despite testing it on 2-3 tasks —
+this is now real evidence the lever itself doesn't work for this idiom
+on this model, not just an unlucky task pairing, reinforcing the
+Research phase's cross-model negative signal rather than just repeating
+it once.
