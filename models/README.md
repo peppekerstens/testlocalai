@@ -17,7 +17,7 @@ in general; this table is model-specific results.
 | [`qwen3.5-0.8b-bf16`](qwen3.5-0.8b-bf16/) | documenter | ⚠️ Mixed — quality loop closed 2026-08-02, same 2 of 9 task shapes usable as Q4_K_M (~67% reliable); precision doesn't justify the extra size | `qwen3.5-0.8b-bf16/README.md` |
 | [`qwen3.5-2b`](qwen3.5-2b/) | documenter | ⚠️ Mixed — quality loop closed 2026-08-02, `doc-crossref` fully reliable (3/3, strongest qwen3.5 result), rest unsuitable | `qwen3.5-2b/README.md` |
 | [`qwen3.5-4b`](qwen3.5-4b/) | documenter | ⚠️ Mixed — quality loop closed 2026-08-02, 3 stable-PASS task shapes, 4 genuinely unstable, 2 unsuitable | `qwen3.5-4b/README.md` |
-| [`qwen3.5-9b`](qwen3.5-9b/) | documenter | 🔬 Preliminary — Steering Tier 1 closed, 1 confirmed fix + widespread bare-task instability, Confirm next | `qwen3.5-9b/README.md` |
+| [`qwen3.5-9b`](qwen3.5-9b/) | documenter | ⚠️ Mixed — quality loop closed 2026-08-02, 4 stable-pass task shapes (best qwen3.5-family result), 2 stable-fail, 3 unstable | `qwen3.5-9b/README.md` |
 | [`lfm2.5-vl-450m`](lfm2.5-vl-450m/) | visual | 🚧 Scaffold only — model not downloaded, role not wired up | `lfm2.5-vl-450m/README.md` |
 | — (no model tested yet) | tool-use | Task suite built + blind-subagent-validated only (`claude-sonnet-5`) — no real small-model run yet | `claude-sonnet-5/README.md` "Tool-use extension" |
 | — (no model tested yet) | extract | Task suite built + blind-subagent-validated only — no real small-model run yet | `claude-sonnet-5/README.md` "Extract extension" |

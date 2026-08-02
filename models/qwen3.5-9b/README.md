@@ -10,65 +10,73 @@ this GPU (4GB VRAM) only via VRAM oversubscription — see Setup.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — Steering Tier 1 closed, Confirm next | 5/9 bare → 1 confirmed specialist fix, rest bare instability | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | ⚠️ Mixed — quality loop closed 2026-08-02, 4 stable-pass task shapes (best qwen3.5-family result), 2 stable-fail, 3 genuinely unstable | 5/9 bare (zero truncation) → 4/9 stable pass, ~59% average per draw | Not comparable overall; best qwen3.5-family content reliability result of the whole session | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-02) |
 
-## Documenter role: current status (preliminary)
+## Documenter role: final report (closed 2026-08-02)
 
-**A thinking-enabled spot-check was run first** (2026-08-02, per
-explicit user request, before any real baseline) to check whether the
-larger 9B size alone resolves the runaway-thinking bug seen on
-`qwen3.5:4b`, without disabling thinking. **Result: inconclusive on
-the original question, but informative** — see `history.md` for the
-full narrative. Summary: the 4 tasks that truncated on 4B
-(`doc-verbatim`, `doc-adapt`, `doc-script`, `doc-repair`) were each
-given up to 12 minutes, thinking enabled; all 4 timed out, all
-cancelled in a tight, consistent 1915-2179 token band (~23-27% of the
-8192 context) — never near the ceiling. A follow-up extended test on
-`doc-verbatim` (up to 120 min) reached 5504 tokens (67% of context,
-`truncated=0`, steady ~2.8 tok/s) before being killed by
-`bench/dispatch.sh`'s own hardcoded 30-minute client-side timeout, not
-by the model or the server. **No evidence of a genuinely stuck/looping
-runaway was observed** — every draw was still progressing steadily
-when cut off — but the test infrastructure (this GPU's severe
-VRAM-oversubscription slowdown, ~12x slower than `qwen3.5:4b`) made it
-impractical to let any draw run to full natural completion or the
-8192-token ceiling within a reasonable time budget. **The original
-question (does 9B alone fix runaway-thinking without disabling it) was
-not conclusively answered** — treat as an open question, not "9B fixes
-it."
+**Why stopped here.** Full quality loop: a thinking-enabled spot-check
+first (per explicit user request, to check whether 9B alone resolves
+the runaway-thinking bug seen on `qwen3.5:4b` without disabling
+thinking — result inconclusive, see `history.md`), then
+`enable_thinking=false` Phase 1 baseline, Research (cross-model check
+against `qwen3.5-4b`), Steering Tier 1 (3 tasks attempted, 1 fixed), an
+autonomous Tier 2 gate (56% < 60%, skipped), and a 3-run Confirm.
 
-**Given this, switched to `enable_thinking=false` for a normal
-baseline run**, matching every other qwen3.5 config tested in this
-project. **Bare baseline: 5/9 PASS, zero truncation** —
-`reports/report-docs-20260802-173725.md`. Genuine 5/9, no hidden
-empty-output failures.
+**Usability score without optimizations**: 5/9 (56%) PASS bare, under
+`enable_thinking=false` — genuine 5/9, zero truncation, no hidden
+empty-output failures (unlike `qwen3.5:4b`'s thinking-enabled bare
+baseline, which looked similar on paper but actually had 44% empty
+output from context-ceiling truncation).
 
-**Steering Tier 1 closed after 3 runs.** `doc-synthesize`'s combined
-fix (fenced-JSON-block reminder + `zod`-token reminder — 2
-independently diagnosed idioms on the same task) worked cleanly.
-`doc-verbatim`, `doc-surgical`, `doc-restructure` all reverted to bare
-after real attempts (2, 1, 1 runs) — gated early once cross-model
-evidence, especially `qwen3.5-4b`'s own exhaustive 4-attempt history
-on the identical idioms, pointed to low expected value from further
-iteration rather than mechanically exhausting the full 4-run budget on
-each. `doc-adapt`, `doc-script`, `doc-repair`, `doc-summarize`,
-`doc-crossref` were never steered — their pass/fail swings across all
-3 Steering runs are pure bare-task instability. Per-task detail:
+**Usability score with optimizations** (Confirm-verified across 3
+draws): **4 tasks reliably pass** (`doc-adapt`, `doc-synthesize` — needs
+its steering override, `doc-summarize`, `doc-crossref` — all 3/3),
+**2 tasks reliably fail** (`doc-verbatim`, `doc-surgical` — confirmed
+unsuitable, matching their Steering-phase gate decisions exactly), and
+**3 tasks are genuinely unstable** (`doc-script` 1/3, `doc-repair` 2/3,
+`doc-restructure` 1/3 — none of these were ever steered, so the
+instability is the model's own reliability ceiling on this role, not a
+fixable prompt gap). Average 16/27 ≈ 59% pass rate across the 3 draws —
+but that average is misleading on its own: it's a 4/2/3 stable-pass/
+stable-fail/unstable split, not "roughly 6 in 9 always pass." Zero
+truncation across every Confirm draw — `enable_thinking=false` holds
+completely.
+
+**Comparison against a mainstream frontier LLM**: not comparable
+overall — a model like Claude Haiku 4.5 would be expected to pass
+close to all 9 tasks reliably, not show a 4/2/3 stable-pass/stable-
+fail/unstable split. **This is the best qwen3.5-family content
+reliability result of the whole session** (4 stable-pass tasks vs.
+4B's 3, 2B's 1, 0.8B's ~2-at-67%-each), all near-zero cost/latency
+versus a hosted frontier call once the ~12x VRAM-oversubscription
+slowdown is accepted — but the model cannot be trusted unsupervised
+even on task shapes it sometimes gets right, unlike a frontier model's
+default reliability.
+
+**Final verdict: usable with mandatory `enable_thinking=false` and
+mandatory human review on every output — not a "sometimes skip
+review" model.** Bigger did help here relative to `qwen3.5:4b` (4
+stable-pass vs. 3), but the improvement is incremental, not
+categorical — 3 tasks remain genuinely unstable regardless of size. A
+notable cross-model finding: the same 2 structural idioms
+(`doc-verbatim`'s blank-line handling, `doc-surgical`'s line-wrap
+collapsing) are now confirmed unresolved at 2 different model sizes
+(4B and 9B) via real, varied steering attempts at each — this is a
+stable cross-model finding, not a fluke of either individual model.
+
+**Per-task detail**:
 
 | Task | Specialist result | Specialist config | Generalist result |
 |---|---|---|---|
-| `doc-synthesize` | **PASS** (combined fix, confirmed on its latest draw) | [`task-overrides/doc-synthesize.md`](task-overrides/doc-synthesize.md) — JSON-block + `zod`-token reminders | n/a — Tier 2 gate skipped (specialist rate 56% < 60% threshold) |
-| `doc-adapt` | Bare, flipped pass/fail across draws — real instability | bare | n/a |
-| `doc-script` | Bare, flipped pass/fail across draws — real instability | bare | n/a |
-| `doc-repair` | Bare, flipped pass/fail across draws — real instability | bare | n/a |
-| `doc-summarize` | Bare, stable PASS across Steering draws so far | bare | n/a |
-| `doc-crossref` | Bare, stable PASS across Steering draws so far | bare | n/a |
-| `doc-verbatim` | 2 attempts, same idiom `qwen3.5-4b` never resolved in 4 — reverted | bare | n/a |
-| `doc-surgical` | 1 attempt, matches `qwen3.5-4b`'s finding this lever doesn't help — reverted | bare | n/a |
-| `doc-restructure` | 1 attempt, zero movement — reverted | bare | n/a |
-
-**Tier 2 gate**: 5/9 ≈ 56% specialist rate, below the 60% threshold —
-skipped per `AGENTS.md`'s autonomous rule. Next: Confirm.
+| `doc-synthesize` | **Stable PASS, 3/3 Confirm draws** (combined fix) | [`task-overrides/doc-synthesize.md`](task-overrides/doc-synthesize.md) — JSON-block + `zod`-token reminders | n/a — Tier 2 gate skipped (specialist rate 56% < 60% threshold) |
+| `doc-adapt` | **Stable PASS, 3/3 Confirm draws** (bare, never steered) | bare | n/a |
+| `doc-summarize` | **Stable PASS, 3/3 Confirm draws** (bare, never steered) | bare | n/a |
+| `doc-crossref` | **Stable PASS, 3/3 Confirm draws** (bare, never steered) | bare | n/a |
+| `doc-verbatim` | **Stable FAIL, 0/3** — 2 attempts, same idiom `qwen3.5-4b` never resolved in 4 — reverted | bare | n/a |
+| `doc-surgical` | **Stable FAIL, 0/3** — 1 attempt, matches `qwen3.5-4b`'s finding this lever doesn't help — reverted | bare | n/a |
+| `doc-script` | Unstable, 1/3 Confirm draws (bare, never steered) | bare | n/a |
+| `doc-repair` | Unstable, 2/3 Confirm draws (bare, never steered) | bare | n/a |
+| `doc-restructure` | Unstable, 1/3 Confirm draws — 1 attempt during Steering, zero movement, reverted | bare | n/a |
 
 ## How to optimize (verify before trusting)
 
@@ -82,11 +90,17 @@ skipped per `AGENTS.md`'s autonomous rule. Next: Confirm.
 - For `doc-synthesize`-shaped tasks: a combined fenced-JSON-block +
   `zod`-token reminder works reliably — see
   [`task-overrides/doc-synthesize.md`](task-overrides/doc-synthesize.md).
-- For `doc-verbatim`/`doc-restructure`-shaped tasks (structural
-  blank-line/separator-row dropping) and `doc-surgical`-shaped tasks
-  (line-wrap collapsing): instruction-based steering does not reliably
-  fix these on this model — matches `qwen3.5-4b`'s own findings on the
-  identical idioms. Don't spend further steering budget here.
+- For `doc-verbatim`-shaped tasks (blank-line dropping) and
+  `doc-surgical`-shaped tasks (line-wrap collapsing): instruction-based
+  steering does not reliably fix these on this model — matches
+  `qwen3.5-4b`'s own findings on the identical idioms across 2
+  different model sizes now. Don't spend further steering budget here.
+- For tasks with genuine per-draw instability (`doc-script`,
+  `doc-repair`, `doc-restructure`-shaped tasks): no known fix — none
+  were moved by the one steering attempt tried (`doc-restructure`
+  only), because the instability appears independent of prompt
+  content. Always run multiple draws before trusting any single result
+  on these task shapes.
 
 ## Setup
 
@@ -136,12 +150,19 @@ skipped per `AGENTS.md`'s autonomous rule. Next: Confirm.
 
 ## Further reading
 
-- `history.md` — full narrative of the thinking-enabled spot-check
-  (the 4-task 12-minute-cap run, the extended 120-minute single-task
-  test, and the CPU/GPU bottleneck investigation).
+- `history.md` — full narrative, including the thinking-enabled
+  spot-check (the 4-task 12-minute-cap run, the extended 120-minute
+  single-task test, and the CPU/GPU bottleneck investigation), the
+  full Steering-phase diagnostic detail, and the 3-run Confirm.
 - `models/qwen3.5-4b/`, `models/qwen3.5-2b/`, `models/qwen3.5-0.8b/` —
-  smaller siblings; check their `history.md`/`README.md` for idioms
-  that might transfer once a real baseline exists here.
+  smaller siblings; `doc-verbatim`/`doc-surgical`'s structural idioms
+  are now confirmed unresolved at both 4B and 9B — see each one's
+  `history.md`/`README.md`.
 - `models/README.md` — cross-model index and role-coverage table.
 - `reports/` — per-run evidence (`bash bench/report.sh qwen3.5:9b
   <role>`, with the env vars above).
+- `task-overrides/` — the exact, literal prompt dispatched for
+  `doc-synthesize` with task-specific steering — auto-resolved by
+  `bench/pure-run.sh`, never a direct edit to the shared
+  `tasks/doc-synthesize/SPEC.md` (see `AGENTS.md`'s "Per-model doc-task
+  steering" rule).

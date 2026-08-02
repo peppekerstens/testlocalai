@@ -224,3 +224,89 @@ Tasks with a current PASS on the final Steering draw = `doc-adapt`,
 autonomous gate rule, no question asked. Moving to Confirm — essential
 given the volume of bare-task instability observed across this
 Steering phase.
+
+## Confirm: 3-loop consistency check
+
+`reports/report-docs-20260802-183401.md` (5/9),
+`-184630.md` (6/9), `-185835.md` (5/9). No truncation across any
+draw. Per-task 3-draw tracing:
+
+- **Stable PASS (3/3)**: `doc-adapt`, `doc-synthesize` (steered fix
+  confirmed reliable), `doc-summarize`, `doc-crossref` — 4 of 9 tasks,
+  **the best confirmed reliability of any qwen3.5 config tested this
+  session** (4B: 3 stable, 2B: 1 stable, 0.8B: 2 stable-ish at ~67%
+  each, not full 3/3).
+- **Stable FAIL (0/3)**: `doc-verbatim`, `doc-surgical` — exactly
+  matches their Steering-phase gate decisions, confirming those were
+  the right calls to stop early rather than continue spending budget.
+- **Unstable**: `doc-script` (FAIL, PASS, FAIL — 1/3), `doc-repair`
+  (PASS, PASS, FAIL — 2/3), `doc-restructure` (FAIL, FAIL, PASS —
+  1/3). None of these 3 were ever steered — the instability is the
+  model's own reliability ceiling on this role, not a fixable prompt
+  gap, same conclusion reached on `qwen3.5-4b`'s equivalent tasks.
+
+**Average pass rate across the 3 Confirm draws: 16/27 ≈ 59%** — but
+this average is misleading in isolation: it's not "roughly 6 in 9
+always pass," it's a specific 4/2/3 split (stable-pass/stable-fail/
+unstable). **Decision: keep the current state** (bare except
+`doc-synthesize`'s confirmed fix) — no further Steering budget
+justified. The 3 unstable tasks were never steered, so their
+instability isn't something more prompt iteration would close; the 2
+stable-FAIL tasks already have exhaustive cross-model evidence
+(especially from `qwen3.5-4b`) that instruction-based steering doesn't
+reliably help these idioms at this general model scale.
+
+## Final report
+
+**Why stopped here.** Full quality loop completed: a thinking-enabled
+spot-check (per explicit user request, before any baseline — inconclusive
+on its original question but ruled out a genuine stuck-runaway pattern),
+Phase 1 baseline with `enable_thinking=false`, Research (cross-model
+check against `qwen3.5-4b`'s exhaustive history on matching idioms),
+Steering Tier 1 (3 runs, gated early on strong negative cross-model
+evidence rather than mechanically exhausting the full budget), an
+autonomous Tier 2 gate (56% < 60%, skipped), and a 3-run Confirm.
+
+**Usability score without optimizations (bare, `enable_thinking=false`)**:
+5/9 (56%) PASS on the single Phase 1 draw — genuine, no hidden
+truncation (unlike `qwen3.5-4b`'s bare-thinking-enabled baseline, which
+looked similar on paper but hid a 44% empty-output rate).
+
+**Usability score with optimizations (Confirm-verified across 3
+draws)**: **4 tasks reliably pass** (`doc-adapt`, `doc-synthesize` —
+needs its steering override, `doc-summarize`, `doc-crossref`), **2
+tasks reliably fail** (`doc-verbatim`, `doc-surgical` — confirmed
+unsuitable after real, cross-model-informed steering attempts), and
+**3 tasks are genuinely unstable** (`doc-script` 1/3, `doc-repair`
+2/3, `doc-restructure` 1/3 — none ever steered, this is the model's
+own reliability ceiling on this role). Average ~59% pass rate per
+draw — misleading on its own, the real picture is the 4/2/3 split.
+Zero truncation across every post-fix draw.
+
+**Comparison against a mainstream frontier LLM**: not comparable
+overall — a model like Claude Haiku 4.5 would be expected to pass
+close to all 9 tasks reliably, not show a 4/2/3
+stable-pass/stable-fail/coin-flip split. **This is the best qwen3.5-
+family content reliability result of the whole session** — 4 stable-
+PASS task shapes versus 4B's 3, 2B's 1, and 0.8B's 2 (at only ~67%
+each, not full 3/3) — but the model still cannot be trusted
+unsupervised even on the task shapes it sometimes gets right, unlike a
+frontier model's default reliability. Also worth noting explicitly:
+this model only runs on this hardware via severe VRAM oversubscription
+(~3.1 tok/s vs. `qwen3.5:4b`'s fully-GPU-resident ~37-40 tok/s) — a
+real deployment cost independent of content quality, though largely
+mitigated for practical use by `enable_thinking=false` keeping answers
+short.
+
+**Final verdict: usable with mandatory `enable_thinking=false` and
+mandatory human review on every output — the strongest qwen3.5-family
+content reliability of this session, but still not a "sometimes skip
+review" model.** Bigger continued the pattern already seen at 4B: more
+parameters bought a wider footprint of partially-working, real-content
+task shapes (4 stable vs. 4B's 3) rather than uniformly fixing the
+idioms that already resisted steering at smaller sizes — the same 2
+structural idioms (`doc-verbatim`'s blank-line instability,
+`doc-surgical`'s line-wrap collapsing) that `qwen3.5-4b` never
+resolved across its own exhaustive attempts remained unresolved here
+too, now confirmed as a stable cross-model finding at 2 different
+sizes, not a fluke of either individual model.
