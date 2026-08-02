@@ -7,6 +7,12 @@ reverse engineered from *this model's* observed failures on C# tasks, not
 a generic/shared ruleset. A different model may need different rules,
 non-prose scaffolding, or none — don't assume these transfer.
 
+## Overview
+
+| Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
+|---|---|---|---|---|
+| Code-emitter (C#) | ✅ Established — two validated recipes | Not a single number — two task families, each with its own recipe and verified-equal-quality outcome; see `history.md` for round-by-round pass rates | Not assessed | [Use this](#use-this) |
+
 ## Use this
 
 **Two different recipes for two task families — do not mix them:**

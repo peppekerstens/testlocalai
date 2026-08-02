@@ -15,6 +15,13 @@ the model and each role can be steered/optimized separately:
 **Never code** — the `code-*` tasks belong to qwen; R1 does not bench
 them.
 
+## Overview
+
+| Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
+|---|---|---|---|---|
+| Documenter | ⚠️ Mixed — suitable for a defined task subset only | Task-category dependent, not one number — see Verdict table | Not assessed | [Verdict: is R1 suitable?](#verdict-is-r1-suitable) |
+| Reasoner | ⚠️ Mixed — 1/3 task types solid, rest need steering or are past this model's ceiling | Task-category dependent, not one number — see Verdict table | Not assessed | [Verdict: is R1 suitable?](#verdict-is-r1-suitable) |
+
 ## Verdict: is R1 suitable?
 
 **No, not as a general-purpose documenter — but yes for a real, definable

@@ -1,12 +1,15 @@
 # qwen3.5:0.8b — steering profile
 
-**Status: preliminary — Phase 1 reference baseline done, Phase 2 not
-started.** Treat everything below as an early read.
-
 **Role: documenter** (docs role, `tasks/doc-*`). Not yet tested against
 any other role.
 
-## Current status
+## Overview
+
+| Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
+|---|---|---|---|---|
+| Documenter | 🔬 Preliminary — Phase 1 baseline done, Steering phase not started | 1/9 → 1/9 (not yet steered) | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+
+## Documenter role: current status (preliminary)
 
 **Bare baseline (with the mandatory `enable_thinking=false` +
 non-thinking sampling params, no content-level steering), docs role: 1/9

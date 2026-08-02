@@ -34,13 +34,15 @@ the recipe below surfaces them cheaply.
    `models/<model>/reports/` — see `AGENTS.md`'s "after a test run"
    rule: the run isn't done until it's on disk, not just seen in your
    terminal.
-5. **Steer.** Inspect the failed outputs; fix SPECs/rules; re-run. Keep
-   `models/<model>/README.md` current-state-only — a verdict/status
-   summary and "how to optimize" instructions (e.g. "qwen2.5-coder:1.5b
-   drifts to idiomatic-wrong code unless the SPEC shows a complete
-   verbatim shape"). Put the actual round-by-round narrative (what you
-   tried, what happened, in order) in `models/<model>/history.md`
-   instead — see `AGENTS.md`'s README-shape rule.
+5. **Steer.** Inspect the failed outputs; fix SPECs/rules; re-run. Copy
+   `MODEL-README-SCAFFOLD.md` (this directory) to `models/<model>/
+   README.md` for a new model, or use it as the structure check for an
+   existing one — Overview table up top, one current-state-only section
+   per role, "how to optimize" instructions. Put the actual
+   round-by-round narrative (what you tried, what happened, in order) in
+   `models/<model>/history.md` instead, every time, not just at the end
+   — see `AGENTS.md`'s README-shape rule and the scaffold's own inline
+   comments for exactly what does and doesn't belong.
 6. **Learn from history.** The previous model's steering is your
    baseline; check its `history.md` for what carried over and what
    didn't, and add the new model to `models/README.md`'s index once it

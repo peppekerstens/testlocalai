@@ -415,12 +415,21 @@ traversable, not accumulate into a chronological log. Concretely:
 - **`models/README.md`**: one index — which model has been tested against
   which role, with a status indicator, linking to each model's own
   README. Nothing else.
-- **`models/<model>/README.md`**: current state only — a verdict/status
-  table, direct "how to optimize for role X" instructions, setup facts.
-  Ends with links to `history.md` and `reports/`. If a section is telling
-  a story ("first we tried X, then Y happened, so we tried Z") instead of
-  stating a current fact or instruction, it belongs in `history.md`, not
-  here.
+- **`models/<model>/README.md`**: current state only — starts with an
+  **Overview table**, one row per role this model has ever been tested
+  against (tested or not): `Role | Status | Pass rate (bare → current) |
+  vs. mainstream LLM | Details` (Details = a markdown link to that
+  role's own heading further down). Below the table: per-role sections
+  with a verdict/status, direct "how to optimize for role X"
+  instructions, setup facts. Ends with links to `history.md` and
+  `reports/`. If a sentence is telling a story ("first we tried X, then
+  Y happened, so we tried Z") instead of stating a current fact or
+  instruction, it belongs in `history.md`, not here — this includes
+  phase-by-phase progress updates: don't append "here's what changed
+  this run" paragraphs to a status section over the course of a loop,
+  replace the section's content with the new current state and push
+  what changed (and why) to `history.md` instead, every time, not just
+  at the end.
 - **`models/<model>/history.md`**: the full narrative — round-by-round
   results, diagnosed idioms as they were found, debugging trails,
   everything that explains *how* the current state was reached. Nothing
@@ -428,14 +437,27 @@ traversable, not accumulate into a chronological log. Concretely:
   since this is the fallback for full historical lookup once
   `bench/reports/round-*`-style raw evidence ages out or gets
   regenerated. Append here after a steering session; don't let it leak
-  back into the README.
+  back into the README. This is a distinct, necessary layer from
+  `reports/` (raw per-run mechanical data — a results table plus that
+  run's own Findings/Suggested-next-steps) — reports don't connect
+  across runs into a "how did we get here" story, `history.md` does;
+  neither one replaces the other.
 
 **Why:** `models/deepseek-r1-1.5b/README.md` grew to 418 lines, ~80% of
 it round-by-round narrative, before this rule existed — a reader looking
 for "should I use this model for task X" had to read a lab notebook to
 find out. The fix (2026-08-02) split every model's README along this
-line; this rule is what keeps it split going forward instead of drifting
-back.
+line. **This rule alone wasn't enough to prevent a repeat**: later the
+same day, `models/lfm2.5-1.2b-thinking/README.md`'s "Current status"
+section grew to ~115 lines of round-by-round narrative anyway — every
+quality-loop phase appended its own paragraph instead of replacing the
+section's content, even though `history.md` already had the same
+material, fuller, in parallel the whole time. Caught by the user, not
+self-caught. The Overview-table requirement and the explicit
+"replace, don't append, every time" instruction above were added at the
+same time as the fix, specifically because the rule already existing
+wasn't sufficient — the failure mode is losing track of the rule
+mid-loop, not not knowing it.
 
 ## Every dispatch-level tweak must be documented, not just passed as a flag
 
