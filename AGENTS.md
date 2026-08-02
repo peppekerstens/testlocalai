@@ -162,6 +162,22 @@ last time" — add it to `models/<model>/history.md` too, in addition to
 this report. The report is the per-run record; `history.md` is the
 narrative that explains how the model's current state was reached.
 
+**Write the Findings/Suggested-next-steps up before starting the next
+exploratory run, not after.** Diagnosing a run's failures often surfaces
+a hypothesis worth testing immediately (e.g. "is the steering block
+itself the problem?") — the temptation is to go chase it with a fresh
+dispatch right away. Don't: finish writing this report's Findings and
+Suggested next steps with what you already know *first*, then start the
+follow-up run as its own step. **Why:** an agent diagnosed all 8 failures
+in a `lfm2.5:1.2b-thinking` docs-role report, formed a real hypothesis,
+and immediately launched a second comparison dispatch to test it — the
+first report sat with both sections still at their TODO placeholder text
+the whole time. Analysis that exists only in conversation and gets
+interrupted (a permission prompt, a context compaction, the session
+ending) is lost exactly like the un-persisted-report failure mode this
+section already warns about, just one layer earlier: mid-diagnosis
+instead of post-run.
+
 ## After a test run, persist it — don't leave findings only in chat
 
 Any time you run a real model against a task/role (`bench.sh`,
@@ -187,6 +203,14 @@ both were reported only in conversation and would have been lost
 entirely if no one thought to write them down after the fact. A model
 with real test data and no file recording it is indistinguishable, to the
 next reader, from a model that was never tested.
+
+**Rule: a full test run requires at least one commit, minimum.** Writing
+the report/README/history files to disk isn't enough by itself — an
+uncommitted file is still invisible to the next `git log` reader and can
+be lost the same way an unwritten one can. Every full test run must end
+with **at least one commit** covering whatever it produced or updated.
+More commits are fine (e.g. one for the report, one for the README/history
+update) — fewer than one is not.
 
 ## README shape: current-state only, history deferred
 
@@ -233,16 +257,31 @@ evidence the role is usable.
 
 ## Unattended operation is authorized in this repo
 
-`.claude/settings.json` pre-authorizes routine Bash/git operations
-(dispatch, bench scripts, service management, model downloads, `git
-add`/`commit`/`push origin`) so an AI agent can run multiple optimization
-loops — dispatch, diagnose, steer, report, commit, push — without
-stopping to ask permission at each step. This is a deliberate, explicit
+`.claude/settings.json` blanket-allows the `Bash` tool (`Bash(*)`,
+2026-08-02 — previously a long list of narrow per-command prefixes,
+widened because compound commands like a `for` loop or a `&&`/`;` chain
+don't match a single narrow prefix and fell through to a permission
+prompt even when every command inside them was already individually
+allowed) so an AI agent can run multiple optimization loops — dispatch,
+diagnose, steer, report, commit, push — without stopping to ask
+permission at each step. This is a deliberate, explicit
 grant (2026-08-02), scoped to this repo only, not a general license to
 skip judgment on genuinely risky operations: force-push, `git reset
 --hard`, branch deletion, and `--no-verify`/`--no-gpg-sign` are explicit
 `deny` entries regardless, and destructive operations outside this
 repo's own scope still need to be raised, not just done.
+
+The same file also blanket-allows the `Edit` and `Write` tools
+(2026-08-02) — file edits/creates of any kind (steering rules, task
+files, scripts, reports, README/history updates) don't prompt either.
+Without this, an agent steering a model for a newly added task type or
+role can't actually write the new task files, rule files, or code
+changes that role requires without stopping for permission on every
+single file — this closes that gap the same way the Bash/git grant
+already does for shell commands. Same scope caveat as above: this
+authorizes routine file changes in this repo, not a license to skip
+judgment — e.g. still raise before touching anything outside this repo's
+own directory tree.
 
 **Git push is scoped to this repo only, enforced by GitHub itself, not
 just by convention.** This repo's `origin` remote uses a dedicated SSH
