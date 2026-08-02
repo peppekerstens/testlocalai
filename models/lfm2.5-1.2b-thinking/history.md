@@ -171,3 +171,51 @@ the preamble itself needs to be treated as a suspect, not a settled
 foundation. Single comparison draw per task — this needs 2-3 more draws
 each before the "preamble hurts these 4 tasks" read is trusted as a
 rate rather than a same-day sample.
+
+## Task-specific steering pass on the 4 preamble-affected tasks
+
+Built `rules/surgical-edit-discipline.md` — short, targeted at the
+literal-find-replace task family (`doc-surgical`, `doc-adapt`,
+`doc-script`, `doc-repair` all share the same "copy exactly, apply N
+numbered FIND→REPLACE edits, no delimiter markers, no commentary"
+structure) rather than a general-purpose rules block. Replaced the old
+`output-discipline.md` preamble with this on those 4 tasks' live
+`SPEC.md`; left the other 4 previously-steered tasks
+(`doc-verbatim`/`doc-synthesize`/`doc-summarize`/`doc-crossref`)
+unchanged. Full docs-role re-test:
+`models/lfm2.5-1.2b-thinking/reports/report-docs-20260802-102044.md`.
+
+**Result: 2/9 PASS** (`doc-restructure`, `doc-crossref` — the latter
+unchanged-SPEC, a per-draw flip not a fix, consistent with the
+instability already noted above). None of the 4 newly-steered tasks
+passed outright, but real, specific movement:
+
+- **`doc-surgical`**: the "copy the exact given text" instruction fixed
+  the wrong-SDK-name leakage completely (forbidden tokens now PASS) —
+  but surfaced a new idiom instead: fabricated narration claiming the
+  source document "isn't visible," plus the delimiter markers it was
+  told not to reproduce. **New idiom — Idiom F: hallucinated
+  missing-context narration.** Not in `output-discipline.md`'s scope and
+  not covered by `surgical-edit-discipline.md`'s current wording either.
+- **`doc-adapt`**: the old forbidden tokens (`npm`, `node dist`) are
+  gone; the remaining failure narrowed to 2 of 5 edits (one dropped
+  entirely — `ObfuscationConfigLoader` step missing from the output, not
+  just misworded; one simply not performed — `Express` token survives).
+  Real partial fix.
+- **`doc-script`**: unmoved — reproduces the same failure shape as the
+  unsteered bare-comparison draw from the previous section. The missing
+  `curl`/`mcp-session-id` tokens (untouched by either target edit) show
+  the back half of the script got dropped from the output — a
+  completeness gap, not the substitution idiom the new instruction
+  targets.
+- **`doc-repair`**: down to a single remaining defect (the YAML closing
+  fence written as a text comment instead of literal backticks) from
+  multiple defects before — closest of the 4 to a real fix.
+
+Idiom E (preamble-induced compression) is holding up as a real, useful
+diagnosis — completion-token counts and output substance both rose
+across all 4 re-steered tasks vs. the blanket-preamble run. Idiom F is
+new and specific to `doc-surgical`'s draw so far; needs more draws before
+folding a fix into `surgical-edit-discipline.md`. Single draw per task
+throughout this pass — see the report for the full per-task caveats and
+next-step levers.

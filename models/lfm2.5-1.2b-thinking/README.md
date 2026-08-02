@@ -1,8 +1,8 @@
 # lfm2.5:1.2b-thinking — steering profile
 
-**Status: preliminary — one bare baseline + one steering pass, both on
-the same day, work paused mid-iteration.** Treat everything below as an
-early read, not a settled verdict like `models/deepseek-r1-1.5b/`'s.
+**Status: preliminary — bare baseline + 3 steering passes across two
+sessions, both on the same day.** Treat everything below as an early
+read, not a settled verdict like `models/deepseek-r1-1.5b/`'s.
 
 **Role: documenter/reasoner** (same combined role as deepseek-r1 — see
 its README for the doc/reason track split). Tracks: `tasks/doc-*` +
@@ -43,6 +43,24 @@ unaffected by the preamble either way; something else drives those.
 Single comparison draw per task — see `history.md` for the sample-size
 caveat before treating this as a settled rate.
 
+**Task-specific follow-up on the 4 preamble-affected tasks: 2/9 PASS**
+(`doc-restructure`, and `doc-crossref` on an unchanged SPEC — a per-draw
+flip, not a fix). Built `rules/surgical-edit-discipline.md`, a short
+block targeted at the literal find-replace task family, replacing the
+blanket preamble on `doc-surgical`/`doc-adapt`/`doc-script`/`doc-repair`
+only. None of the 4 passed outright but each moved: `doc-surgical`'s
+wrong-SDK-name leakage is fully fixed but a new idiom appeared instead
+(fabricated "document isn't visible" narration — Idiom F); `doc-adapt`
+narrowed from 5 broken edits to 2; `doc-script` didn't move (its gap is
+dropped script content, not wrong tokens — the current instruction
+doesn't target that); `doc-repair` is down to one remaining defect (a
+literal closing fence not emitted) — closest to solved. Full breakdown:
+`reports/report-docs-20260802-102044.md` and `history.md`'s "Task-specific
+steering pass on the 4 preamble-affected tasks". Single draw per task —
+next step is 2-3 more draws per task before trusting any of this as a
+rate, plus a `doc-script`-specific completeness instruction and a
+`doc-surgical`-specific fix for Idiom F.
+
 **A real infrastructure bug was found and fixed during this pass**, not
 specific to this model's quality: LFM2.5 embeds its `<think>...</think>`
 block *inline* in `content` (unlike R1, which returns it in a separate
@@ -65,7 +83,19 @@ fixes:
    explicit instruction against it on one task (`doc-surgical` regressed
    to a near-empty, still-wrapped output). Don't assume more emphasis on
    an already-stated rule helps; it may trigger over-compliant truncation
-   instead.
+   instead. A narrower version of this same instruction later fixed
+   `doc-surgical`'s specific wrong-content leakage but produced a new
+   variant instead — fabricated "the document isn't visible" narration
+   (Idiom F, see `history.md`) — so this idiom isn't closed, just
+   changed shape.
+6. **Blanket rules blocks can measurably shrink this model's output
+   (Idiom E).** The general `output-discipline.md` preamble cut output
+   length 6–14x on `doc-surgical`/`doc-adapt`/`doc-script`/`doc-repair`
+   without fixing their content errors — a general-purpose meta-rules
+   block prepended ahead of the task appears to cost this small thinking
+   model attention it needs for the actual task. Prefer a short,
+   task-family-specific instruction (see `rules/surgical-edit-discipline.md`)
+   over a general one for this model.
 2. **Exact-identifier preservation is a real, partially fixable gap.**
    Several failures were dropping a specific required exact phrase or
    tool name (`reason-diagnose`'s `Missing required environment
