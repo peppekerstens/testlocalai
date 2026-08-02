@@ -7,8 +7,12 @@ obj/
 bench/tmp/*
 !bench/tmp/.gitkeep
 
-# Claude Code / AI-tool runtime state — local session state, not project content
-.claude/
+# Claude Code / AI-tool runtime state — local session state, not project
+# content, EXCEPT settings.json which is this project's own committed
+# permission policy (see AGENTS.md "Unattended operation is authorized
+# in this repo") — deliberately tracked, not local-only.
+.claude/*
+!.claude/settings.json
 
 # session lifecycle state — runtime-created by session-start.sh, archived by session-stop.sh
 bench/.session-state.json

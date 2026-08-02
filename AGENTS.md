@@ -231,6 +231,32 @@ role, read that README's "what still needs to happen" list first — do
 not treat the presence of a `models/lfm2.5-vl-450m/` directory as
 evidence the role is usable.
 
+## Unattended operation is authorized in this repo
+
+`.claude/settings.json` pre-authorizes routine Bash/git operations
+(dispatch, bench scripts, service management, model downloads, `git
+add`/`commit`/`push origin`) so an AI agent can run multiple optimization
+loops — dispatch, diagnose, steer, report, commit, push — without
+stopping to ask permission at each step. This is a deliberate, explicit
+grant (2026-08-02), scoped to this repo only, not a general license to
+skip judgment on genuinely risky operations: force-push, `git reset
+--hard`, branch deletion, and `--no-verify`/`--no-gpg-sign` are explicit
+`deny` entries regardless, and destructive operations outside this
+repo's own scope still need to be raised, not just done.
+
+**Git push is scoped to this repo only, enforced by GitHub itself, not
+just by convention.** This repo's `origin` remote uses a dedicated SSH
+deploy key (`~/.ssh/id_ed25519_testlocalai`, added to *this repo's*
+GitHub deploy keys with write access — not the account-wide personal
+key), routed via an SSH config host alias (`github-testlocalai`) with
+`IdentitiesOnly yes` so it can never fall back to a broader key. Verified
+empirically, not just configured: the same deploy key was tested against
+a different repo (`connectwise-mcp`) and GitHub rejected it ("Repository
+not found" — deploy keys are invisible to repos they aren't attached to).
+An unattended loop running in this repo cannot push anywhere else, even
+by mistake — this isn't a policy an agent has to remember to follow, it's
+enforced at the GitHub key level.
+
 ## See also
 
 - [`README.md`](README.md) — project purpose, layout, best-first
