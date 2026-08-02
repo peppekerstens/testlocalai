@@ -328,9 +328,22 @@ budget) — but the moment that batch's result is mixed, not uniform,
 immediately split into independent per-task branches instead of
 continuing to treat it as one lever.
 
-*Tier 2 — Generalist search (max 5 runs).* Once Tier 1 settles (every
-task either has a working specialist override or was gated out to
-bare), search for a single shared config usable by an end user who
+*Tier 2 gate — decide automatically, do not ask.* Once Tier 1 settles
+(every task either has a working specialist override or was gated out
+to bare), compute the specialist pass rate: tasks with a current PASS ÷
+total tasks in the role. **≥60% → run Tier 2. <60% → skip Tier 2
+entirely and go straight to Confirm on the Tier 1 result**, no
+exception, no question asked — a 60%+ specialist hit rate is the signal
+a shared config has enough of a common target to be worth searching for;
+below it, Tier 1's own per-task results (several tasks actively harmed
+by any steering at all, see Tier 1 above) already answer the "is there
+a generalist" question before spending Tier 2's budget finding out the
+slow way. State the computed rate and the resulting skip/proceed
+decision in the report — this is a report line, not a permission
+question.
+
+*Tier 2 — Generalist search (max 5 runs, only when the gate above
+passes).* Search for a single shared config usable by an end user who
 doesn't know in advance which task shape they'll hit. **"No generalist
 exists" is a fully acceptable, expected outcome for a small local
 model, not a failure of this phase** — state it plainly in the report
@@ -343,7 +356,15 @@ generalized a single steering config across heterogeneous task shapes
 within one role. Expect this outcome, don't fight it.
 
 Stop either tier early (move to Confirm) once further runs stop
-producing improvement, or once every task in the role passes.
+producing improvement, or once every task in the role passes. **Moving
+between phases/tiers (Research → Steering, Tier 1 → Tier 2 gate →
+Confirm, Confirm → Performance → Final report) is autonomous — don't
+stop to ask whether to continue.** State what phase just finished, its
+result, and that you're proceeding, in that order, then proceed. Ask
+only when a finding genuinely changes strategy in a way these rules
+don't already resolve (a new idiom needing a real judgment call, a
+dispatch-level change with real cost/risk) — not as a routine
+between-phases check-in.
 
 ## Confirm — check the optimization is real, not one lucky draw
 
