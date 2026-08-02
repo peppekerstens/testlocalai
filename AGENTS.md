@@ -423,14 +423,25 @@ addition to whatever the existing README-shape rules already require:
   the comparison.
 
 **Checkpoint before treating the Final report as done: diff it against
-`templates/new-model/MODEL-README-SCAFFOLD.md`.** Confirm, section by
-section: the Overview table has this role's row updated (status, pass
-rate, mainstream comparison, and its Details link still resolves to the
-right heading); the role section reads as current-state/verdict, not a
-round-by-round retelling of the loop (that belongs in `history.md`,
-linked, not summarized); "How to optimize" entries for this role are
-stated as facts/instructions, not narrated as "we tried X and Y
-happened." **Why:** this is the same check that would have caught
+`templates/new-model/MODEL-README-SCAFFOLD.md`.** Start with a
+mechanical heading check, not a read-through — run `grep "^## "` on
+both the scaffold and the model's README and compare the two lists
+side by side. **A "How to optimize" section missing entirely reads as
+nothing wrong on a read-through** (the file just flows from the Final
+report straight to Setup, which looks complete) — it only shows up as
+a gap when the heading lists are literally compared. This exact
+failure happened: all 4 `qwen3.5-*` model READMEs written in one
+session skipped "How to optimize" entirely, despite this checkpoint
+rule already existing, caught only when the user asked "does your
+latest report conform to the template?" and a heading diff was finally
+run. Once headings match, confirm content per section: the Overview
+table has this role's row updated (status, pass rate, mainstream
+comparison, and its Details link still resolves to the right heading);
+the role section reads as current-state/verdict, not a round-by-round
+retelling of the loop (that belongs in `history.md`, linked, not
+summarized); "How to optimize" entries for this role are stated as
+facts/instructions, not narrated as "we tried X and Y happened."
+**Why:** this is the same check that would have caught
 `lfm2.5-1.2b-thinking`'s README growing back into a 115-line narrative
 mid-loop, closing the gap the scaffold was built for instead of relying
 on remembering the rule unprompted at the one moment (loop closure)
