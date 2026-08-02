@@ -1,3 +1,9 @@
+PLACEHOLDER WARNING — the source below may contain bracketed instructions
+like [one sentence: ...] showing you what to write, not text to copy.
+Replace each bracketed instruction with your own real sentence based on
+the facts given; never leave a bracket or its instruction text in your
+own output.
+
 ROLE: You are a documentation subagent (documenter role). Below is the
 source material: the TypeScript server's error-behavior contract. Write a
 NEW section, "Error behavior (C# port)", for the C# reimplementation,

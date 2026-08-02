@@ -2,8 +2,23 @@
 # Pure self-test runner. Treats each task like an unknown-LLM evaluation:
 #   - control: verify.sh <expected.md>   must PASS (test accepts ground truth)
 #   - control: verify.sh <empty>         must FAIL (test rejects garbage)
-#   - model run: dispatch SPEC.md as prompt -> verify.sh <output>
+#   - model run: dispatch SPEC.md (or a per-model override, see below) as
+#     prompt -> verify.sh <output>
 # Prints ONLY verdicts and token counts; never file contents.
+#
+# Per-model steering: tasks/<task>/SPEC.md is always the bare, canonical,
+# model-agnostic task definition — never edit it to steer one model, it is
+# shared across every model this runner is ever invoked with. If
+# models/<model-dir>/task-overrides/<task>.md exists, it is dispatched
+# instead of the bare SPEC for that task+model only (model-dir = the model
+# tag with ':' replaced by '-', matching every other models/<dir>/ path in
+# this project). This mirrors bench.sh's existing --rules mechanism for
+# code tasks (models/<model>/rules/<lang>-rules.md, composed at dispatch
+# time, SPEC.md never mutated) — added here 2026-08-02 after a session
+# discovered doc-task steering had been silently overwriting the shared
+# SPEC.md instead, contaminating the next model's "bare" baseline with the
+# previous model's steering. See AGENTS.md's "Per-model doc-task steering"
+# rule.
 #
 # Usage: bash bench/pure-run.sh [model] [--test <tracks>] [task...]
 #   model   : qwen2.5-coder:1.5b | deepseek-r1:1.5b | ... (default deepseek-r1:1.5b)
@@ -64,6 +79,8 @@ else
   TASKS="$ALL_TASKS"
 fi
 
+MODEL_DIR_NAME="$(echo "$MODEL" | tr ':' '-')"
+
 for t in $TASKS; do
   D="$SELF_DIR/../tasks/$t"
   POS="?"; NEG="?"; RUN="?"
@@ -75,9 +92,12 @@ for t in $TASKS; do
   : > "$TMP_DIR/.empty"
   if (cd "$D" && bash verify.sh "$TMP_DIR/.empty" >/dev/null 2>&1); then NEG=PASS; else NEG=FAIL; fi
 
+  OVERRIDE="$SELF_DIR/../models/$MODEL_DIR_NAME/task-overrides/$t.md"
+  if [ -f "$OVERRIDE" ]; then SPEC_TO_USE="$OVERRIDE"; else SPEC_TO_USE="$D/SPEC.md"; fi
+
   OUT="$TMP_DIR/out-$t.txt"
   TRUNCATED=""
-  if bash "$SELF_DIR/dispatch.sh" "$MODEL" "$D/SPEC.md" "$OUT" >/dev/null 2>&1; then
+  if bash "$SELF_DIR/dispatch.sh" "$MODEL" "$SPEC_TO_USE" "$OUT" >/dev/null 2>&1; then
     if [ -f "$OUT.tokens.json" ]; then
       PT="$(python3 -c "import json;d=json.load(open('$OUT.tokens.json'));print(d.get('prompt_tokens','?'))" 2>/dev/null || echo '?')"
       CT="$(python3 -c "import json;d=json.load(open('$OUT.tokens.json'));print(d.get('completion_tokens','?'))" 2>/dev/null || echo '?')"

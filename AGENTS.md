@@ -178,6 +178,48 @@ ending) is lost exactly like the un-persisted-report failure mode this
 section already warns about, just one layer earlier: mid-diagnosis
 instead of post-run.
 
+## Per-model doc-task steering: never edit tasks/<task>/SPEC.md
+
+`tasks/<task>/SPEC.md` is the single, shared, model-agnostic task
+definition — every model this project ever tests dispatches the exact
+same path. **Never edit a doc task's `SPEC.md` to steer one specific
+model.** To steer a model on a doc task, create
+`models/<model-dir>/task-overrides/<task>.md` (model-dir = the model tag
+with `:` replaced by `-`, matching every other `models/<dir>/` path) —
+`bench/pure-run.sh` (and therefore `bench/report.sh`) checks for this
+file first and dispatches it instead of the bare `SPEC.md` when it
+exists, falling back to bare otherwise. This exactly mirrors
+`bench.sh`'s existing `--rules <lang>` mechanism for code tasks
+(`models/<model>/rules/<lang>-rules.md`, composed with `SPEC.md` at
+dispatch time, `SPEC.md` itself never touched) — code tasks already got
+this right; doc tasks didn't have an equivalent until this rule
+(2026-08-02).
+
+**Why:** an entire `lfm2.5-1.2b-thinking` quality loop (2 phases, 9 SPEC
+variants, multiple commits) was carried out by directly overwriting
+`tasks/<task>/SPEC.md` for 6 of the 9 docs tasks. When a `qwen3.5:0.8b`
+Phase 1 baseline was started afterward using the same shared files, it
+was silently dispatched against a mix of true-bare and
+leftover-lfm2.5-steered prompts — contaminating the very first data
+point for a brand new model, mischaracterized as "bare" in a report and
+committed before the mistake was caught. The steering itself wasn't
+lost (it was reconstructable from `models/lfm2.5-1.2b-thinking/rules/`
++ each task's `history/SPEC-pre-<model>-steer.md` archive), but nothing
+stopped the next model's baseline from stepping on it, and would have
+kept happening for every subsequent model tested against `tasks/doc-*`
+without this fix.
+
+**How to apply:** before writing task-specific doc steering, create the
+override under the *steering model's own* `task-overrides/` directory,
+never edit the shared `SPEC.md`. Before starting a brand-new model's
+Phase 1 baseline, you do not need to check or restore anything — bare
+`SPEC.md` is now guaranteed stable, and a previous model's overrides
+only ever apply to dispatches for that exact model (its own
+`model-dir` in the override path). If you ever need the literal prompt
+a previous model's report was generated against, check that model's
+`task-overrides/<task>.md` first, `SPEC.md` only if no override exists
+for that task.
+
 ## The quality loop — standard structure for a model+role optimization session
 
 When asked to run a test-and-optimization loop for a model+role (e.g.

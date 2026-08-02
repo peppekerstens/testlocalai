@@ -250,3 +250,12 @@ fixes:
 - `models/README.md` — cross-model index and role-coverage table.
 - `reports/` — per-run evidence going forward (`bash bench/report.sh
   lfm2.5:1.2b-thinking <role>`).
+- `task-overrides/` — the exact, literal prompt dispatched for each doc
+  task this model has task-specific steering on (`doc-verbatim`,
+  `doc-surgical`, `doc-adapt`, `doc-script`, `doc-repair`,
+  `doc-synthesize`) — auto-resolved by `bench/pure-run.sh`, never a
+  direct edit to the shared `tasks/<task>/SPEC.md` (see `AGENTS.md`'s
+  "Per-model doc-task steering" rule, added 2026-08-02 after this
+  model's own SPEC.md edits were found contaminating a later model's
+  baseline). `doc-summarize`/`doc-crossref` have no override file — this
+  model's final state for both is bare, matching the fallback exactly.
