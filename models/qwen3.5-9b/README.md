@@ -10,7 +10,7 @@ this GPU (4GB VRAM) only via VRAM oversubscription — see Setup.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — thinking-enabled spot-check done (inconclusive on the runaway question), `enable_thinking=false` baseline starting | n/a | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | 🔬 Preliminary — Phase 1 baseline done (5/9, no truncation), Steering starting | 5/9 bare → not yet steered | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
 
 ## Documenter role: current status (preliminary)
 
@@ -37,19 +37,37 @@ question (does 9B alone fix runaway-thinking without disabling it) was
 not conclusively answered** — treat as an open question, not "9B fixes
 it."
 
-**Given this, per explicit user instruction: switching to
-`enable_thinking=false` for a normal baseline run**, matching every
-other qwen3.5 config tested in this project — see Setup.
+**Given this, switched to `enable_thinking=false` for a normal
+baseline run**, matching every other qwen3.5 config tested in this
+project. **Bare baseline: 5/9 PASS, zero truncation** —
+`reports/report-docs-20260802-173725.md`. Matches or exceeds every
+smaller qwen3.5 config's bare baseline, and — unlike `qwen3.5-4b`'s
+5/9-on-paper — this 5/9 is genuine, with no hidden empty-output
+failures. Single draw. All 4 FAILs are near-misses matching idiom
+families already diagnosed on `qwen3.5-4b` (structural blank-line
+dropping, line-wrap collapsing) — no new idioms found. Full breakdown:
+`history.md`.
 
 ## How to optimize (verify before trusting)
 
-- `DISPATCH_ENABLE_THINKING=false` is required for practical testing
-  on this hardware — see Setup. Thinking-enabled generation is ~12x
-  slower under VRAM oversubscription (~2.6-3.1 tok/s vs. `qwen3.5:4b`'s
-  ~37-40 tok/s), making even a single full docs-role run impractical
-  within normal iteration timescales; a 9-task role would take on the
-  order of hours, not minutes, with thinking enabled.
-- No content-level idioms diagnosed yet — Phase 1 baseline not run.
+- `DISPATCH_ENABLE_THINKING=false` is required — see Setup.
+  **Correction to an earlier assumption**: disabling thinking does NOT
+  speed up per-token generation on this hardware (still ~3.1 tok/s,
+  the VRAM-oversubscription bottleneck applies to every token
+  regardless of content) — what it fixes is total answer *length*
+  (hundreds of tokens instead of thousands+), which is what keeps a
+  full docs-role run practical.
+- For `doc-verbatim`/`doc-restructure`-shaped tasks (structural
+  blank-line/separator-row dropping): `qwen3.5-4b` tried real, varied
+  fixes on these exact idioms and reverted to bare both times — treat
+  as a likely negative signal before investing fresh Steering budget.
+- For `doc-surgical`-shaped tasks (line-wrap collapsing, content
+  otherwise correct): `qwen3.5-4b`'s `formatting-fidelity.md` never
+  fully closed this gap either — same caution.
+- For `doc-synthesize`-shaped tasks: `qwen3.5-4b` had a working
+  forbidden-token-reminder fix, but this model's specific gap (missing
+  fenced JSON block) differs from what that fix targeted — worth
+  testing as a hypothesis, not assuming direct transfer.
 
 ## Setup
 

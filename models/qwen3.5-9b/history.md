@@ -126,3 +126,43 @@ tested in this project), which will also resolve the practical
 problem — non-thinking generation should run at normal speed even
 under this GPU's VRAM oversubscription, since there's no long
 reasoning phase to pay the PCIe-stall cost against.
+
+**Correction, confirmed via smoke test**: this expectation was
+half-right. Generation speed itself stayed at ~3.1 tok/s (the
+VRAM-oversubscription PCIe-paging bottleneck applies to every token,
+not specifically to long reasoning chains — it's a per-token cost
+regardless of content). What changed is total answer *length*: without
+a reasoning phase, individual answers are dramatically shorter (hundreds
+of tokens, not thousands), so the *total* time for a full docs-role
+run stays practical even at the same per-token speed.
+
+## Phase 1: reference baseline (docs role, 9 tasks)
+
+`reports/report-docs-20260802-173725.md`: **5/9 PASS**, no truncation
+(all `finish_reason=stop`). Matches or exceeds every smaller qwen3.5
+config's bare baseline (0.8B: 1/9, 2B: 2/9, 4B: 5/9-on-paper but with
+44% hidden empty-output truncation that this run doesn't have — this
+is a genuine, trustworthy 5/9). Single draw.
+
+**All 4 FAILs are near-misses matching idiom families already
+diagnosed on `qwen3.5-4b`** — no new idioms found:
+- `doc-verbatim`: dropped both blank lines (heading→fence,
+  fence→table) — same structural-dropping idiom seen on every smaller
+  config.
+- `doc-surgical`: forbidden/required tokens both PASS, fails purely on
+  line-wrap collapsing — same idiom `qwen3.5-4b`'s
+  `formatting-fidelity.md` targeted (mixed success there, never fully
+  closed).
+- `doc-synthesize`: bullet count and required tokens PASS, missing
+  only the fenced JSON block — closest near-miss of the 4.
+- `doc-restructure`: all content checks PASS, missing only the table
+  separator row — same family as `doc-verbatim`.
+
+**Research-phase plan**: check `qwen3.5-4b`'s outcomes for these exact
+4 tasks before inventing new fixes. `doc-verbatim`/`doc-restructure`
+were both ultimately reverted to bare on 4B after real, varied
+attempts — a negative signal worth weighting. `doc-surgical`'s
+`formatting-fidelity.md` never fully worked there either. `doc-
+synthesize` DID have a working fix on 4B (a forbidden-token reminder)
+— worth testing, though the specific gap here (missing JSON block,
+not a forbidden token) differs from what that fix targeted.
