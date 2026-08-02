@@ -84,3 +84,40 @@ category as `doc-script`.
 PASS (`doc-verbatim`, `doc-surgical`, `doc-adapt`, `doc-repair`,
 `doc-script`), 1 gated to bare (`doc-restructure`). Moving to Confirm
 to quantify the 3 flaky tasks' real reliability.
+
+## Tier 2 gate: skipped (autonomous)
+
+3 tasks achieved at least one PASS during Tier 1 (`doc-crossref`,
+`doc-summarize`, `doc-synthesize`) = 3/9 ≈ 33% — below the 60%
+threshold, so Tier 2 (generalist search) was skipped per `AGENTS.md`'s
+autonomous gate rule, no question asked.
+
+## Confirm: 3-loop consistency check
+
+`reports/report-docs-20260802-131502.md` (1/9), `-131622.md` (1/9),
+`-131801.md` (2/9). Per-task tracing for the 3 flaky tasks:
+
+- **`doc-crossref`**: FAIL, PASS, PASS — 2/3. Matches Q4's own ~67%
+  reliability on this exact task almost exactly.
+- **`doc-summarize`**: PASS, FAIL, PASS — 2/3. Same match to Q4.
+- **`doc-synthesize`**: FAIL, FAIL, FAIL — 0/3. The single PASS seen
+  during Steering run 2 does not reproduce under Confirm — looks like
+  noise, not a real capability, unlike Q4 where this exact lever was a
+  clean, consistent regression (a different failure mode, same
+  practical conclusion: this instruction doesn't reliably help this
+  task on either precision). **Reverted to bare** — 0/3 in the actual
+  Confirm check plus only 1 PASS across all 4 total draws (Steering +
+  Confirm combined) doesn't support keeping this override with
+  confidence.
+
+**Final confirmed state**: 2 tasks reliable-but-not-perfect specialist
+PASS (`doc-crossref`, `doc-summarize`, ~67% each — both essentially
+identical to the Q4_K_M variant's own confirmed reliability), 5 stable
+partials without a full PASS (`doc-verbatim`, `doc-surgical`,
+`doc-adapt`, `doc-repair`, `doc-script`), 2 reverted to bare
+(`doc-synthesize`, `doc-restructure`). This result is remarkably close
+to the Q4_K_M variant's own final state — the main practical
+difference between the two precisions turned out to be `doc-adapt`
+(stable partial here, gated-flat on Q4) and `doc-synthesize` (briefly
+promising here, consistently harmful on Q4 — same bottom line, don't
+keep it, reached by different evidence).

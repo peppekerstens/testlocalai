@@ -10,41 +10,70 @@ transfer the Q4 variant's steering results untested.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — Steering Tier 1 closed, Confirm next | 1/9 bare; 3 tasks flaky-PASS, 5 stable partial, 1 gated | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | ⚠️ Mixed — quality loop closed 2026-08-02, 2 of 9 task shapes usable with per-task steering | 1/9 → ~2/9 (2 tasks confirmed ~67% reliable specialist, rest unsuitable) | Not comparable overall; 2 narrow task shapes usable with review | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-02) |
 
-## Documenter role: current status (preliminary)
+## Documenter role: final report (closed 2026-08-02)
 
-**Bare baseline, docs role: 1/9 PASS** (`doc-crossref`) —
-`reports/report-docs-20260802-130512.md`. Same 5 idioms as the Q4_K_M
-variant, same task shapes affected — strong cross-precision evidence
-these are model-architecture idioms, not quantization artifacts.
+**Why stopped here.** Full quality loop: Phase 0 (dispatch fix
+confirmed transferring from the Q4_K_M variant), Phase 1 baseline,
+Research phase (the Q4_K_M variant's own validated overrides as the
+cross-precision hypothesis, tested directly), Tier 1 specialist
+optimization (3 Steering runs), an autonomous Tier 2 gate (specialist
+rate 3/9 ≈ 33%, below the 60% threshold — Tier 2 skipped, no question
+asked), and a 3-run Confirm check. Completed process, not budget
+exhaustion.
 
-Dispatch fix confirmed transferring from the Q4_K_M variant: the
-runaway-thinking bug reproduces here too, and the same
-`DISPATCH_ENABLE_THINKING=false` + non-thinking sampling params fix it
-— verified, not assumed. See "Setup" for the exact reproducible
-invocation.
+**Usability score without optimizations (bare): 1/9 (11%) PASS**
+(`reports/report-docs-20260802-130512.md`).
 
-**Steering Tier 1 closed after 3 runs — cross-precision transfer from
-`qwen3.5-0.8b` (Q4_K_M) worked immediately for 2 of 3 borrowed
-overrides, with one notable divergence.** Full narrative:
-`history.md`'s "Steering: cross-precision transfer" section. Per-task
-detail:
+**Usability score with optimizations: 2/9 tasks reach a reliable, if
+imperfect, specialist PASS (~67% each, Confirm-verified: `doc-crossref`
+2/3, `doc-summarize` 2/3 — both essentially identical to the Q4_K_M
+variant's own confirmed reliability on the same 2 tasks); 5 more tasks
+reach stable partial improvement without a full PASS
+(`doc-verbatim`, `doc-surgical`, `doc-adapt`, `doc-repair`,
+`doc-script`); 2 tasks showed no net improvement worth keeping
+(`doc-synthesize` — passed once during Steering but 0/3 in Confirm,
+reverted to bare; `doc-restructure` — instruction conflicted with the
+task's actual job, reverted to bare).**
+
+**Comparison against a mainstream frontier LLM: not comparable
+overall**, same reasoning as the Q4_K_M variant — a model like Claude
+Haiku 4.5 would be expected to pass close to all 9 zero-shot. **The
+same narrow exception applies**: `doc-crossref` and `doc-summarize`
+reach ~67% reliability at near-zero cost/latency versus a hosted
+frontier-model call, usable with human review on those two specific
+task shapes only.
+
+**Final verdict: not suitable as a general documenter — result nearly
+identical to the Q4_K_M variant of this same model.** Usable for the
+same 2 of 9 task shapes at ~67% reliability under review. **The
+precision variants converged on almost the same outcome**: cross-
+precision transfer worked immediately and without modification for the
+2 tasks that matter most (`doc-crossref`, `doc-summarize` — copied
+overrides, zero adaptation, same ~67% reliability both variants). The
+practical differences were narrow: `doc-adapt` reached stable partial
+improvement here but was gated flat on Q4, and `doc-synthesize` looked
+promising here before Confirm caught it as noise, whereas the same
+instruction was a clean regression on Q4 — different evidence, same
+practical conclusion on both. **Bottom line for anyone choosing between
+the two precisions for this role: use whichever is cheaper to run
+(Q4_K_M, smaller) — bf16 does not deliver enough incremental quality to
+justify its ~3x size for this task set.**
+
+**Per-task detail** (Confirm-verified):
 
 | Task | Specialist result | Specialist config | Generalist result |
 |---|---|---|---|
-| `doc-crossref` | Flaky — PASS then FAIL then FAIL across 3 draws | [`task-overrides/doc-crossref.md`](task-overrides/doc-crossref.md) — identical to Q4's, needs Confirm | n/a |
-| `doc-summarize` | Flaky — PASS, FAIL, PASS across 3 draws | [`task-overrides/doc-summarize.md`](task-overrides/doc-summarize.md) — identical to Q4's, needs Confirm | n/a |
-| `doc-synthesize` | Flaky — PASS then FAIL across 2 draws; **opposite of Q4's result** with the identical instruction (regressed there) | [`task-overrides/doc-synthesize.md`](task-overrides/doc-synthesize.md) — identical to Q4's | n/a |
-| `doc-verbatim` | Stable partial, FAIL both draws, consistent 1-line-defect improvement over bare | [`task-overrides/doc-verbatim.md`](task-overrides/doc-verbatim.md) | n/a |
-| `doc-surgical` | Stable partial, FAIL both draws, instruction-bleed reduced | [`task-overrides/doc-surgical.md`](task-overrides/doc-surgical.md) | n/a |
-| `doc-adapt` | Stable partial, FAIL both draws, forbidden-token count reduced | [`task-overrides/doc-adapt.md`](task-overrides/doc-adapt.md) | n/a |
-| `doc-repair` | Stable partial, FAIL both draws, near-miss both times | [`task-overrides/doc-repair.md`](task-overrides/doc-repair.md) | n/a |
-| `doc-script` | Stable partial (unchanged from Phase 1/Q4's transferred override) | [`task-overrides/doc-script.md`](task-overrides/doc-script.md) | n/a |
-| `doc-restructure` | Gated out — same task-nature conflict as Q4 | bare | n/a |
-
-**Next: Confirm** to quantify the 3 flaky tasks' real reliability, same
-process as Q4.
+| `doc-crossref` | **~67% reliable PASS** (2/3 Confirm draws) | [`task-overrides/doc-crossref.md`](task-overrides/doc-crossref.md) — identical to Q4's, zero adaptation needed | n/a — Tier 2 gate skipped (specialist rate 33% < 60% threshold) |
+| `doc-summarize` | **~67% reliable PASS** (2/3 Confirm draws) | [`task-overrides/doc-summarize.md`](task-overrides/doc-summarize.md) — identical to Q4's | n/a |
+| `doc-verbatim` | Stable partial — consistent 1-line-defect improvement over bare, never a full PASS | [`task-overrides/doc-verbatim.md`](task-overrides/doc-verbatim.md) | n/a |
+| `doc-surgical` | Stable partial — instruction-bleed reduced, substitution still not applied | [`task-overrides/doc-surgical.md`](task-overrides/doc-surgical.md) | n/a |
+| `doc-adapt` | Stable partial — forbidden-token count reduced (differs from Q4, where this task was gated flat) | [`task-overrides/doc-adapt.md`](task-overrides/doc-adapt.md) | n/a |
+| `doc-repair` | Stable partial — near-miss every draw | [`task-overrides/doc-repair.md`](task-overrides/doc-repair.md) | n/a |
+| `doc-script` | Stable partial — same shape as Q4's transferred override | [`task-overrides/doc-script.md`](task-overrides/doc-script.md) | n/a |
+| `doc-synthesize` | 0/3 Confirm, one Steering-phase PASS looked like noise — **reverted to bare** | bare — steering didn't hold up | n/a |
+| `doc-restructure` | Gated out — instruction conflicted with the task's actual job (transform, not preserve) | bare | n/a |
 
 ## Setup
 

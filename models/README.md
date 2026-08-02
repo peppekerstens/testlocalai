@@ -14,7 +14,7 @@ in general; this table is model-specific results.
 | [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | documenter | ❌ Not suitable — quality loop closed 2026-08-02, 1/9 bare and with optimizations (see Final report) | `lfm2.5-1.2b-thinking/README.md` |
 | [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | reasoner | 🔬 Preliminary — one bare baseline + one steering pass, work paused mid-iteration (not part of the closed docs-role loop) | `lfm2.5-1.2b-thinking/README.md` |
 | [`qwen3.5-0.8b`](qwen3.5-0.8b/) | documenter | ⚠️ Mixed — quality loop closed 2026-08-02, 2 of 9 task shapes usable (~67% reliable) with per-task steering, rest unsuitable | `qwen3.5-0.8b/README.md` |
-| [`qwen3.5-0.8b-bf16`](qwen3.5-0.8b-bf16/) | documenter | 🔬 Preliminary — setup done, Phase 1 baseline starting | `qwen3.5-0.8b-bf16/README.md` |
+| [`qwen3.5-0.8b-bf16`](qwen3.5-0.8b-bf16/) | documenter | ⚠️ Mixed — quality loop closed 2026-08-02, same 2 of 9 task shapes usable as Q4_K_M (~67% reliable); precision doesn't justify the extra size | `qwen3.5-0.8b-bf16/README.md` |
 | [`qwen3.5:2b`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
 | [`lfm2.5-vl-450m`](lfm2.5-vl-450m/) | visual | 🚧 Scaffold only — model not downloaded, role not wired up | `lfm2.5-vl-450m/README.md` |
 | — (no model tested yet) | tool-use | Task suite built + blind-subagent-validated only (`claude-sonnet-5`) — no real small-model run yet | `claude-sonnet-5/README.md` "Tool-use extension" |
