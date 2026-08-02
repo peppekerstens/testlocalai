@@ -73,6 +73,30 @@ trades some idioms for others.
 | `doc-synthesize` | Gated out (flat after run 1) | bare | n/a |
 | `doc-repair` | Gated out (flat after run 1) | bare | n/a |
 
+## How to optimize (verify before trusting)
+
+- `DISPATCH_ENABLE_THINKING=false` is mandatory before any other
+  steering — see Setup below (note the non-deterministic warm-up
+  caveat there).
+- For `doc-crossref`-shaped tasks (cross-document synthesis requiring
+  correct mechanism attribution, not just fact presence): a
+  mechanism-specific reminder reaches full, stable reliability — see
+  [`task-overrides/doc-crossref.md`](task-overrides/doc-crossref.md).
+  This is a different idiom from the 0.8B variants' `doc-crossref`
+  gap (missing fact vs. backwards semantic attribution) — don't reuse
+  the 0.8B fix verbatim, diagnose the actual defect first.
+- For `doc-verbatim`-shaped tasks: task-specific steering reaches a
+  stable 1-line-defect partial, never a full PASS — see
+  [`task-overrides/doc-verbatim.md`](task-overrides/doc-verbatim.md).
+- For `doc-surgical`-shaped tasks: **do not use a boundary-discipline-
+  style instruction** — it triggered a degenerate repetition loop on
+  this model (a failure mode not seen on either 0.8B variant). Gated
+  to bare; no working lever found yet.
+- For `doc-adapt`/`doc-script`-shaped tasks: unlike the 0.8B variants,
+  substitution content is already correct bare here — only formatting
+  fails. A different lever than what worked (or didn't) on 0.8B is
+  needed; not yet found.
+
 ## Setup
 
 - Served by `llama-server-qwen3.5-2b.service` on `:8084` (Q4_K_M GGUF,
@@ -115,7 +139,9 @@ trades some idioms for others.
 
 ## Further reading
 
-- `history.md` — full per-task diagnostic breakdown once testing starts.
+- `history.md` — full per-task diagnostic breakdown, every idiom,
+  every tried variant, and the reasoning behind every keep/revert
+  decision.
 - `models/qwen3.5-0.8b/` and `models/qwen3.5-0.8b-bf16/` — the smaller
   siblings of this same model family; check their `history.md`/
   `README.md` for idioms that might transfer (a hypothesis to test in

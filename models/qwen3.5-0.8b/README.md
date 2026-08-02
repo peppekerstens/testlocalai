@@ -94,6 +94,33 @@ for the full 3-run trace):
 | `doc-synthesize` | Gated out (regressed) | bare — steering hurt this task | n/a |
 | `doc-restructure` | Gated out in run 1 (instruction conflicted with the task's job); passes bare ~2/3 draws, pre-existing instability unrelated to this loop | bare | n/a |
 
+## How to optimize (verify before trusting)
+
+- `DISPATCH_ENABLE_THINKING=false` is mandatory before any other
+  steering — see Setup below.
+- For `doc-crossref`/`doc-summarize`-shaped tasks (exact-identifier
+  cross-document synthesis, bounded fact-checklist summarization): an
+  exact-fact reminder naming the specific historically-dropped fact
+  reaches ~67% reliability — see
+  [`task-overrides/doc-crossref.md`](task-overrides/doc-crossref.md)
+  and
+  [`task-overrides/doc-summarize.md`](task-overrides/doc-summarize.md).
+- For structural-element-dropping idioms (headings, table separator
+  rows — `doc-verbatim`-shaped tasks): instruction-based steering does
+  not reliably fix this at this model size — 4 distinct attempts
+  produced a contradictory, noise-dominated picture, not a trend.
+  Don't spend further budget on this idiom family here.
+- For instruction/prompt-bleed idioms (`doc-surgical`-shaped tasks): a
+  boundary-discipline instruction measurably helps on isolated draws
+  but the effect is noise-dominated across repeated attempts (3 tried)
+  — not a reliable fix yet. `stop` sequences (see "Potential helpers"
+  below) are a more promising un-implemented lever than more prompt
+  text.
+- For substitution-not-applied idioms (`doc-adapt`/`doc-script`-shaped
+  tasks): matches `deepseek-r1-1.5b`'s independent "structural limit,
+  not a prompting problem" verdict on the same task family — treat as
+  a likely capability ceiling at this model size, not a prompting gap.
+
 ## Potential helpers (documented, not yet integrated)
 
 - **API-level `stop` sequences** (e.g. `"stop": ["[DOC_END]"]` on

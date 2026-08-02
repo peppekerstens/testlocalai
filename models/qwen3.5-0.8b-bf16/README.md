@@ -75,6 +75,27 @@ justify its ~3x size for this task set.**
 | `doc-synthesize` | 0/3 Confirm, one Steering-phase PASS looked like noise — **reverted to bare** | bare — steering didn't hold up | n/a |
 | `doc-restructure` | Gated out — instruction conflicted with the task's actual job (transform, not preserve) | bare | n/a |
 
+## How to optimize (verify before trusting)
+
+- `DISPATCH_ENABLE_THINKING=false` is mandatory before any other
+  steering — see Setup below.
+- For `doc-crossref`/`doc-summarize`-shaped tasks: `qwen3.5-0.8b`'s
+  exact-fact-reminder overrides transfer here with zero adaptation and
+  the same ~67% reliability — reuse them directly rather than
+  reinventing, see
+  [`task-overrides/doc-crossref.md`](task-overrides/doc-crossref.md)
+  and
+  [`task-overrides/doc-summarize.md`](task-overrides/doc-summarize.md).
+- For `doc-verbatim`/`doc-surgical`/`doc-adapt`/`doc-repair`/
+  `doc-script`-shaped tasks: task-specific steering reaches a stable
+  partial improvement (never a full PASS) — see their
+  `task-overrides/` files. Don't expect a full fix from further prompt
+  iteration on these task shapes at this size.
+- **Precision is not the lever here** — this variant and the Q4_K_M
+  variant converged on nearly the same outcome across every task
+  tested. If choosing between them, prefer Q4_K_M (smaller, same
+  quality) — see the Final report above.
+
 ## Setup
 
 - Served by `llama-server-qwen3.5-0.8b-bf16.service` on `:8085`
@@ -109,7 +130,9 @@ justify its ~3x size for this task set.**
 
 ## Further reading
 
-- `history.md` — full per-task diagnostic breakdown once testing starts.
+- `history.md` — full per-task diagnostic breakdown, every idiom,
+  every tried variant, and the reasoning behind every keep/revert
+  decision.
 - `models/qwen3.5-0.8b/` — the Q4_K_M variant of this same model; check
   its `history.md`/`README.md` for idioms that might transfer (a
   hypothesis to test in the Research phase, not an assumption — see

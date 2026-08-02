@@ -82,6 +82,29 @@ this size on this role, not something prompt engineering can close.
 | `doc-verbatim` | **Stable FAIL, 0/3** — 4/4 Tier 1 budget used, 4 distinct instruction styles, none beat bare | bare | n/a |
 | `doc-surgical` | **Stable FAIL, 0/3** — 2 distinct lever types tried, zero movement | bare | n/a |
 
+## How to optimize (verify before trusting)
+
+- `enable_thinking=false` is mandatory before any other steering —
+  see Setup below. Without it, up to 44% of tasks produce zero
+  content regardless of what the SPEC.md says.
+- For `doc-synthesize`-shaped tasks (new-section synthesis from
+  source material): an explicit reminder naming the specific
+  forbidden leftover-language token to avoid works reliably — see
+  [`task-overrides/doc-synthesize.md`](task-overrides/doc-synthesize.md).
+- For single-blank-line and line-wrapping fidelity idioms
+  (`doc-verbatim`, `doc-surgical`-shaped tasks): instruction-based
+  steering does not reliably fix this model — 4 distinct instruction
+  styles on one task and 2 distinct lever types on another all failed
+  to beat bare. Don't spend further steering budget on this idiom
+  family for this model; treat it as a structural limit at this size,
+  not a prompting gap — see `history.md`'s Steering-phase narrative.
+- For tasks with genuine per-draw instability (`doc-adapt`,
+  `doc-script`, `doc-repair`, `doc-summarize`-shaped tasks): no known
+  fix — none of these were moved by any steering attempted, because
+  none were ever the *cause* worth targeting; the instability appears
+  independent of prompt content. Always run multiple draws before
+  trusting any single result on these task shapes.
+
 ## Setup
 
 - Served by `llama-server-qwen3.5-4b.service` on `:8086` (Q4_K_M GGUF,
@@ -130,7 +153,9 @@ this size on this role, not something prompt engineering can close.
 
 ## Further reading
 
-- `history.md` — full per-task diagnostic breakdown once testing starts.
+- `history.md` — full per-task diagnostic breakdown, every idiom,
+  every tried variant, and the reasoning behind every keep/revert
+  decision.
 - `models/qwen3.5-2b/` and `models/qwen3.5-0.8b/` — smaller siblings;
   check their `history.md`/`README.md` for idioms that might transfer
   (a hypothesis, not an assumption — see `AGENTS.md`'s quality loop).
