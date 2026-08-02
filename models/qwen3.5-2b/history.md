@@ -103,3 +103,39 @@ attempt made things worse rather than closing the gap), 5 tasks
 reverted to bare after real attempts showed no promise or regressed
 (`doc-surgical`, `doc-adapt`, `doc-script`, `doc-synthesize`,
 `doc-repair`).
+
+## Tier 2 gate: skipped (autonomous)
+
+3 tasks with a current PASS (`doc-crossref`, `doc-summarize`,
+`doc-restructure`) ÷ 9 = 33% — below the 60% threshold. Tier 2 skipped
+per `AGENTS.md`'s autonomous gate rule, no question asked.
+
+## Confirm: 3-loop consistency check
+
+`reports/report-docs-20260802-133838.md` (2/9), `-133947.md` (1/9),
+`-134055.md` (1/9). Per-task tracing:
+
+- **`doc-crossref`**: PASS, PASS, PASS — **3/3, fully stable.** The
+  strongest confirmed specialist result across any qwen3.5 variant
+  tested this session (both 0.8B variants topped out at ~67%). The
+  new Q5-specific mechanism-reminder fix is a clean, reliable win.
+- **`doc-summarize`** (bare, no steering applied): PASS, FAIL, FAIL —
+  1/3. Lower than assumed from Phase 1's single-draw bare pass — real
+  instability, consistent with this task's project-wide flakiness, not
+  evidence of anything steering-related since nothing was changed here.
+- **`doc-restructure`** (bare, no steering applied): FAIL, FAIL, FAIL —
+  0/3 this round. Same already-documented per-draw instability landing
+  badly this time; not caused by anything in this loop.
+- **`doc-verbatim`**: FAIL throughout Confirm — matches its "stable
+  partial, never a full PASS" characterization from Steering.
+
+**Final confirmed state**: 1 task fully reliable specialist PASS
+(`doc-crossref`, 3/3 — the strongest result of the whole qwen3.5
+family tested this session), 1 stable partial without a full PASS
+(`doc-verbatim`), 2 tasks that pass bare on some draws but not
+reliably (`doc-summarize`, `doc-restructure` — untouched by steering,
+this is just this project's already-known bare instability on these
+exact tasks), 6 tasks unsuitable even after dedicated per-task
+steering effort (`doc-surgical` — including a new degenerate-
+repetition regression, `doc-adapt`, `doc-script`, `doc-synthesize`,
+`doc-repair`, plus `doc-verbatim` short of a full PASS).

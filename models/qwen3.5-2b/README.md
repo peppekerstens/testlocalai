@@ -10,51 +10,68 @@ steering not assumed to transfer untested.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — Steering Tier 1 closed, Confirm next | 2/9 → 3/9 (1 specialist PASS, 2 bare PASS, 1 stable partial) | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | ⚠️ Mixed — quality loop closed 2026-08-02, 1 fully reliable task shape, rest unsuitable | 2/9 bare → 1 task at 100%, 1 stable partial, rest unchanged | Not comparable overall; 1 narrow task shape usable, high confidence | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-02) |
 
-## Documenter role: current status (preliminary)
+## Documenter role: final report (closed 2026-08-02)
 
-**Bare baseline, docs role: 2/9 PASS** (`doc-summarize`,
-`doc-restructure`) — `reports/report-docs-20260802-132935.md`, better
-than either 0.8B variant's bare baseline (both 1/9). No truncation.
+**Why stopped here.** Full quality loop: Phase 0 (dispatch fix
+confirmed, and found to be non-deterministic per draw unlike the 0.8B
+variants), Phase 1 baseline (2/9 bare — better than either smaller
+variant, and a meaningfully different idiom picture, not a scaled-up
+copy), Research phase (0.8B's overrides tested as individual
+hypotheses, not a bundle), Tier 1 specialist optimization (2 Steering
+runs, including one severe regression caught and reverted), an
+autonomous Tier 2 gate (specialist rate 3/9 ≈ 33%, below the 60%
+threshold — Tier 2 skipped), and a 3-run Confirm check.
 
-**Idiom picture differs meaningfully from the 0.8B variants** — not a
-scaled-up copy of the same failures. Q1 (structural dropping) and Q2
-(instruction bleed) still present, same shape as 0.8B. **Q3
-(substitution not applied) is largely resolved at this size** —
-`doc-adapt`/`doc-script` get the actual substitution content right,
-only failing on formatting. **New idiom Q5 (backwards semantic
-attribution)**: `doc-crossref` gets both required facts present but
-describes the tool as performing the obfuscation rather than reporting
-it — a logic error, not a missing-fact error, never seen on 0.8B. Full
-breakdown: `history.md`.
+**Usability score without optimizations (bare): 2/9 (22%) PASS**
+(`reports/report-docs-20260802-132935.md`) — the best bare baseline of
+any qwen3.5 config tested this session.
 
-**Steering Tier 1 closed after 2 runs.** `doc-crossref`'s new
-mechanism-reminder fix worked immediately (2/2 PASS so far). One
-severe regression found and reverted: `doc-surgical`'s
-boundary-discipline instruction triggered a degenerate repetition loop
-(same paragraph repeated ~8 times) — an idiom not seen on either 0.8B
-variant. `doc-verbatim` reached a 1-line-defect near-miss; a follow-up
-refinement made it worse and was reverted. `doc-adapt`/`doc-script`/
-`doc-synthesize`/`doc-repair` showed no promise on their first
-attempt, gated to bare. Per-task detail:
+**Usability score with optimizations: 1 task reaches full, 3/3
+Confirm-verified reliability** (`doc-crossref` — the strongest
+confirmed result of any qwen3.5 variant tested this session, both
+0.8B configs topped out at ~67%); **1 task reaches stable partial
+improvement without a full PASS** (`doc-verbatim`); **2 bare-passing
+tasks turned out less reliable under Confirm than Phase 1 suggested**
+(`doc-summarize` 1/3, `doc-restructure` 0/3 — pre-existing per-draw
+instability, unrelated to this loop's work, since neither was
+steered); **6 tasks remain unsuitable**, including one new failure
+mode not seen on either smaller variant (`doc-surgical` regressed to a
+degenerate repetition loop under one tested instruction, reverted).
+
+**Comparison against a mainstream frontier LLM: not comparable
+overall.** A model like Claude Haiku 4.5 would be expected to pass
+close to all 9 zero-shot. **The narrow exception is stronger here than
+on either 0.8B variant**: `doc-crossref` reaches full, confirmed
+reliability (not ~67% — 3/3), usable with less review overhead than
+either smaller config's version of the same task, at near-zero
+cost/latency versus a hosted frontier-model call.
+
+**Final verdict: not suitable as a general documenter, but with the
+single strongest specialist result of the qwen3.5 family tested this
+session.** Usable, with high confidence, for `doc-crossref`-shaped
+work (cross-document fact synthesis with correct mechanism
+attribution) — the only task across all 3 qwen3.5 configs tested this
+session to reach fully stable Confirm-verified reliability rather than
+a ~67% partial rate. Everything else tested remains unsuitable,
+including a genuinely new failure mode (degenerate repetition) not
+observed at the smaller size — bigger is not uniformly safer, it
+trades some idioms for others.
+
+**Per-task detail** (Confirm-verified):
 
 | Task | Specialist result | Specialist config | Generalist result |
 |---|---|---|---|
-| `doc-crossref` | **PASS** (2/2 so far, needs Confirm) | [`task-overrides/doc-crossref.md`](task-overrides/doc-crossref.md) — new Q5-specific mechanism reminder | n/a — Tier 2 gate pending |
-| `doc-summarize` | **PASS bare**, no steering needed | bare | n/a |
-| `doc-restructure` | **PASS bare** most draws, needs Confirm (already-documented per-draw instability project-wide) | bare | n/a |
-| `doc-verbatim` | Stable partial — 1-line defect, best-observed state kept after a worse refinement was reverted | [`task-overrides/doc-verbatim.md`](task-overrides/doc-verbatim.md) | n/a |
-| `doc-surgical` | Gated out — **regressed to a degenerate repetition loop**, new idiom not seen on 0.8B | bare | n/a |
-| `doc-adapt` | Gated out (flat after run 1) | bare | n/a |
-| `doc-script` | Gated out (flat after run 1) | bare | n/a |
+| `doc-crossref` | **PASS, 3/3 Confirm draws — fully reliable** | [`task-overrides/doc-crossref.md`](task-overrides/doc-crossref.md) — new Q5-specific mechanism reminder | n/a — Tier 2 gate skipped (specialist rate 33% < 60% threshold) |
+| `doc-verbatim` | Stable partial — 1-line defect every draw, never a full PASS | [`task-overrides/doc-verbatim.md`](task-overrides/doc-verbatim.md) | n/a |
+| `doc-summarize` | Bare, unreliable — 1/3 Confirm draws, untouched by steering | bare | n/a |
+| `doc-restructure` | Bare, unreliable — 0/3 Confirm draws this round, untouched by steering | bare | n/a |
+| `doc-surgical` | Gated out — regressed to a degenerate repetition loop, new idiom vs. 0.8B | bare | n/a |
+| `doc-adapt` | Gated out (flat after run 1; substitution content itself is already correct bare, only formatting fails) | bare | n/a |
+| `doc-script` | Gated out (flat after run 1; same partial-correctness-bare pattern as `doc-adapt`) | bare | n/a |
 | `doc-synthesize` | Gated out (flat after run 1) | bare | n/a |
 | `doc-repair` | Gated out (flat after run 1) | bare | n/a |
-
-**Tier 2 gate**: tasks with a current PASS = `doc-crossref`,
-`doc-summarize`, `doc-restructure` = 3/9 ≈ 33% — below the 60%
-threshold. Tier 2 skipped per `AGENTS.md`'s autonomous rule. Next:
-Confirm.
 
 ## Setup
 
