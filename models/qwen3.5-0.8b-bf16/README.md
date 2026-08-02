@@ -10,23 +10,41 @@ transfer the Q4 variant's steering results untested.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — Phase 1 baseline done, Steering starting | 1/9 → not yet steered | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | 🔬 Preliminary — Steering Tier 1 closed, Confirm next | 1/9 bare; 3 tasks flaky-PASS, 5 stable partial, 1 gated | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
 
 ## Documenter role: current status (preliminary)
 
 **Bare baseline, docs role: 1/9 PASS** (`doc-crossref`) —
-`reports/report-docs-20260802-130512.md`. No truncation. **Same 5
-idioms as the Q4_K_M variant, same task shapes affected** — strong
-cross-precision evidence these are model-architecture idioms, not
-quantization artifacts. Full breakdown: `history.md`.
+`reports/report-docs-20260802-130512.md`. Same 5 idioms as the Q4_K_M
+variant, same task shapes affected — strong cross-precision evidence
+these are model-architecture idioms, not quantization artifacts.
 
 Dispatch fix confirmed transferring from the Q4_K_M variant: the
-runaway-thinking bug reproduces here too (warm-up ping hit
-`finish_reason=length` after 8177 completion tokens, 30,290 reasoning
-chars, empty output), and the same `DISPATCH_ENABLE_THINKING=false` +
-non-thinking sampling params fix it (clean 3-token response, zero
-reasoning content) — verified, not assumed. See "Setup" for the exact
-reproducible invocation.
+runaway-thinking bug reproduces here too, and the same
+`DISPATCH_ENABLE_THINKING=false` + non-thinking sampling params fix it
+— verified, not assumed. See "Setup" for the exact reproducible
+invocation.
+
+**Steering Tier 1 closed after 3 runs — cross-precision transfer from
+`qwen3.5-0.8b` (Q4_K_M) worked immediately for 2 of 3 borrowed
+overrides, with one notable divergence.** Full narrative:
+`history.md`'s "Steering: cross-precision transfer" section. Per-task
+detail:
+
+| Task | Specialist result | Specialist config | Generalist result |
+|---|---|---|---|
+| `doc-crossref` | Flaky — PASS then FAIL then FAIL across 3 draws | [`task-overrides/doc-crossref.md`](task-overrides/doc-crossref.md) — identical to Q4's, needs Confirm | n/a |
+| `doc-summarize` | Flaky — PASS, FAIL, PASS across 3 draws | [`task-overrides/doc-summarize.md`](task-overrides/doc-summarize.md) — identical to Q4's, needs Confirm | n/a |
+| `doc-synthesize` | Flaky — PASS then FAIL across 2 draws; **opposite of Q4's result** with the identical instruction (regressed there) | [`task-overrides/doc-synthesize.md`](task-overrides/doc-synthesize.md) — identical to Q4's | n/a |
+| `doc-verbatim` | Stable partial, FAIL both draws, consistent 1-line-defect improvement over bare | [`task-overrides/doc-verbatim.md`](task-overrides/doc-verbatim.md) | n/a |
+| `doc-surgical` | Stable partial, FAIL both draws, instruction-bleed reduced | [`task-overrides/doc-surgical.md`](task-overrides/doc-surgical.md) | n/a |
+| `doc-adapt` | Stable partial, FAIL both draws, forbidden-token count reduced | [`task-overrides/doc-adapt.md`](task-overrides/doc-adapt.md) | n/a |
+| `doc-repair` | Stable partial, FAIL both draws, near-miss both times | [`task-overrides/doc-repair.md`](task-overrides/doc-repair.md) | n/a |
+| `doc-script` | Stable partial (unchanged from Phase 1/Q4's transferred override) | [`task-overrides/doc-script.md`](task-overrides/doc-script.md) | n/a |
+| `doc-restructure` | Gated out — same task-nature conflict as Q4 | bare | n/a |
+
+**Next: Confirm** to quantify the 3 flaky tasks' real reliability, same
+process as Q4.
 
 ## Setup
 

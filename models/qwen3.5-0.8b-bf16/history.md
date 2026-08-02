@@ -44,3 +44,43 @@ No truncation. Single draw.
 cross-precision hypothesis source — same model, already has validated
 specialist configs for 3 tasks. Testing those directly rather than
 inventing new fixes from scratch.
+
+## Steering: cross-precision transfer from qwen3.5-0.8b (Q4_K_M)
+
+**Run 1** (`reports/report-docs-20260802-130746.md`, 2/9): copied
+`qwen3.5-0.8b`'s exact `doc-crossref`/`doc-summarize`/`doc-script`
+overrides unmodified. **`doc-crossref` and `doc-summarize` PASS
+immediately** — strong cross-precision transfer, no adaptation needed.
+`doc-script` still FAILs, same shape as Q4's stable-partial state.
+
+**Run 2** (`reports/report-docs-20260802-130926.md`, 2/9): gave the
+remaining 6 tasks their first specialist attempt, reusing Q4's rules
+files directly. **`doc-synthesize` PASSES** — the *opposite* of Q4's
+result with the identical instruction (Q4 regressed under this exact
+lever) — first clear evidence a fix's effect isn't guaranteed to
+transfer across precision even when the underlying idiom does.
+`doc-summarize` flipped to FAIL this draw (unchanged override) — first
+sign of the same per-draw instability already documented for this task
+on Q4. `doc-verbatim`/`doc-surgical`/`doc-adapt`/`doc-repair` all
+showed real partial improvement without a full PASS; `doc-restructure`
+showed the same task-nature conflict already found on Q4 (instruction
+says preserve structure, task requires transforming it) — **gated out,
+reverted to bare**.
+
+**Run 3** (`reports/report-docs-20260802-131130.md`, 1/9): re-dispatched
+the 4 promising tasks plus `doc-crossref`/`doc-summarize`/
+`doc-synthesize` unchanged, as a 2nd-draw stability check.
+`doc-crossref` flipped back to FAIL, `doc-summarize` flipped back to
+PASS, `doc-synthesize` flipped to FAIL — all 3 now show clear
+per-draw instability, matching Q4's own ~67%-not-100% reliability
+pattern rather than being clean wins. `doc-verbatim`/`doc-surgical`/
+`doc-adapt`/`doc-repair` stayed FAIL on both draws with consistent
+partial improvement over bare each time — stable partials, same
+category as `doc-script`.
+
+**Tier 1 closed**: outcome closely mirrors the Q4_K_M variant's —
+3 tasks with real but flaky reliability (`doc-crossref`,
+`doc-summarize`, `doc-synthesize`), 5 stable partials without a full
+PASS (`doc-verbatim`, `doc-surgical`, `doc-adapt`, `doc-repair`,
+`doc-script`), 1 gated to bare (`doc-restructure`). Moving to Confirm
+to quantify the 3 flaky tasks' real reliability.
