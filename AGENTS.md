@@ -178,6 +178,111 @@ ending) is lost exactly like the un-persisted-report failure mode this
 section already warns about, just one layer earlier: mid-diagnosis
 instead of post-run.
 
+## The quality loop — standard structure for a model+role optimization session
+
+When asked to run a test-and-optimization loop for a model+role (e.g.
+"test and optimize `lfm2.5:1.2b-thinking` for documenting"), follow this
+structure rather than diagnosing and steering ad hoc. Every "run" below
+means one full role re-test (`bash bench/report.sh <model> <role>`, or
+the task subset that role covers) — not a single task. Every phase
+follows the existing report rules above: write Findings/Suggested next
+steps into the report **before** starting the next run in the loop, not
+after (see the rule just above this one).
+
+**Phase 1 — Reference run.** One baseline `bash bench/report.sh <model>
+<role>` run against the model's current state (bare, or whatever
+steering already exists) before touching anything. This is the anchor
+every later phase's "did it improve" comparison is measured against.
+
+**Phase 2 — Obvious-improvement runs (max 5 full role re-test runs).**
+Diagnose the reference run's failures per the report-completion rules
+(exact `verify.sh` quotes, idiom classification), apply grounded,
+task-specific steering — a short instruction targeted at the actual
+diagnosed idiom, not a general-purpose blanket rules block prepended to
+everything (a blanket preamble measurably *hurt* several tasks for
+`lfm2.5:1.2b-thinking`, see its `history.md`'s Idiom E) — then re-run the
+full role test. Repeat, up to 5 runs total in this phase. Stop early
+(move to Confirm) once a run doesn't improve on the previous one, or
+once every task in the role passes.
+
+**Phase 3 — Cross-model idiom transfer (max 5 full role re-test runs).**
+Before inventing new fixes, check every other `models/<other-model>/`
+that has been tested against this *same* role's `history.md` and
+`README.md` for diagnosed idioms/fixes already validated there. Apply
+any that plausibly transfer to this model, re-test, up to 5 runs. A fix
+that worked for one model is a *hypothesis* for another, not a given —
+state in the report whether each borrowed fix helped, was neutral, or
+didn't apply here, and why.
+
+**Phase 4 — External research (max 5 full role re-test runs).** Search
+external sources (web search, the model's card/official prompting
+guide) for prompting/steering guidance specific to this exact model
+checkpoint. Apply candidate techniques, re-test, up to 5 runs. Whether
+or not an external technique found here gets applied, the report and
+`README.md` must name any helper tooling identified as potentially
+useful going forward (a linter/formatter that could catch a structural
+defect before `verify.sh` does, an MCP tool, a schema validator, etc.)
+— even tooling not implemented yet — so the finding isn't lost.
+
+Any phase (2, 3, or 4) ends early and moves to Confirm once a run
+produces no further improvement over the previous one, regardless of
+remaining budget in that phase's max-5.
+
+## Confirm — check the optimization is real, not one lucky draw
+
+Once the quality loop's improvement phases stop producing gains:
+
+1. Re-run the full role test **3 more times** against the current
+   best-known state, unchanged, back to back. Every verdict up to this
+   point in the loop was a single draw (n=1) per the sample-size rule
+   above — this is where that gets checked, not skipped.
+2. **If consistent** (same pass count, same per-task verdicts across all
+   3 runs): this is the loop's confirmed result.
+3. **If flaky** (pass count or any task's verdict varies across the 3
+   runs): revert to the previous checkpoint — the last committed state
+   before the change that introduced the flakiness — and run *that*
+   state's own 3-loop consistency check instead. Keep whichever
+   confirmed-stable state is best; don't ship a flaky "improvement" as
+   the loop's result just because one draw of it looked good.
+
+## Performance run (max 5 full role re-test runs)
+
+Once Confirm has settled on a stable state: investigate and apply
+token-usage/latency optimizations that do **not** reduce the confirmed
+quality (same pass count and per-task verdicts, checked by re-running
+after each change — revert anything that regresses). One known
+candidate technique: "caveman"-style output shaping
+(github.com/juliusbrussee/caveman) — a short instruction that strips
+filler, hedging, and pleasantries to cut *output* tokens specifically.
+**Caveat before applying it here:** it only reduces output tokens (not
+input or reasoning-phase tokens — no help for a "thinking" model's
+`<think>` budget) and costs ~1-1.5k extra input tokens per turn as the
+instruction's own overhead. Several models in this project already fail
+via *under*-elaboration/terseness, not verbosity (e.g.
+`lfm2.5-1.2b-thinking`'s Idiom A/E) — applying a "be terser" technique to
+a model whose failures are about missing required content will make it
+worse, not save tokens for free. Only apply where the model's failures
+are about padding/verbosity, not missing content.
+
+## Final report
+
+The model+role's `README.md` Current-status section **is** the quality
+loop's final report — not a separate document. It must state, in
+addition to whatever the existing README-shape rules already require:
+
+- **Usability score without optimizations** — the bare-baseline pass
+  rate/verdict for this role (Phase 1's reference run).
+- **Usability score with optimizations** — the Confirm-settled pass
+  rate/verdict.
+- **A comparison against a mainstream frontier LLM** — e.g. "with all
+  optimizations and helper tooling applied, quality on this role is
+  comparable to Claude Haiku 4.1, with the following restrictions:
+  ..." — state the restrictions/caveats explicitly (context size, task
+  types that still fail, reliability/flakiness, latency). This is a
+  qualitative judgment call grounded in the loop's actual evidence, not
+  a mechanically computed number — show the reasoning, don't just assert
+  the comparison.
+
 ## After a test run, persist it — don't leave findings only in chat
 
 Any time you run a real model against a task/role (`bench.sh`,
