@@ -11,7 +11,7 @@ this GPU (4GB VRAM) via an explicit partial `-ngl` offload, tuned to
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | ⚠️ Mixed — quality loop closed 2026-08-02, 4 stable-pass task shapes (best qwen3.5-family result), 2 stable-fail, 3 genuinely unstable | 5/9 bare (zero truncation) → 4/9 stable pass, ~59% average per draw | Not comparable overall; best qwen3.5-family content reliability result of the whole session | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-02) |
+| Documenter | ⚠️ Mixed — quality loop closed 2026-08-02, 5 stable-pass task shapes after post-closure specialist steering (best qwen3.5-family result), 2 stable-fail, 1 improved-not-stable, 1 unstable | 5/9 bare (zero truncation) → 5/9 stable pass + 1 task improved to 2/3 | Not comparable overall; best qwen3.5-family content reliability result of the whole session | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-02) |
 
 ## Documenter role: final report (closed 2026-08-02)
 
@@ -65,18 +65,34 @@ collapsing) are now confirmed unresolved at 2 different model sizes
 (4B and 9B) via real, varied steering attempts at each — this is a
 stable cross-model finding, not a fluke of either individual model.
 
-**Per-task detail**:
+**Update, same day: post-closure specialist steering on `doc-script`
+and `doc-repair`.** With `-ngl 20` making iteration ~3x cheaper, 2 of
+the 3 previously-unsteered "unstable" tasks got real Tier 1 attempts.
+`doc-script` is now a clean, confirmed 3/3 fix. `doc-repair` improved
+from bare ~40% to a steered 2/3 (67%) — real progress, not yet stable.
+Diagnosing `doc-repair` also surfaced a bug in the shared, canonical
+`tasks/doc-repair/SPEC.md`: its "DEFECT 2" claims the source table is
+missing a separator row that is, in fact, already present — see
+Setup's note on this; it affects every model's historical `doc-repair`
+results, not just this one, and is deliberately left unfixed here
+pending a separate decision. Recalculated specialist tally: 5/9 ≈ 56%
+stable, still under the 60% Tier 2 threshold — gate correctly remains
+skipped, not retriggered. Full diagnostic narrative (including the
+3-attempt whack-a-mole pattern behind `doc-repair`'s fix) in
+`history.md`'s "Post-closure specialist steering" section.
+
+**Per-task detail** (updated):
 
 | Task | Specialist result | Specialist config | Generalist result |
 |---|---|---|---|
 | `doc-synthesize` | **Stable PASS, 3/3 Confirm draws** (combined fix) | [`task-overrides/doc-synthesize.md`](task-overrides/doc-synthesize.md) — JSON-block + `zod`-token reminders | n/a — Tier 2 gate skipped (specialist rate 56% < 60% threshold) |
+| `doc-script` | **Stable PASS, 3/3** (steered, post-closure) | [`task-overrides/doc-script.md`](task-overrides/doc-script.md) — explicit both-lines-must-be-gone + forbidden-token reminder | n/a |
 | `doc-adapt` | **Stable PASS, 3/3 Confirm draws** (bare, never steered) | bare | n/a |
 | `doc-summarize` | **Stable PASS, 3/3 Confirm draws** (bare, never steered) | bare | n/a |
 | `doc-crossref` | **Stable PASS, 3/3 Confirm draws** (bare, never steered) | bare | n/a |
 | `doc-verbatim` | **Stable FAIL, 0/3** — 2 attempts, same idiom `qwen3.5-4b` never resolved in 4 — reverted | bare | n/a |
 | `doc-surgical` | **Stable FAIL, 0/3** — 1 attempt, matches `qwen3.5-4b`'s finding this lever doesn't help — reverted | bare | n/a |
-| `doc-script` | Unstable, 1/3 Confirm draws (bare, never steered) | bare | n/a |
-| `doc-repair` | Unstable, 2/3 Confirm draws (bare, never steered) | bare | n/a |
+| `doc-repair` | Improved, not stable: 2/3 (steered, post-closure) vs. bare ~40% — real progress via a checklist-style reminder, but the 1 FAIL still shows the original defect | [`task-overrides/doc-repair.md`](task-overrides/doc-repair.md) | n/a |
 | `doc-restructure` | Unstable, 1/3 Confirm draws — 1 attempt during Steering, zero movement, reverted | bare | n/a |
 
 ## How to optimize (verify before trusting)
@@ -211,6 +227,20 @@ stable cross-model finding, not a fluke of either individual model.
   ever testing this model with thinking re-enabled or any other
   slow-generation scenario; not relevant with `enable_thinking=false`,
   where generation is fast enough this ceiling is never approached.
+- **`tasks/doc-repair/SPEC.md` has a real bug, unfixed as of this
+  write, affecting every model tested against this task, not just this
+  one.** Its "DEFECT 2" instruction claims the embedded source table is
+  missing a separator row (`|---|---|---|---|`) — it is not; both the
+  SPEC's embedded document and `tasks/doc-repair/input.md` already
+  contain it (confirmed via `git blame`: canonical, model-agnostic
+  content since commit `11da74f`). Every historical `doc-repair` FAIL
+  on any model was necessarily caused by the *other* defect (missing
+  YAML closing fence) or an unrelated output-shape issue, never a
+  genuinely-missing separator row. Deliberately left unfixed here — a
+  fix belongs in the shared canonical file, which would retroactively
+  affect other models' already-closed `doc-repair` findings, a bigger
+  decision than a per-model `task-overrides/` workaround. See
+  `history.md`'s "Post-closure specialist steering" section.
 
 ## Further reading
 

@@ -417,3 +417,76 @@ depending on measurement) — this is the practical ceiling this session
 tested and validated, not a number proven safe against every future
 workload (e.g. a longer-context task or heavier concurrent load on this
 hardware); re-check before assuming it still holds if either changes.
+
+## Post-closure specialist steering: `doc-script` and `doc-repair`
+
+**Context.** With `-ngl 20` making iteration ~3x cheaper, the user asked
+for more specialized Tier 1 loops on the tasks that were left unsteered
+when this loop originally closed. `doc-script` and `doc-repair` had
+zero prior Tier 1 attempts (unlike `doc-verbatim`/`doc-surgical`, which
+had real, evidence-grounded attempts before being gated out) — genuine
+remaining budget, not previously exhausted.
+
+**`doc-script` — clean, confirmed fix.** Diagnosis: both prior FAILs
+(the `-ngl 18` and `-ngl 20` validation draws) showed the identical
+`verify.sh` defect — `forbidden token still present: 'dist/index.js'`.
+The task's EDIT 2 collapses two lines (the `SERVER_ENTRYPOINT`
+assignment and the `node` invocation) into one replacement line; the
+model was applying EDIT 2 partially, leaving the `SERVER_ENTRYPOINT`
+line (which contains the forbidden token) in place. Fix: an explicit
+reminder stating both original lines must be gone, naming the
+forbidden token directly — the same pattern that worked for
+`doc-synthesize`. Result: **3/3 PASS** across the first attempt plus 2
+validation draws — see
+[`task-overrides/doc-script.md`](task-overrides/doc-script.md).
+
+**`doc-repair` — real improvement, not yet stable; also surfaced a bug
+in the shared `tasks/doc-repair/SPEC.md`.** While diagnosing this
+task's failures, found that the embedded source document already
+contains the correct table separator row (`|---|---|---|---|`) that
+the prompt's "DEFECT 2" claims is missing — confirmed via `git blame`
+(canonical, model-agnostic file, restored to this state in commit
+`11da74f`) and cross-checked against `input.md`, which has the same
+row. **This means DEFECT 2 has never been a real defect for any model
+tested against this task** — every historical `doc-repair` FAIL, on
+every model (`qwen3.5-0.8b`, `-0.8b-bf16`, `-2b`, `-4b`, `-9b`,
+`lfm2.5-1.2b-thinking`, per `grep -rl doc-repair models/*/reports/`),
+was necessarily caused by DEFECT 1 (the missing YAML closing fence) or
+some other output-shape issue, never a genuinely-missing separator
+row — the instruction asking to "add" an already-present row is at
+best a no-op distractor and at worst a source of confusion. **Not
+fixed here** — this is a canonical/shared-file issue, out of scope for
+a per-model `task-overrides/` workaround to fully resolve, and
+deliberately left for a separate decision (see README's Setup section)
+rather than editing `tasks/doc-repair/SPEC.md` unilaterally, since that
+would retroactively affect every other model's already-closed
+`doc-repair` findings.
+
+Diagnosis of the real defect (DEFECT 1, fence placement) went through
+3 distinct attempts before landing on a working shape — a genuine
+whack-a-mole pattern, not a one-shot fix:
+1. First reminder (fence-placement only): fixed fence placement (2/2
+   correct) but introduced a *new* defect — the model started dropping
+   the `## Top level` heading entirely (2/2 draws).
+2. Second reminder (added an explicit heading instruction): fixed the
+   heading, but fence placement *regressed* back to the original
+   end-of-document defect.
+3. Third reminder (numbered checklist covering both constraints
+   explicitly, in order): **2/3 PASS** across 3 draws (1 original +
+   2 validation) — the 1 FAIL reverted to the original missing-fence
+   defect entirely, not a new idiom. Real improvement over the bare
+   rate (2/5 across all prior unsteered draws this session), but not
+   stable by this project's 3/3 bar.
+   See [`task-overrides/doc-repair.md`](task-overrides/doc-repair.md)
+   for the final (checklist) version — kept as the current specialist
+   config since it measurably improves the odds even though it isn't
+   fully reliable yet.
+
+**Tier 2 gate reconsidered, not retriggered.** Recalculating specialist
+tallies with these 2 new results: stable (3/3-equivalent) tasks =
+`doc-adapt`, `doc-synthesize`, `doc-script` (newly stable),
+`doc-summarize`, `doc-crossref` = 5/9 ≈ 56%, still under the 60%
+threshold on the strict/honest count — `doc-repair`'s 2/3 is real
+progress but doesn't meet the stability bar to count toward the gate.
+Tier 2 generalist search remains correctly skipped per `AGENTS.md`'s
+autonomous rule; not manually overridden.
