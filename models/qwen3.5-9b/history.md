@@ -379,15 +379,21 @@ layers on GPU, just 2-3 of those 8 full-attention layers fall in
 range, so the real KV-cache VRAM cost was much smaller than an
 estimate assuming full-model attention cost would suggest.
 
-**Caveat, not yet resolved as of this write:** the benchmark above
-used a short, fixed 300-token generation. Real docs tasks generate up
-to ~900 tokens (see `reports/`), which grows the KV cache further
-than this test did — at 173-217MB free (the `-ngl 18`/`20` end of the
-sweep), a longer real task could plausibly hit an actual CUDA
-out-of-memory crash rather than just slowing down, a different
-failure mode than anything tested here. **Serving config changed to
-`-ngl 18` and a full real-length docs-role run was launched to
-validate stability and confirm no quality regression vs. the 3-run
-Confirm's 4-stable/2-stable-fail/3-unstable profile before treating
-this as final** — outcome to be appended here once that run
-completes.
+**Validation run at `-ngl 18` (2026-08-02) — confirmed, no
+regression.** A full real-length docs-role run
+(`reports/report-docs-20260802-211436.md`) completed clean: no
+crash/OOM (232MB free VRAM after, service stayed healthy throughout,
+`doc-script` alone generated 728 completion tokens — well past the
+300-token synthetic benchmark used to compare `-ngl` values), no
+truncation on any task. Every task landed within its established
+Confirm-phase behavior class (4 stable-PASS tasks all PASSED, 2
+stable-FAIL tasks both FAILED, the 3 unstable tasks flipped within
+their known range) — no sign of quality regression from the switch
+away from `-ngl 99`. **`-ngl 18` is the final serving config**: the
+systemd service (`llama-server-qwen3.5-9b.service`) now runs with
+`-ngl 18` instead of the original `-ngl 99`, ~2.7x faster
+(8.59 vs. 3.1 tok/s) with no observed downside. `-ngl 20`+ was not
+adopted despite being faster still (9.46 tok/s) — its free-VRAM
+margin (173MB) wasn't validated against a real workload the way
+`-ngl 18`'s was, and the marginal gain didn't seem worth re-running
+the validation for; revisit if a future session wants to push further.

@@ -151,15 +151,16 @@ stable cross-model finding, not a fluke of either individual model.
   VRAM margin alone doesn't predict speed, whether the split is
   static/deterministic vs. reactive/driver-paged does.
 
-  **Caveat — this benchmark used a short fixed generation length.**
-  Real docs tasks generate up to ~900 tokens (see `reports/`), which
-  grows the KV cache further than this 300-token test did; at
-  173-217MB free, a longer real task could plausibly hit an actual
-  CUDA out-of-memory crash rather than just slowing down. **Current
-  serving config: `-ngl 18`, pending a full real-workload docs-role
-  run to confirm it survives real task lengths without
-  crashing/regressing quality — check `history.md` for the outcome
-  before trusting this as final.**
+  **Validated 2026-08-02**: a full real-length docs-role run at
+  `-ngl 18` (`doc-script` alone generated 728 completion tokens, well
+  past this benchmark's 300-token synthetic test) completed with no
+  crash/OOM and no quality regression — every task landed within its
+  established Confirm-phase behavior class. **`-ngl 18` is the final
+  serving config, ~2.7x faster than the original `-ngl 99` with no
+  observed downside** — see `history.md` for the full validation
+  writeup. `-ngl 20`+ was not adopted despite being faster still
+  (9.46 tok/s); its tighter 173MB margin wasn't validated against a
+  real workload.
 
   **How to work out the right `-ngl` on a system with different
   specs** (different VRAM total, different GPU, different model):
