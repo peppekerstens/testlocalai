@@ -166,3 +166,61 @@ attempts — a negative signal worth weighting. `doc-surgical`'s
 synthesize` DID have a working fix on 4B (a forbidden-token reminder)
 — worth testing, though the specific gap here (missing JSON block,
 not a forbidden token) differs from what that fix targeted.
+
+## Steering: Tier 1 (3 runs) — one confirmed fix, strong cross-model gating
+
+**Run 1** (`reports/report-docs-20260802-175322.md`, 6/9): first
+attempt for all 4 FAILs. `doc-synthesize`'s fenced-JSON-block reminder
+worked immediately. `doc-verbatim`'s 2-blank-line fix improved (both
+targeted gaps closed) but a 3rd, unaccounted-for blank line (before
+the note line) became the new sole defect. `doc-surgical`'s
+`formatting-fidelity.md` (reused from `qwen3.5-4b`) regressed — the
+substitution content itself came back wrong, matching that same
+model's finding this lever doesn't reliably help this idiom.
+`doc-restructure`'s table-separator reminder showed zero movement.
+
+**Run 2** (`reports/report-docs-20260802-180647.md`, 4/9):
+`doc-verbatim`'s refined 3-blank-line instruction still failed — same
+single-line-defect shape, different specific line each draw, matching
+`qwen3.5-4b`'s own exhaustive (4-attempt) history on this identical
+idiom. `doc-surgical`/`doc-restructure` (already reverted to bare)
+stayed FAIL as expected. `doc-script` (bare, never touched) flipped to
+FAIL — real per-draw noise. `doc-synthesize` (kept override) flipped
+to FAIL too, but not a regression of the original fix — the JSON block
+and bullets and required tokens all still passed; a *second*,
+independent idiom surfaced (`zod` token leaking in), matching what
+other qwen3.5 configs show on this exact task.
+
+**Gate decision**: `doc-verbatim` reverted to bare after 2 attempts
+here — cross-model evidence (4B's full 4-attempt history on the
+identical idiom, never resolved, always a different specific
+manifestation) was strong enough to stop early rather than spend the
+remaining Tier 1 budget against a pattern this consistent.
+
+**Run 3** (`reports/report-docs-20260802-182001.md`, 5/9):
+`doc-synthesize`'s combined fix (JSON-block reminder + `zod`-token
+reminder together) **worked** — clean PASS, both idioms addressed.
+`doc-script` (bare) flipped back to PASS. `doc-repair` (bare, never
+touched by any steering this entire session) flipped to FAIL for the
+first time — a new instability data point on a task previously assumed
+stable.
+
+**Tier 1 closed.** Final state: `doc-synthesize` has a confirmed
+working override (combined fix). `doc-verbatim`, `doc-surgical`,
+`doc-restructure` all reverted to bare after real, evidence-grounded
+attempts (2, 1, 1 runs respectively — gated early where cross-model
+history already pointed to low expected value, rather than
+mechanically using the full 4-run budget on each). `doc-adapt`,
+`doc-script`, `doc-repair`, `doc-summarize`, `doc-crossref` were never
+steered; their swings across all 3 Steering runs (`doc-script`:
+FAIL→PASS→PASS→FAIL→PASS across the 4 draws so far, `doc-repair`:
+PASS→PASS→PASS→FAIL) are pure bare-task instability.
+
+## Tier 2 gate: skipped (autonomous)
+
+Tasks with a current PASS on the final Steering draw = `doc-adapt`,
+`doc-script`, `doc-synthesize`, `doc-summarize`, `doc-crossref` = 5/9
+≈ 56% — below the 60% threshold. Tier 2 skipped per `AGENTS.md`'s
+autonomous gate rule, no question asked. Moving to Confirm — essential
+given the volume of bare-task instability observed across this
+Steering phase.

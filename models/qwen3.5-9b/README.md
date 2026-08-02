@@ -10,7 +10,7 @@ this GPU (4GB VRAM) only via VRAM oversubscription — see Setup.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — Phase 1 baseline done (5/9, no truncation), Steering starting | 5/9 bare → not yet steered | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | 🔬 Preliminary — Steering Tier 1 closed, Confirm next | 5/9 bare → 1 confirmed specialist fix, rest bare instability | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
 
 ## Documenter role: current status (preliminary)
 
@@ -40,13 +40,35 @@ it."
 **Given this, switched to `enable_thinking=false` for a normal
 baseline run**, matching every other qwen3.5 config tested in this
 project. **Bare baseline: 5/9 PASS, zero truncation** —
-`reports/report-docs-20260802-173725.md`. Matches or exceeds every
-smaller qwen3.5 config's bare baseline, and — unlike `qwen3.5-4b`'s
-5/9-on-paper — this 5/9 is genuine, with no hidden empty-output
-failures. Single draw. All 4 FAILs are near-misses matching idiom
-families already diagnosed on `qwen3.5-4b` (structural blank-line
-dropping, line-wrap collapsing) — no new idioms found. Full breakdown:
-`history.md`.
+`reports/report-docs-20260802-173725.md`. Genuine 5/9, no hidden
+empty-output failures.
+
+**Steering Tier 1 closed after 3 runs.** `doc-synthesize`'s combined
+fix (fenced-JSON-block reminder + `zod`-token reminder — 2
+independently diagnosed idioms on the same task) worked cleanly.
+`doc-verbatim`, `doc-surgical`, `doc-restructure` all reverted to bare
+after real attempts (2, 1, 1 runs) — gated early once cross-model
+evidence, especially `qwen3.5-4b`'s own exhaustive 4-attempt history
+on the identical idioms, pointed to low expected value from further
+iteration rather than mechanically exhausting the full 4-run budget on
+each. `doc-adapt`, `doc-script`, `doc-repair`, `doc-summarize`,
+`doc-crossref` were never steered — their pass/fail swings across all
+3 Steering runs are pure bare-task instability. Per-task detail:
+
+| Task | Specialist result | Specialist config | Generalist result |
+|---|---|---|---|
+| `doc-synthesize` | **PASS** (combined fix, confirmed on its latest draw) | [`task-overrides/doc-synthesize.md`](task-overrides/doc-synthesize.md) — JSON-block + `zod`-token reminders | n/a — Tier 2 gate skipped (specialist rate 56% < 60% threshold) |
+| `doc-adapt` | Bare, flipped pass/fail across draws — real instability | bare | n/a |
+| `doc-script` | Bare, flipped pass/fail across draws — real instability | bare | n/a |
+| `doc-repair` | Bare, flipped pass/fail across draws — real instability | bare | n/a |
+| `doc-summarize` | Bare, stable PASS across Steering draws so far | bare | n/a |
+| `doc-crossref` | Bare, stable PASS across Steering draws so far | bare | n/a |
+| `doc-verbatim` | 2 attempts, same idiom `qwen3.5-4b` never resolved in 4 — reverted | bare | n/a |
+| `doc-surgical` | 1 attempt, matches `qwen3.5-4b`'s finding this lever doesn't help — reverted | bare | n/a |
+| `doc-restructure` | 1 attempt, zero movement — reverted | bare | n/a |
+
+**Tier 2 gate**: 5/9 ≈ 56% specialist rate, below the 60% threshold —
+skipped per `AGENTS.md`'s autonomous rule. Next: Confirm.
 
 ## How to optimize (verify before trusting)
 
@@ -57,17 +79,14 @@ dropping, line-wrap collapsing) — no new idioms found. Full breakdown:
   regardless of content) — what it fixes is total answer *length*
   (hundreds of tokens instead of thousands+), which is what keeps a
   full docs-role run practical.
+- For `doc-synthesize`-shaped tasks: a combined fenced-JSON-block +
+  `zod`-token reminder works reliably — see
+  [`task-overrides/doc-synthesize.md`](task-overrides/doc-synthesize.md).
 - For `doc-verbatim`/`doc-restructure`-shaped tasks (structural
-  blank-line/separator-row dropping): `qwen3.5-4b` tried real, varied
-  fixes on these exact idioms and reverted to bare both times — treat
-  as a likely negative signal before investing fresh Steering budget.
-- For `doc-surgical`-shaped tasks (line-wrap collapsing, content
-  otherwise correct): `qwen3.5-4b`'s `formatting-fidelity.md` never
-  fully closed this gap either — same caution.
-- For `doc-synthesize`-shaped tasks: `qwen3.5-4b` had a working
-  forbidden-token-reminder fix, but this model's specific gap (missing
-  fenced JSON block) differs from what that fix targeted — worth
-  testing as a hypothesis, not assuming direct transfer.
+  blank-line/separator-row dropping) and `doc-surgical`-shaped tasks
+  (line-wrap collapsing): instruction-based steering does not reliably
+  fix these on this model — matches `qwen3.5-4b`'s own findings on the
+  identical idioms. Don't spend further steering budget here.
 
 ## Setup
 
