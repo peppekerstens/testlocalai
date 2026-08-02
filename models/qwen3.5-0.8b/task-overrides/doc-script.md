@@ -5,6 +5,13 @@ EDIT VERIFICATION — read before answering:
   and NOT the FIND text? If any FIND text still appears anywhere in
   your draft, you are not finished — remove it and insert the REPLACE
   text in its place before submitting.
+EDIT 2 REMINDER — read before answering:
+
+EDIT 2 replaces the two lines containing `dist/index.js` with a single
+`dotnet run --project src/ConnectwiseMcp --no-build` line. Check your
+draft specifically: does the string `dist/index.js` still appear
+anywhere? If so, EDIT 2 was not applied — remove it and insert the
+replacement line before submitting.
 ROLE: You are a careful document editor. Copy the bash script below
 byte-for-byte, then apply the two FIND→REPLACE edits inside it. The result
 must remain a valid bash script that passes `bash -n`. Do not reword,

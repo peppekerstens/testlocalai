@@ -242,3 +242,47 @@ this is now real evidence the lever itself doesn't work for this idiom
 on this model, not just an unlucky task pairing, reinforcing the
 Research phase's cross-model negative signal rather than just repeating
 it once.
+
+## Steering runs 3-4: second PASS, then Tier 1 closes on 3 tasks
+
+**Run 3** (`reports/report-docs-20260802-124436.md`, 2/9): sharpened
+`doc-summarize`'s reminder to the single remaining fact — **PASS**,
+2nd specialist-tier win this loop. `doc-verbatim`'s precise line-order
+instruction produced the *opposite* blank-line swap, still exactly 1
+line of defect. `doc-surgical` regressed when edit-verification was
+dropped (kept only boundary-discipline) — contradicted the "dead
+weight" read from run 2. `doc-script` reproduced identically on an
+unchanged override — first evidence this specific gap is stable, not
+noisy.
+
+**Run 4** (`reports/report-docs-20260802-124627.md`, 1/9 — `doc-summarize`
+flickered back to FAIL on its unchanged, previously-passing override,
+`doc-crossref` held): `doc-verbatim`'s 4th and final attempt (an even
+more explicit "these two lines must be ADJACENT" instruction — caught
+and fixed a real drafting error first: an earlier draft of that
+instruction incorrectly claimed the heading and opening fence were
+adjacent when the source actually has a blank line between them, would
+have actively misled the model had it shipped) regressed to dropping
+the entire table — worse than runs 2-3. `doc-surgical`'s 3rd attempt
+(reverted to the run-1 combination) produced a *new*, worse idiom: a
+self-narrated "EDIT VERIFICATION:" section reasoning out loud about
+compliance instead of performing the edits. `doc-script` reproduced
+identically a 3rd time despite an EDIT-2-specific reminder — confirms
+stability, not that the instruction is working.
+
+**Closing decisions**: `doc-verbatim` (4/4 runs, contradictory results —
+runs 2-3 near-miss, runs 1 and 4 severe) and `doc-surgical` (3
+attempts, best/worst/worst — noise-dominated, not a trend) both
+**reverted to bare** rather than keeping a cherry-picked "best draw,"
+since the evidence across all attempts doesn't support confidence in
+any one variant over bare. `doc-script` **kept its current override** —
+genuinely stable across 3 identical draws, not worse than bare, real
+partial signal (required-tokens check passes reliably).
+
+**Tier 1 status after 4 Steering runs**: 2 tasks PASS (`doc-crossref`,
+`doc-summarize` — both need Confirm-phase re-verification given
+documented per-draw flakiness on each), 1 stable-but-not-passing
+(`doc-script`), 5 gated out to bare (`doc-repair`, `doc-adapt`,
+`doc-synthesize`, `doc-verbatim`, `doc-surgical`), 1 never addressed
+(`doc-restructure`, gated in run 1 for actively conflicting with the
+task). Next per the quality loop: Tier 2 (generalist search) or Confirm.

@@ -7,7 +7,7 @@ any other role.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — Steering Tier 1 in progress, 1 task passing | 1/9 → 2/9 (`doc-crossref` specialist PASS; role-level bare-vs-current not directly comparable, see per-task table) | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | 🔬 Preliminary — Steering Tier 1 closed, 2 tasks passing (unconfirmed) | 1/9 → 2/9 specialist (unconfirmed, see per-task table) | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
 
 ## Documenter role: current status (preliminary)
 
@@ -57,26 +57,27 @@ signal from `deepseek-r1-1.5b`'s own "structural limit, not a prompting
 problem" verdict on the same task family — deprioritized accordingly.
 Full findings: `history.md`'s "Research phase" section.
 
-**Steering phase (Tier 1, specialist), current state: 1 task PASSING
-(`doc-crossref`), 2 gated out, 4 still in progress.** Two runs so far —
-full narrative in `history.md`'s "Steering run 1"/"Steering run 2"
-sections. Per-task detail:
+**Steering phase (Tier 1, specialist) closed after 4 runs: 2 tasks
+PASS, 1 stable partial, 6 reverted to bare.** Full narrative in
+`history.md`'s "Steering run 1" through "Steering runs 3-4" sections.
+Per-task detail:
 
 | Task | Specialist result | Specialist config | Generalist result |
 |---|---|---|---|
-| `doc-crossref` | **PASS** | [`task-overrides/doc-crossref.md`](task-overrides/doc-crossref.md) — exact-fact reminder for the historically-dropped tool name | n/a — Tier 2 not started |
-| `doc-summarize` | 1 missing fact (down from 2) | [`task-overrides/doc-summarize.md`](task-overrides/doc-summarize.md) | n/a |
-| `doc-surgical` | Q2 (instruction bleed) mostly fixed; Q3 (substitution) unchanged | [`task-overrides/doc-surgical.md`](task-overrides/doc-surgical.md) | n/a |
-| `doc-verbatim` | Ambiguous — one defect fixed, two new ones appeared | [`task-overrides/doc-verbatim.md`](task-overrides/doc-verbatim.md) | n/a |
-| `doc-script` | Ambiguous — needs one more draw | [`task-overrides/doc-script.md`](task-overrides/doc-script.md) | n/a |
+| `doc-crossref` | **PASS** (needs Confirm re-verification — this task has documented per-draw flakiness) | [`task-overrides/doc-crossref.md`](task-overrides/doc-crossref.md) — exact-fact reminder for the historically-dropped tool name | n/a — Tier 2 not started |
+| `doc-summarize` | **PASS on 1 of 2 draws** (needs Confirm re-verification) | [`task-overrides/doc-summarize.md`](task-overrides/doc-summarize.md) — sharpened single-fact reminder | n/a |
+| `doc-script` | Stable partial — 1 forbidden token remains, reproduced identically across 3 draws | [`task-overrides/doc-script.md`](task-overrides/doc-script.md) | n/a |
+| `doc-verbatim` | 4/4 runs used, contradictory results (best: 1-line defect; worst: severe) — **reverted to bare** | bare — no variant beat bare with confidence | n/a |
+| `doc-surgical` | 3 attempts, noise-dominated (best/worst/worst) — **reverted to bare** | bare — no variant beat bare with confidence | n/a |
 | `doc-repair` | Gated out (flat after run 1) | bare — steering didn't help | n/a |
 | `doc-adapt` | Gated out (flat after run 1, matches R1's cross-model "structural limit" signal) | bare — steering didn't help | n/a |
 | `doc-synthesize` | Gated out (regressed) | bare — steering hurt this task | n/a |
 | `doc-restructure` | Gated out in run 1 (instruction conflicted with the task's actual job) | bare — steering hurt this task | n/a |
 
-Tier 2 (generalist search) hasn't started — Tier 1 is still active on 4
-tasks. Given the pattern so far (per-task fixes, several gated out as
-actively harmful), a working generalist for this role is not expected —
+**Next: Confirm (re-verify the 2 PASSes) or Tier 2 (generalist search).**
+Given the pattern (2 narrow specialist wins, 2 noise-dominated tasks
+reverted to bare after real budget spent, several actively harmed by
+steering), a working generalist for this role is not expected —
 consistent with this project's now-standing finding that small models
 don't generalize a single config across heterogeneous task shapes (see
 root `README.md`).
