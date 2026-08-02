@@ -1,0 +1,43 @@
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Bench.Stats;
+
+public sealed record Ticket(string Status, int Priority);
+
+public sealed class TicketStatsAggregator
+{
+    public Dictionary<string, int> CountByStatus(IEnumerable<Ticket> tickets)
+    {
+        if (tickets == null)
+            throw new ArgumentNullException(nameof(tickets));
+
+        return tickets.GroupBy(t => t.Status).ToDictionary(g => g.Key, g => g.Count());
+    }
+
+    public double AverageOpenPriority(IEnumerable<Ticket> tickets)
+    {
+        if (tickets == null)
+            throw new ArgumentNullException(nameof(tickets));
+
+        var openTickets = tickets.Where(t => t.Status == "Open");
+        if (!openTickets.Any())
+            return 0.0;
+
+        return openTickets.Average(t => t.Priority);
+    }
+
+    public List<string> TopStatuses(IEnumerable<Ticket> tickets, int n)
+    {
+        if (tickets == null)
+            throw new ArgumentNullException(nameof(tickets));
+
+        var statusCounts = tickets.GroupBy(t => t.Status).ToDictionary(g => g.Key, g => g.Count());
+        var sortedStatuses = statusCounts.OrderByDescending(g => g.Value).ThenBy(g => g.Key, StringComparer.Ordinal);
+
+        return sortedStatuses.Take(n).Select(g => g.Key).ToList();
+    }
+}
+```

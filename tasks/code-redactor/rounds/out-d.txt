@@ -1,0 +1,62 @@
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Bench.Task6
+{
+    public sealed class PatternRule
+    {
+        public string Name { get; set; } = "";
+        public string Regex { get; set; } = "";
+        public string Replacement { get; set; } = "";
+    }
+
+    public sealed class Redactor
+    {
+        private readonly Dictionary<string, Regex> _rules;
+
+        public Redactor(IReadOnlyList<PatternRule> rules)
+        {
+            _rules = new Dictionary<string, Regex>();
+            foreach (var rule in rules)
+            {
+                try
+                {
+                    _rules.Add(rule.Name, new Regex(rule.Regex));
+                }
+                catch (ArgumentException ex)
+                {
+                    Console.WriteLine($"Invalid regex for rule {rule.Name}: {ex.Message}");
+                }
+            }
+        }
+
+        public string Redact(string input, IReadOnlyList<PatternRule> rules)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return "";
+            }
+
+            foreach (var rule in rules)
+            {
+                if (_rules.TryGetValue(rule.Name, out var regex))
+                {
+                    try
+                    {
+                        input = regex.Replace(input, rule.Replacement);
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        Console.WriteLine($"Invalid regex for rule {rule.Name}: {ex.Message}");
+                    }
+                }
+            }
+
+            return input;
+        }
+    }
+}
+```

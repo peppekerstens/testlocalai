@@ -1,0 +1,43 @@
+```csharp
+using System;
+using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
+
+namespace Bench.Task6
+{
+    public sealed class PatternRule
+    {
+        public string Name { get; set; } = "";
+        public string Regex { get; set; } = "";
+        public string Replacement { get; set; } = "";
+    }
+
+    public sealed class Redactor
+    {
+        private readonly ConcurrentDictionary<string, string> _cache = new ConcurrentDictionary<string, string>();
+
+        public string Redact(string input, IReadOnlyList<PatternRule> rules)
+        {
+            if (string.IsNullOrEmpty(input) || rules == null || rules.Count == 0)
+                return input;
+
+            foreach (var rule in rules)
+            {
+                try
+                {
+                    var regex = new Regex(rule.Regex);
+                    var result = regex.Replace(input, rule.Replacement);
+                    _cache[rule.Name] = result;
+                    input = result;
+                }
+                catch (ArgumentException)
+                {
+                    // Skip invalid regex and continue with the next rule
+                }
+            }
+
+            return input;
+        }
+    }
+}
+```

@@ -1,0 +1,44 @@
+```csharp
+using System.Net.Http;
+using System.Text.Json.Nodes;
+using System.Threading.Tasks;
+
+namespace Bench.Task3;
+
+public sealed class CwClient
+{
+    private readonly HttpClient _http;
+
+    public CwClient(HttpClient httpClient)
+    {
+        _http = httpClient;
+    }
+
+    public async Task<System.Text.Json.Nodes.JsonNode?> GetAsync(
+        string path, CancellationToken cancellationToken = default)
+    {
+        var response = await _http.GetAsync(path, cancellationToken);
+        if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.NoContent)
+        {
+            return null;
+        }
+        else
+        {
+            response.EnsureSuccessStatusCode();
+            var body = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(body))
+            {
+                return null;
+            }
+            try
+            {
+                return JsonNode.Parse(body);
+            }
+            catch (JsonException ex)
+            {
+                throw new HttpRequestException($"Failed to parse JSON: {ex.Message}", ex);
+            }
+        }
+    }
+}
+```

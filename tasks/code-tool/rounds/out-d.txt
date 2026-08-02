@@ -1,0 +1,53 @@
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using System.Text.RegularExpressions;
+using YamlDotNet.Serialization;
+
+namespace Bench.Task5;
+
+public interface ITicketStore
+{
+    Task<string?> GetTicketAsync(int id);
+}
+
+public sealed class InMemoryTicketStore : ITicketStore
+{
+    public Task<string?> GetTicketAsync(int id)
+    {
+        switch (id)
+        {
+            case 1:
+                return Task.FromResult("Ticket 1");
+            case 999:
+                return Task.FromResult(null);
+            default:
+                return Task.FromResult((string?)null);
+        }
+    }
+}
+
+public sealed class TicketTool
+{
+    private readonly ITicketStore _store;
+
+    public TicketTool(ITicketStore store)
+    {
+        _store = store;
+    }
+
+    public string? GetTicket(int id)
+    {
+        return _store.GetTicketAsync(id).Result;
+    }
+}
+
+public static class TicketServiceCollectionExtensions
+{
+    public static IServiceCollection AddTicketTool(this IServiceCollection services)
+    {
+        services.AddSingleton<ITicketStore, InMemoryTicketStore>();
+        services.AddSingleton<TicketTool>();
+        return services;
+    }
+}
+```

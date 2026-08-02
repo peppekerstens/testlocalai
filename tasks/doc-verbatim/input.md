@@ -1,0 +1,15 @@
+## Top level
+
+```yaml
+mode: consistent | session-random   # required
+entities: { ... }                    # required, may be empty map
+nestedEntities: { ... }               # optional, defaults to {}
+customFields: { ... }                 # optional, omit entirely to disable
+```
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `mode` | enum: `"consistent"` \| `"session-random"` | yes | Any other string fails validation at startup. See "Token modes" below. |
+| `entities` | map of string → [EntityRule](#entityrule) | yes | Key is the entity type name (e.g. `company`, `contact`, `member`) — this name is what `nestedEntities` values reference, and what a tool passes as `rootEntityType` when it fetches data. Free-form; not a fixed enum. |
+| `nestedEntities` | map of string → string | no (default `{}`) | Key is a JSON property name as it appears in a ConnectWise response (e.g. `defaultContact`, `owner`, `company`); value must be a key that exists in `entities`. |
+| `customFields` | [CustomFieldsRule](#customfieldsrule) | no | Omit to disable custom-field exclusion entirely. |

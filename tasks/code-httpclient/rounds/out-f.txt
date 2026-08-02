@@ -1,0 +1,45 @@
+```csharp
+using System;
+using System.Net.Http;
+using System.Text.Json.Nodes;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Bench.Task3
+{
+    public sealed class CwClient
+    {
+        private readonly HttpClient _http;
+
+        public CwClient(HttpClient httpClient)
+        {
+            _http = httpClient;
+        }
+
+        public async Task<System.Text.Json.Nodes.JsonNode?> GetAsync(
+            string path, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                HttpResponseMessage response = await _http.GetAsync(path, cancellationToken);
+                if (response.IsSuccessStatusCode)
+                {
+                    string body = await response.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrWhiteSpace(body))
+                    {
+                        return JsonNode.Parse(body);
+                    }
+                }
+                else
+                {
+                    throw new HttpRequestException(response.ReasonPhrase);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+        }
+    }
+}
+```

@@ -1,0 +1,43 @@
+using System;
+using System.Collections.Generic;
+
+namespace Bench.Equality;
+
+public sealed class CompositeKey : IEquatable<CompositeKey>
+{
+    public string TenantId { get; }
+    public string ResourceId { get; }
+
+    public CompositeKey(string tenantId, string resourceId)
+    {
+        TenantId = tenantId ?? throw new ArgumentNullException(nameof(tenantId));
+        ResourceId = resourceId ?? throw new ArgumentNullException(nameof(resourceId));
+    }
+
+    public bool Equals(CompositeKey? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return string.Equals(TenantId, other.TenantId, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(ResourceId, other.ResourceId, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public override bool Equals(object? obj) => Equals(obj as CompositeKey);
+
+    public override int GetHashCode() =>
+        HashCode.Combine(TenantId.ToUpperInvariant(), ResourceId.ToUpperInvariant());
+
+    public static bool operator ==(CompositeKey? left, CompositeKey? right) =>
+        left is null ? right is null : left.Equals(right);
+
+    public static bool operator !=(CompositeKey? left, CompositeKey? right) => !(left == right);
+}
+
+public sealed class KeyDeduplicator
+{
+    public HashSet<CompositeKey> Deduplicate(IEnumerable<CompositeKey> keys)
+    {
+        if (keys is null) throw new ArgumentNullException(nameof(keys));
+        return new HashSet<CompositeKey>(keys);
+    }
+}

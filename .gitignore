@@ -1,0 +1,19 @@
+# dotnet build artifacts (task harnesses) — regenerable, machine-specific
+bin/
+obj/
+
+# bench/pure-run.sh scratch output — freely overwritten, never evidence
+# (see AGENTS.md "Reports are model-scoped; scratch files are not evidence")
+bench/tmp/*
+!bench/tmp/.gitkeep
+
+# Claude Code / AI-tool runtime state — local session state, not project content
+.claude/
+
+# session lifecycle state — runtime-created by session-start.sh, archived by session-stop.sh
+bench/.session-state.json
+bench/.session-state.json.last
+
+# OS cruft
+.DS_Store
+Thumbs.db

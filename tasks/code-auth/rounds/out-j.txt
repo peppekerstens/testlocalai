@@ -1,0 +1,25 @@
+```csharp
+using System;
+using System.Threading.Tasks;
+
+namespace Bench.Task4
+{
+    public sealed class AuthResolver
+    {
+        public string ResolveUser(bool requireAuth, string? xDevUser)
+        {
+            if (xDevUser != null && !string.IsNullOrWhiteSpace(xDevUser))
+            {
+                return xDevUser;
+            }
+
+            if (requireAuth)
+            {
+                throw new UnauthorizedAccessException("Access denied");
+            }
+
+            return "anonymous";
+        }
+    }
+}
+```

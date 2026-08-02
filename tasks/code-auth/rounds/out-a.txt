@@ -1,0 +1,22 @@
+```csharp
+namespace Bench.Task4;
+
+public sealed class AuthResolver
+{
+    public string ResolveUser(bool requireAuth, string? xDevUser)
+    {
+        if (requireAuth && !string.IsNullOrWhiteSpace(xDevUser))
+        {
+            return xDevUser;
+        }
+        else if (requireAuth)
+        {
+            throw new UnauthorizedAccessException();
+        }
+        else
+        {
+            return "anonymous";
+        }
+    }
+}
+```

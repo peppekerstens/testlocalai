@@ -1,0 +1,51 @@
+```csharp
+using System.Text.RegularExpressions;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+
+namespace Bench.Task1;
+
+public sealed class ConfigLoader
+{
+    public ObfuscationConfig Load(string yaml)
+    {
+        var deserializer = new DeserializerBuilder()
+            .IgnoreUnmatchedProperties()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+        var config = deserializer.Deserialize<ObfuscationConfig>(yaml);
+        if (config is null || config.Connection is null
+            || string.IsNullOrWhiteSpace(config.Connection.Token)
+            || string.IsNullOrWhiteSpace(config.Connection.BaseUrl))
+        {
+            throw new InvalidOperationException("Invalid YAML or missing connection details.");
+        }
+        return config;
+    }
+}
+
+public sealed class ObfuscationConfig
+{
+    public ConnectionInfo Connection { get; set; } = new();
+    public ObfuscationSettings Obfuscation { get; set; } = new();
+}
+
+public sealed class ConnectionInfo
+{
+    public string Token { get; set; } = "";
+    public string BaseUrl { get; set; } = "";
+}
+
+public sealed class ObfuscationSettings
+{
+    public bool Enabled { get; set; }
+    public List<PatternRule> Patterns { get; set; } = new();
+}
+
+public sealed class PatternRule
+{
+    public string Name { get; set; } = "";
+    public string Regex { get; set; } = "";
+    public string Replacement { get; set; } = "";
+}
+```

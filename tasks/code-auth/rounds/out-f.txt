@@ -1,0 +1,31 @@
+```csharp
+using System.Security.Cryptography;
+using System.Text;
+using System.Linq;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Numerics;
+using System;
+
+namespace Bench.Task4
+{
+    public sealed class AuthResolver
+    {
+        public string ResolveUser(bool requireAuth, string? xDevUser)
+        {
+            if (xDevUser != null && !string.IsNullOrWhiteSpace(xDevUser))
+            {
+                return xDevUser;
+            }
+            else if (requireAuth)
+            {
+                throw new UnauthorizedAccessException();
+            }
+            else
+            {
+                return "anonymous";
+            }
+        }
+    }
+}
+```

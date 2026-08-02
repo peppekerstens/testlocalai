@@ -1,0 +1,70 @@
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Bench.Repository;
+
+public interface IRepository<T>
+{
+    void Add(string id, T item);
+    T? Get(string id);
+    bool Update(string id, T item);
+    bool Remove(string id);
+    IReadOnlyCollection<T> GetAll();
+}
+
+public sealed class InMemoryRepository<T> : IRepository<T>
+{
+    private readonly Dictionary<string, T> _items = new();
+
+    public void Add(string id, T item)
+    {
+        if (id == null)
+            throw new ArgumentNullException(nameof(id));
+
+        if (_items.ContainsKey(id))
+            throw new ArgumentException($"Duplicate key: {id}", nameof(id));
+
+        _items[id] = item;
+    }
+
+    public T? Get(string id)
+    {
+        if (id == null)
+            return default(T);
+
+        return _items.TryGetValue(id, out T value) ? value : default(T);
+    }
+
+    public bool Update(string id, T item)
+    {
+        if (id == null)
+            return false;
+
+        if (!_items.ContainsKey(id))
+            return false;
+
+        _items[id] = item;
+        return true;
+    }
+
+    public bool Remove(string id)
+    {
+        if (id == null)
+            return false;
+
+        return _items.Remove(id);
+    }
+
+    public IReadOnlyCollection<T> GetAll()
+    {
+        return _items.Values.ToList();
+    }
+}
+
+public static class RepositoryFactory
+{
+    public static IRepository<T> Create<T>() => new InMemoryRepository<T>();
+}
+```

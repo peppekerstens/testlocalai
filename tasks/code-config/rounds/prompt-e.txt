@@ -1,0 +1,160 @@
+C# CODING RULES — apply every one of these to your solution:
+
+1. EXACT SIGNATURE. Implement precisely the types, method names, parameters,
+   return types, and namespaces given in the task. Do not add overloads,
+   parameters, extra methods, extra classes, or extra files.
+2. EXACT CONTRACT. Implement the behavior contract verbatim. Do not invent
+   behavior, headers, environment variables, or features the task did not
+   mention. Nothing more, nothing less.
+3. NULLABILITY. Honor `?` on types. A `string?`/`JsonNode?` return means
+   null IS a valid result path; never throw instead of returning null.
+4. THREAD SAFETY. Shared mutable state (caches, counters, collections used
+   from many threads) MUST use System.Collections.Concurrent types and/or
+   `lock(...)`. Never a plain `Dictionary`/`List` without synchronization.
+5. ERROR HANDLING. Throw the exact exception type the task names. Do not
+   catch and swallow exceptions unless the task explicitly says to skip.
+6. ASYNC. Use `async`/`await`; never `.Result`, never `.Wait()`, never
+   `GetAwaiter().GetResult()`. Always pass a `CancellationToken` through.
+7. RETURN THE PRECISE TYPE. If a task says "returns JsonNode" then return
+   `JsonNode?`, not `object`, not `dynamic`, not `string`.
+8. DI. A service given in a constructor must come from injection. Never
+   `new` up a service that should be injected; never `new` inside a method
+   when a field exists.
+9. SIMPLICITY. Shortest correct implementation that satisfies the contract.
+   No refactoring, no unused usings, no extra feature creep, no comments
+   unless asked.
+10. NO EXTRA INPUTS. If the signature has N parameters, read only those.
+    Do not reach for Environment variables, HttpContext, headers, or
+    globals that the signature does not expose.
+11. COMPLETE FILE. The output must contain EVERY type, class, and method
+    the task asks for — including the ones it only names in passing. Do not
+    truncate the answer; emit the whole file even if it is long. Never end
+    the fenced block before every requested type is present.
+12. IMPORT EVERY NAMESPACE. For every type you reference, add its `using`
+    (e.g. `System.Text.RegularExpressions` for Regex,
+    `System.Text.Json` for JsonException,
+    `YamlDotNet.Serialization.NamingConventions` for
+    CamelCaseNamingConvention, `System.Text.Json.Nodes` for JsonNode).
+    Missing usings are a build error — check each referenced type has its
+    import at the top of the file.
+13. CANONICAL APIs. Use the exact, real API names and overloads:
+    - Remove from a `ConcurrentDictionary` with `TryRemove(key, out _)`.
+    - `Task.FromResult<string?>(null)` for a nullable null result.
+    - `new HttpRequestException(message, innerException)` — the second
+      argument must be an `Exception`, never an HttpResponseMessage.
+    - `HttpClient.GetAsync(path, cancellationToken)`.
+    When in doubt, use the API exactly as written in the task's example.
+14. TRACE EVERY BRANCH. Walk your code line by line against each bullet of
+    the behavior contract. Pay special attention to success paths (200, 204,
+    NoContent), empty/null/whitespace inputs, and the "otherwise" fallbacks
+    of every conditional. If a contract bullet is not covered by your
+    branches, add it.
+15. USING ONLY NAMESPACES. A `using` directive names a NAMESPACE, never a
+    single type. Never write `using System.Threading.CancellationToken;`.
+    CancellationToken lives in `System.Threading`, which is already
+    imported implicitly — do not import it again.
+16. USING ONLY WHAT THE TASK NEEDS. Import ONLY the namespaces for the
+    libraries THIS task actually uses. Never import a namespace for a
+    library the task does not use (no DI unless the task mentions
+    IServiceCollection, no YamlDotNet unless the task mentions YAML, no
+    regex unless the task uses Regex, no JsonNode unless the task uses it).
+    Importing a package the project does not reference is a build error.
+
+Follow the OUTPUT FORMAT exactly: one fenced code block, nothing else.
+
+
+--- TASK BELOW ---
+
+ROLE: You are a coding subagent. Implement exactly the task below.
+You are Qwen 2.5 Coder 1.5B: be conservative, prefer simple correct code,
+do not add anything not requested.
+
+TASK: Implement a YAML config loader using the YamlDotNet library.
+
+FILES TO CREATE: exactly ONE file: `ObfuscationConfig.cs`
+Its namespace MUST be: `Bench.Task1`
+
+The file must contain ALL of these types, exactly as specified.
+
+WRITE THE IMPLEMENTATION FIRST. Start the file with the ConfigLoader
+class below (with its usings), THEN append the record types after it.
+
+```csharp
+namespace Bench.Task1;
+
+public sealed class ConfigLoader
+{
+    public ObfuscationConfig Load(string yaml)
+    {
+        // use YamlDotNet to deserialize yaml into ObfuscationConfig
+    }
+}
+```
+
+Then, AFTER the ConfigLoader class, append these record types verbatim:
+
+```csharp
+public sealed class ObfuscationConfig
+{
+    public ConnectionInfo Connection { get; set; } = new();
+    public ObfuscationSettings Obfuscation { get; set; } = new();
+}
+
+public sealed class ConnectionInfo
+{
+    public string Token { get; set; } = "";
+    public string BaseUrl { get; set; } = "";
+}
+
+public sealed class ObfuscationSettings
+{
+    public bool Enabled { get; set; }
+    public List<PatternRule> Patterns { get; set; } = new();
+}
+
+public sealed class PatternRule
+{
+    public string Name { get; set; } = "";
+    public string Regex { get; set; } = "";
+    public string Replacement { get; set; } = "";
+}
+```
+
+CLASS CHECKLIST — your output file MUST contain exactly these FIVE
+classes, in this order: ConfigLoader, ObfuscationConfig, ConnectionInfo,
+ObfuscationSettings, PatternRule. Before you close the fenced block,
+count them and confirm all five are present. The ConfigLoader class MUST
+be present in your output. Do not stop early — the file is not complete
+until all five classes exist.
+
+BEHAVIOR CONTRACT (must hold exactly):
+1. Load a YAML document shaped like:
+   ```yaml
+   connection:
+     token: "abc123"
+     baseUrl: "https://api.example.com"
+   obfuscation:
+     enabled: true
+     patterns:
+       - name: email
+         regex: "\\b[\\w.+-]+@[\\w-]+\\.[\\w.]+\\b"
+         replacement: "[EMAIL]"
+   ```
+2. If `token` or `baseUrl` is missing or empty (whitespace counts as
+   empty), throw `InvalidOperationException`.
+3. If the YAML is malformed and cannot be parsed, throw any exception
+   (the test only asserts that an exception is thrown).
+4. If the `obfuscation` section is absent entirely, `Enabled` must be
+   `false` and `Patterns` must be an empty list.
+
+HINT: YamlDotNet property matching is case-sensitive and the YAML keys are
+camelCase. Use:
+`new DeserializerBuilder().IgnoreUnmatchedProperties().WithNamingConvention(CamelCaseNamingConvention.Instance).Build()`
+(import `YamlDotNet.Serialization` and
+`YamlDotNet.Serialization.NamingConventions`), then call
+`.Deserialize<ObfuscationConfig>(yaml)`. If deserialization returns null
+or the connection is null, treat that as an error.
+
+OUTPUT FORMAT: output ONLY the complete contents of the single file
+`ObfuscationConfig.cs` inside one fenced code block starting with
+```csharp and ending with ```. No explanations, no other text.

@@ -1,0 +1,37 @@
+ROLE: You are a documentation subagent. Adapt the document below exactly as
+instructed. You are DeepSeek R1 1.5B: be conservative, change ONLY what the
+edit list says, copy everything else verbatim.
+
+DOCUMENT TO ADAPT:
+
+## Top level
+
+```yaml
+mode: consistent | session-random   # required
+entities: { ... }                    # required, may be empty map
+nestedEntities: { ... }               # optional, defaults to {}
+customFields: { ... }                 # optional, omit entirely to disable
+```
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `mode` | enum: `"consistent"` \| `"session-random"` | yes | Any other string fails validation at startup. See "Token modes" below. |
+| `entities` | map of string → [EntityRule](#entityrule) | yes | Key is the entity type name (e.g. `company`, `contact`, `member`) — this name is what `nestedEntities` values reference, and what a tool passes as `rootEntityType` when it fetches data. Free-form; not a fixed enum. |
+| `nestedEntities` | map of string → string | no (default `{}`) | Key is a JSON property name as it appears in a ConnectWise response (e.g. `defaultContact`, `owner`, `company`); value must be a key that exists in `entities`. |
+| `customFields` | [CustomFieldsRule](#customfieldsrule) | no | Omit to disable custom-field exclusion entirely. |
+
+EDIT LIST:
+1. Copy the document above VERBATIM — every character, including the YAML
+   fence and the table — with no changes at all.
+2. Then append exactly this line at the end of the document, on its own line
+   (a single trailing newline after it):
+
+> Note: in the C# port, validation of this schema is implemented in `ObfuscationConfigLoader` (startup fail-fast), not in a runtime schema library.
+
+MUST / MUST NOT:
+- MUST: keep the original text byte-for-byte.
+- MUST NOT: rewrite, rephrase, reformat, fix, or comment on the content.
+- MUST NOT: add anything besides the one appended note.
+- MUST NOT: wrap the document in a code fence or add a heading.
+
+OUTPUT: the full adapted document, and nothing else.

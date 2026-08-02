@@ -1,0 +1,57 @@
+```csharp
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+
+namespace Bench.Task2
+{
+    public sealed class TokenCache
+    {
+        private readonly int _capacity;
+        private readonly ConcurrentDictionary<string, string> _cache;
+        private readonly List<string> _queue;
+        private readonly object _lock = new object();
+
+        public TokenCache(int capacity)
+        {
+            if (capacity <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(capacity), "Capacity must be greater than zero.");
+            }
+
+            _capacity = capacity;
+            _cache = new ConcurrentDictionary<string, string>();
+            _queue = new List<string>();
+        }
+
+        public bool TryGet(string userId, out string? token)
+        {
+            lock (_lock)
+            {
+                if (!_cache.TryGetValue(userId, out token))
+                {
+                    return false;
+                }
+                _queue.Remove(userId);
+                _queue.Add(userId);
+                return true;
+            }
+        }
+
+        public void Set(string userId, string token)
+        {
+            lock (_lock)
+            {
+                if (_cache.Count >= _capacity && !_cache.ContainsKey(userId))
+                {
+                    var oldestUserId = _queue[0];
+                    _cache.Remove(oldestUserId);
+                    _queue.RemoveAt(0);
+                }
+                _cache[userId] = token;
+                _queue.Add(userId);
+            }
+        }
+    }
+}
+```

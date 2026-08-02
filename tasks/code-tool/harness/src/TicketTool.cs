@@ -1,0 +1,52 @@
+using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+namespace Bench.Task5;
+
+public interface ITicketStore
+{
+    Task<string?> GetTicketAsync(int id);
+}
+
+public sealed class InMemoryTicketStore : ITicketStore
+{
+    public Task<string?> GetTicketAsync(int id)
+    {
+        // id 1 -> "Ticket 1"; id 2 -> "Ticket 2"; any other id -> null
+        switch (id)
+        {
+            case 1:
+                return Task.FromResult("Ticket 1");
+            case 2:
+                return Task.FromResult("Ticket 2");
+            default:
+                return Task.FromResult<string?>(null);
+        }
+    }
+}
+
+public class TicketTool
+{
+    private readonly ITicketStore _ticketStore;
+
+    public TicketTool(ITicketStore store)
+    {
+        _ticketStore = store;
+    }
+
+    public string? GetTicket(int id)
+    {
+        return _ticketStore.GetTicketAsync(id).Result;
+    }
+}
+
+public static class TicketServiceCollectionExtensions
+{
+    public static IServiceCollection AddTicketTool(this IServiceCollection services)
+    {
+        services.AddSingleton<ITicketStore, InMemoryTicketStore>();
+        services.AddSingleton<TicketTool>();
+        return services;
+    }
+}

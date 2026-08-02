@@ -1,0 +1,41 @@
+TASK: LINQ ticket-stats aggregator.
+FILE: one file `TicketStats.cs`. Namespace: `Bench.Stats`.
+
+File MUST start with this EXACT using line:
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Linq;
+```
+
+WRITE record TYPE FIRST, THEN the aggregator class.
+
+```csharp
+namespace Bench.Stats;
+
+public sealed record Ticket(string Status, int Priority);
+```
+
+AFTER Ticket, append TicketStatsAggregator with these EXACT three method signatures:
+
+```csharp
+public sealed class TicketStatsAggregator
+{
+    public Dictionary<string, int> CountByStatus(IEnumerable<Ticket> tickets) { ... }
+    public double AverageOpenPriority(IEnumerable<Ticket> tickets) { ... }
+    public List<string> TopStatuses(IEnumerable<Ticket> tickets, int n) { ... }
+}
+```
+
+CLASS CHECKLIST: output MUST contain exactly these TWO types in this order: Ticket, TicketStatsAggregator. Count both before closing the fenced block. Do not stop early.
+
+BEHAVIOR (must hold exactly):
+1. `tickets == null` on ANY of the three methods -> throw `ArgumentNullException`. Check this FIRST in every method, before enumerating.
+2. Each method enumerates `tickets` EXACTLY ONCE. Never call `.Count()`, `.Any()`, or a second `foreach`/LINQ chain over the same parameter — materialize with `.ToList()` once if you need multiple passes over the data.
+3. `CountByStatus`: count of tickets per exact `Status` string (case-sensitive). Empty input -> empty dictionary.
+4. `AverageOpenPriority`: average of `Priority` where `Status == "Open"` EXACTLY (case-sensitive, `"open"`/`"OPEN"` do NOT count). No matching tickets or empty input -> return `0.0`, never divide by zero.
+5. `TopStatuses`: distinct `Status` values ordered by count descending, ties broken alphabetically ascending (`StringComparer.Ordinal`), then take the first `n`. `n == 0` -> empty list. `n` larger than the distinct count -> return all distinct statuses.
+
+HINT: for tie-break, `.OrderByDescending(g => g.Count()).ThenBy(g => g.Key, StringComparer.Ordinal)`.
+
+OUTPUT: ONLY complete `TicketStats.cs` in one fenced ```csharp block. No explanations, no other text.

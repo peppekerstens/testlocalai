@@ -1,0 +1,60 @@
+# Models — index
+
+Every local LLM tested in this project, and which role(s) it's actually
+been tested against. One row per model+role combination — most models
+only cover one or two roles, so a full model×role matrix would be mostly
+empty cells. See `../README.md`'s "Roles" table for what each role tests
+in general; this table is model-specific results.
+
+| Model | Role | Status | Evidence |
+|---|---|---|---|
+| [`qwen2.5-coder-1.5b`](qwen2.5-coder-1.5b/) | code-emitter | ✅ Established — two validated recipes (original 6 / new 6 task families) | `qwen2.5-coder-1.5b/README.md` |
+| [`deepseek-r1-1.5b`](deepseek-r1-1.5b/) | documenter | ⚠️ Mixed — suitable for a defined task subset, not general-purpose (see its Verdict table) | `deepseek-r1-1.5b/README.md` |
+| [`deepseek-r1-1.5b`](deepseek-r1-1.5b/) | reasoner | ⚠️ Mixed — 1/3 task types solid, rest need steering or are past this model's ceiling | `deepseek-r1-1.5b/README.md` |
+| [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | documenter | 🔬 Preliminary — one baseline + one steering pass, work paused mid-iteration | `lfm2.5-1.2b-thinking/README.md` |
+| [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | reasoner | 🔬 Preliminary — same status as documenter (combined doc+reason suite) | `lfm2.5-1.2b-thinking/README.md` |
+| [`qwen3.5:0.8b`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
+| [`qwen3.5:2b`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
+| [`qwen3.5:0.8b-bf16`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
+| [`lfm2.5-vl-450m`](lfm2.5-vl-450m/) | visual | 🚧 Scaffold only — model not downloaded, role not wired up | `lfm2.5-vl-450m/README.md` |
+| — (no model tested yet) | tool-use | Task suite built + blind-subagent-validated only (`claude-sonnet-5`) — no real small-model run yet | `claude-sonnet-5/README.md` "Tool-use extension" |
+| — (no model tested yet) | extract | Task suite built + blind-subagent-validated only — no real small-model run yet | `claude-sonnet-5/README.md` "Extract extension" |
+| — (no model tested yet) | review | Task suite built + blind-subagent-validated only — no real small-model run yet | `claude-sonnet-5/README.md` "Review extension" |
+
+## Reference baseline (not a steering target)
+
+[`claude-sonnet-5`](claude-sonnet-5/) — the orchestrator's own model,
+used to validate that every task suite is actually achievable before any
+small local model is tested against it (isolated subagent, zero tool
+calls, `verify.sh` as sole judge — never shown ground truth). Not
+"steered" or "optimized" the way the models above are; its README is a
+validation ledger, not a profile to keep current-state-trimmed the same
+way.
+
+## Downloaded, not yet profiled
+
+Real small-model smoke tests were run against these during initial setup
+(context-window/`enable_thinking`-toggle probes — see
+`deepseek-r1-1.5b/history.md` and the qwen3.5 investigation), but no task
+suite has been run against them yet, so there's no role/status to report:
+
+- `lfm2.5:1.2b-thinking-bf16` variants and `qwen3.5:0.8b` /
+  `qwen3.5:2b` / `qwen3.5:0.8b-bf16` — downloaded 2026-08-02, whitelisted
+  in `bench/dispatch.sh`, systemd services wired (ports 8083–8085). A
+  known finding worth flagging before testing further: `qwen3.5`'s
+  default thinking mode showed a runaway-reasoning failure mode on a
+  trivial prompt across all three configs tested (0.8B Q4, 0.8B BF16, 2B
+  Q4) — burned the full 8192-token context on reasoning without ever
+  producing an answer, 3/3 reproductions. `enable_thinking:false` does
+  work correctly on this model family (confirmed both directions on the
+  0.8B, unlike deepseek-r1's broken toggle) but is not yet wired into
+  `dispatch.sh`.
+
+## Adding a model here
+
+See root `README.md`'s "Adding a new model". Once a model has at least
+one real task-suite run against a role, give it a row above (or its own
+row per role tested) and create `models/<model>/README.md` following the
+shape of an existing entry: current status up top, "how to optimize"
+instructions, link to `history.md` (once there's enough narrative to
+warrant separating it out) and `reports/`.

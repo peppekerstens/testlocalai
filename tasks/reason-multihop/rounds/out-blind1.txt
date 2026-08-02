@@ -1,0 +1,5 @@
+1. Proximate mechanism: `redactDeep` only obfuscates fields it is explicitly told to obfuscate, driven entirely by a per-entity field list — it has no default-deny or infer-from-sibling-field behavior. Since `addressLine1` is obfuscated but `addressLine2` is not, `addressLine2` simply is not among the field names `redactDeep` was told to act on for this entity, so it falls through the pass-through path untouched.
+
+2. Root cause: In `src/config/obfuscation-rules.yaml`, under `entities.<company-entity>.fields`, the list contains an entry for `addressLine1` but has no corresponding entry for `addressLine2` — it was omitted (e.g., during initial authoring or a later field addition) from that entity's obfuscated-fields list.
+
+3. Fix: Add `addressLine2` to the `entities.<company-entity>.fields` list in `src/config/obfuscation-rules.yaml` alongside `addressLine1`.

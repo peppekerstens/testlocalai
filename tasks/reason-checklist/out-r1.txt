@@ -1,0 +1,647 @@
+1. Run the dotnet build command to ensure the server is built successfully.
+   - Action: dotnet build
+   - Expected result: The server is built and ready for use.
+
+2. Execute the dotnet run command to launch the server.
+   - Action: dotnet run --project src/ConnectwiseMcp
+   - Expected result: The server is running and accessible.
+
+3. Verify that the server listens on the correct port, defaulting to 3000.
+   - Action: Check the Port value
+   - Expected result: The Port value is 3000.
+
+4. Confirm that the server is listening on the correct URL, defaulting to `http://127.0.0.1:3000/mcp`.
+   - Action: Check the MCP endpoint
+   - Expected result: The URL is correct.
+
+5. Validate that the server's credentials are correctly set in the .env files.
+   - Action: Check each .env variable
+   - Expected result: All .env variables are present and valid.
+
+6. Ensure that the server's obfuscation config is validated at startup.
+   - Action: Check the CW_OBFUSCATION_CONFIG file
+   - Expected result: The config file is valid.
+
+7. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+   - Action: Send an `initialize` request and check the response
+   - Expected result: The server responds with a session ID in the header.
+
+8. Run the `curl` command to check the server's response to the `initialize` request.
+   - Action: curl -X POST http://127.0.0.1:3000/mcp/initialize
+   - Expected result: The server responds with a session ID in the header.
+
+9. Verify that the server responds with a session ID in the `mcp-session-id` header.
+   - Action: Check the `mcp-session-id` header
+   - Expected result: The header contains the session ID.
+
+10. Run the `curl` command to verify the response from the server.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+11. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+12. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+13. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+14. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+15. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+16. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+17. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl -X POST http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+18. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+19. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+20. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+21. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+22. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+23. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+24. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+25. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+26. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+27. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+28. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+29. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+30. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+31. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+32. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+33. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+34. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+35. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+36. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+37. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+38. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+39. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+40. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+41. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+42. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+43. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+44. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+45. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+46. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+47. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+48. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+49. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+50. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+51. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+52. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+53. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+54. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+55. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+56. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+57. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+58. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+59. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+60. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+61. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+62. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+63. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+64. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+65. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+66. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+67. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+68. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+69. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+70. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+71. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+72. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+73. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+74. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+75. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+76. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+77. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+78. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+79. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+80. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+81. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+82. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+83. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+84. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+85. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+86. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+87. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+88. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+89. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+90. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+91. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+92. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+93. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+94. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+95. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+96. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+97. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+98. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+99. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+100. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+101. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+102. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+103. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+104. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+105. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+106. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+107. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+108. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+109. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+110. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+111. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+112. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+113. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+114. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+115. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+116. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+117. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+118. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+119. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+120. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+121. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+122. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+123. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+124. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+125. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+126. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+127. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+128. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+129. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+130. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+131. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+132. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+133. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+134. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+135. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+136. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+137. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+138. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+139. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+140. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+141. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+142. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+143. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+144. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+145. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+146. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+147. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+148. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+149. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+150. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+151. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+152. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+153. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+154. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+155. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result: The config file is valid.
+
+156. Verify that the MCP client initializes a session with an `initialize` request and receives a session ID in the header.
+    - Action: Send an `initialize` request and check the response
+    - Expected result: The server responds with a session ID in the header.
+
+157. Run the `curl` command to check the server's response to the `initialize` request.
+    - Action: curl http://127.0.0.1:3000/mcp/initialize
+    - Expected result: The server responds with a session ID in the header.
+
+158. Check the status of the server to ensure it's running.
+    - Action: Check the server's status
+    - Expected result: The server is running.
+
+159. Verify that the server is accessible via the specified port.
+    - Action: Check the Port value
+    - Expected result: The Port value is 3000.
+
+160. Confirm that the server is listening on the correct URL.
+    - Action: Check the MCP endpoint
+    - Expected result: The URL is correct.
+
+161. Ensure that the server's credentials are correctly set in the .env files.
+    - Action: Check each .env variable
+    - Expected result: All .env variables are present and valid.
+
+162. Validate that the server's obfuscation config is validated at startup.
+    - Action: Check the CW_OBFUSCATION_CONFIG file
+    - Expected result:

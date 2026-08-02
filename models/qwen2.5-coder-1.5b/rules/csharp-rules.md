@@ -1,0 +1,25 @@
+C# RULES. Apply ALL.
+
+1. EXACT SIGNATURE. Implement exactly types, methods, params, return types, namespaces given. No overloads, no extra params, no extra methods, classes, or files.
+2. EXACT CONTRACT. Implement contract verbatim. No invented behavior, headers, env vars, features.
+3. NULLABILITY. Honor `?`. `string?`/`JsonNode?` = null valid path. Never throw instead of null.
+4. THREAD SAFETY. Shared mutable state MUST use System.Collections.Concurrent and/or `lock(...)`. Never plain Dictionary/List without sync.
+5. ERRORS. Throw exact exception type task names. Never catch+swallow unless task says skip.
+6. ASYNC. async/await. Never `.Result`, `.Wait()`, `GetAwaiter().GetResult()`. Always pass CancellationToken.
+7. PRECISE TYPE. "returns JsonNode" = `JsonNode?`, not object/dynamic/string.
+8. DI. Service in constructor comes from injection. Never `new` a service; never `new` inside method when field exists.
+9. SIMPLICITY. Shortest correct impl. No refactor, no unused usings, no feature creep, no comments unless asked.
+10. NO EXTRA INPUTS. Signature has N params — read only those. No env vars, HttpContext, headers, globals.
+11. COMPLETE FILE. Output MUST contain EVERY type/class/method asked — including ones named in passing. Never truncate. Never close fenced block before every type present.
+12. IMPORT EVERYTHING. Every referenced type needs its using: Regex -> System.Text.RegularExpressions; JsonException -> System.Text.Json; CamelCaseNamingConvention -> YamlDotNet.Serialization.NamingConventions; JsonNode -> System.Text.Json.Nodes. Missing usings = build error.
+13. CANONICAL APIs. Exact real API names:
+   - ConcurrentDictionary remove: `TryRemove(key, out _)`.
+   - nullable null result: `Task.FromResult<string?>(null)`.
+   - `new HttpRequestException(message, innerException)` — 2nd arg MUST be Exception, never HttpResponseMessage.
+   - `HttpClient.GetAsync(path, cancellationToken)`.
+   In doubt, use API exactly as in task example.
+14. TRACE EVERY BRANCH. Walk code line by line against each contract bullet. Cover success (200/204/NoContent), empty/null/whitespace inputs, and every "otherwise" fallback. Uncovered bullet = missing branch.
+15. USING = NAMESPACE, never single type. Never `using System.Threading.CancellationToken;`. CancellationToken lives in System.Threading (implicit) — do not import again.
+16. USING ONLY TASK NEEDS. Import ONLY namespaces THIS task uses. Importing a package project lacks = build error.
+
+OUTPUT FORMAT exact: one fenced code block, nothing else.

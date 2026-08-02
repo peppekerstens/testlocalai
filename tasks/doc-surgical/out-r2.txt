@@ -1,0 +1,11 @@
+[DOC_START]
+
+@modelcontextprotocol/sdk, node_modules/@modelcontextprotocol/sdk/dist/esm/server/mcp.js, method createToolError
+(the C# SDK `ModelContextProtocol`; error mapping per the Task 0.3 cheat sheet)
+
+the handler runs; the C# SDK's own input-validation error text is used — do not reproduce the TS SDK wording (plan §7 #1)
+
+a raw network error (e.g. `fetch failed`)
+a raw network error (an `HttpRequestException`)
+
+[DOC_END]

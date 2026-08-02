@@ -1,0 +1,58 @@
+TASK: LINQ ticket-stats aggregator.
+FILE: one file `TicketStats.cs`. Namespace: `Bench.Stats`.
+
+File MUST start with this EXACT using line:
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Linq;
+```
+
+WRITE record TYPE FIRST, THEN the aggregator class.
+
+```csharp
+namespace Bench.Stats;
+
+public sealed record Ticket(string Status, int Priority);
+```
+
+AFTER Ticket, append TicketStatsAggregator. `CountByStatus`/`AverageOpenPriority`
+take these EXACT signatures (fill in the bodies); `TopStatuses` MUST be copied
+VERBATIM, do not rewrite it — this exact method has a known easy mistake
+(returning the full list instead of empty when `n == 0`) that only shows up
+on some draws, so it is not left to inference:
+
+```csharp
+public sealed class TicketStatsAggregator
+{
+    public Dictionary<string, int> CountByStatus(IEnumerable<Ticket> tickets) { ... }
+    public double AverageOpenPriority(IEnumerable<Ticket> tickets) { ... }
+
+    public List<string> TopStatuses(IEnumerable<Ticket> tickets, int n)
+    {
+        if (tickets is null) throw new ArgumentNullException(nameof(tickets));
+        if (n == 0) return new List<string>();
+        return tickets
+            .GroupBy(t => t.Status)
+            .OrderByDescending(g => g.Count())
+            .ThenBy(g => g.Key, StringComparer.Ordinal)
+            .Take(n)
+            .Select(g => g.Key)
+            .ToList();
+    }
+}
+```
+
+CLASS CHECKLIST: output MUST contain exactly these TWO types in this order: Ticket, TicketStatsAggregator. Count both before closing the fenced block. Do not stop early.
+
+BEHAVIOR (must hold exactly):
+1. `tickets == null` on ANY of the three methods -> throw `ArgumentNullException`. Check this FIRST in every method, before enumerating.
+2. Each method enumerates `tickets` EXACTLY ONCE. Never call `.Count()`, `.Any()`, or a second `foreach`/LINQ chain over the same parameter — materialize with `.ToList()` once if you need multiple passes over the data.
+3. `CountByStatus`: count of tickets per exact `Status` string (case-sensitive). Empty input -> empty dictionary.
+4. `AverageOpenPriority`: average of `Priority` where `Status == "Open"` EXACTLY (case-sensitive, `"open"`/`"OPEN"` do NOT count). No matching tickets or empty input -> return `0.0`, never divide by zero.
+5. `TopStatuses`: use the verbatim body above exactly — `n == 0` returns an
+   empty list BEFORE anything else runs; the `GroupBy` shape is what makes
+   the count-per-status correct (do not compute counts by re-scanning an
+   already-deduplicated list, that always yields 1).
+
+OUTPUT: ONLY complete `TicketStats.cs` in one fenced ```csharp block. No explanations, no other text.

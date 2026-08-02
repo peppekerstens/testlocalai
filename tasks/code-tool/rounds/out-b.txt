@@ -1,0 +1,52 @@
+```csharp
+using System;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Bench.Task5
+{
+    public interface ITicketStore
+    {
+        Task<string?> GetTicketAsync(int id);
+    }
+
+    public sealed class InMemoryTicketStore : ITicketStore
+    {
+        private readonly Dictionary<int, string> _tickets = new Dictionary<int, string>
+        {
+            { 1, "Ticket 1" },
+            { 2, "Ticket 2" }
+        };
+
+        public Task<string?> GetTicketAsync(int id)
+        {
+            return Task.FromResult(_tickets.TryGetValue(id, out var ticket) ? ticket : null);
+        }
+    }
+
+    public sealed class TicketTool
+    {
+        private readonly ITicketStore _store;
+
+        public TicketTool(ITicketStore store)
+        {
+            _store = store;
+        }
+
+        public string? GetTicket(int id)
+        {
+            return _store.GetTicketAsync(id).Result;
+        }
+    }
+
+    public static class TicketServiceCollectionExtensions
+    {
+        public static IServiceCollection AddTicketTool(this IServiceCollection services)
+        {
+            services.AddSingleton<ITicketStore, InMemoryTicketStore>();
+            services.AddSingleton<TicketTool>();
+            return services;
+        }
+    }
+}
+```

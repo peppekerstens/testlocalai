@@ -1,0 +1,125 @@
+C# RULES. Apply ALL.
+
+1. EXACT SIGNATURE. Implement exactly types, methods, params, return types, namespaces given. No overloads, no extra params, no extra methods, classes, or files.
+2. EXACT CONTRACT. Implement contract verbatim. No invented behavior, headers, env vars, features.
+3. NULLABILITY. Honor `?`. `string?`/`JsonNode?` = null valid path. Never throw instead of null.
+4. THREAD SAFETY. Shared mutable state MUST use System.Collections.Concurrent and/or `lock(...)`. Never plain Dictionary/List without sync.
+5. ERRORS. Throw exact exception type task names. Never catch+swallow unless task says skip.
+6. ASYNC. async/await. Never `.Result`, `.Wait()`, `GetAwaiter().GetResult()`. Always pass CancellationToken.
+7. PRECISE TYPE. "returns JsonNode" = `JsonNode?`, not object/dynamic/string.
+8. DI. Service in constructor comes from injection. Never `new` a service; never `new` inside method when field exists.
+9. SIMPLICITY. Shortest correct impl. No refactor, no unused usings, no feature creep, no comments unless asked.
+10. NO EXTRA INPUTS. Signature has N params — read only those. No env vars, HttpContext, headers, globals.
+11. COMPLETE FILE. Output MUST contain EVERY type/class/method asked — including ones named in passing. Never truncate. Never close fenced block before every type present.
+12. IMPORT EVERYTHING. Every referenced type needs its using: Regex -> System.Text.RegularExpressions; JsonException -> System.Text.Json; CamelCaseNamingConvention -> YamlDotNet.Serialization.NamingConventions; JsonNode -> System.Text.Json.Nodes. Missing usings = build error.
+13. CANONICAL APIs. Exact real API names:
+   - ConcurrentDictionary remove: `TryRemove(key, out _)`.
+   - nullable null result: `Task.FromResult<string?>(null)`.
+   - `new HttpRequestException(message, innerException)` — 2nd arg MUST be Exception, never HttpResponseMessage.
+   - `HttpClient.GetAsync(path, cancellationToken)`.
+   In doubt, use API exactly as in task example.
+14. TRACE EVERY BRANCH. Walk code line by line against each contract bullet. Cover success (200/204/NoContent), empty/null/whitespace inputs, and every "otherwise" fallback. Uncovered bullet = missing branch.
+15. USING = NAMESPACE, never single type. Never `using System.Threading.CancellationToken;`. CancellationToken lives in System.Threading (implicit) — do not import again.
+16. USING ONLY TASK NEEDS. Import ONLY namespaces THIS task uses. Importing a package project lacks = build error.
+
+OUTPUT FORMAT exact: one fenced code block, nothing else.
+
+
+--- TASK BELOW ---
+
+TASK: YAML config loader, YamlDotNet.
+FILE: one file `ObfuscationConfig.cs`. Namespace: `Bench.Task1`.
+
+File MUST start with these EXACT using lines, in order:
+```csharp
+using System.Text.RegularExpressions;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+```
+
+WRITE IMPLEMENTATION FIRST: ConfigLoader class below with EXACTLY this Load method body, THEN append record types.
+
+```csharp
+namespace Bench.Task1;
+
+public sealed class ConfigLoader
+{
+    public ObfuscationConfig Load(string yaml)
+    {
+        var deserializer = new DeserializerBuilder()
+            .IgnoreUnmatchedProperties()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+        var config = deserializer.Deserialize<ObfuscationConfig>(yaml);
+        if (config is null || config.Connection is null
+            || string.IsNullOrWhiteSpace(config.Connection.Token)
+            || string.IsNullOrWhiteSpace(config.Connection.BaseUrl))
+        {
+            throw new InvalidOperationException("Invalid YAML or missing connection details.");
+        }
+        return config;
+    }
+}
+```
+
+AFTER ConfigLoader, append these record types verbatim:
+
+```csharp
+public sealed class ObfuscationConfig
+{
+    public ConnectionInfo Connection { get; set; } = new();
+    public ObfuscationSettings Obfuscation { get; set; } = new();
+}
+
+public sealed class ConnectionInfo
+{
+    public string Token { get; set; } = "";
+    public string BaseUrl { get; set; } = "";
+}
+
+public sealed class ObfuscationSettings
+{
+    public bool Enabled { get; set; }
+    public List<PatternRule> Patterns { get; set; } = new();
+}
+
+public sealed class PatternRule
+{
+    public string Name { get; set; } = "";
+    public string Regex { get; set; } = "";
+    public string Replacement { get; set; } = "";
+}
+```
+
+CLASS CHECKLIST: output MUST contain exactly these FIVE classes in this order: ConfigLoader, ObfuscationConfig, ConnectionInfo, ObfuscationSettings, PatternRule. Count all five before closing the fenced block. ConfigLoader MUST be present. Do not stop early.
+
+BEHAVIOR (must hold exactly):
+1. Load YAML shaped like:
+   ```yaml
+   connection:
+     token: "abc123"
+     baseUrl: "https://api.example.com"
+   obfuscation:
+     enabled: true
+     patterns:
+       - name: email
+         regex: "\\b[\\w.+-]+@[\\w-]+\\.[\\w.]+\\b"
+         replacement: "[EMAIL]"
+   ```
+2. If `token` or `baseUrl` missing or empty (whitespace counts empty), throw `InvalidOperationException`. Empty check MUST use `string.IsNullOrWhiteSpace` — `== null` is NOT enough. Use EXACTLY this validation after deserializing:
+   ```csharp
+   if (config is null || config.Connection is null
+       || string.IsNullOrWhiteSpace(config.Connection.Token)
+       || string.IsNullOrWhiteSpace(config.Connection.BaseUrl))
+   {
+       throw new InvalidOperationException("Invalid YAML or missing connection details.");
+   }
+   ```
+3. Malformed YAML -> throw any exception (test only asserts an exception is thrown).
+4. If `obfuscation` section absent entirely, `Enabled` must be `false`, `Patterns` empty list.
+
+HINT: YamlDotNet property matching case-sensitive; YAML keys camelCase. Use:
+`new DeserializerBuilder().IgnoreUnmatchedProperties().WithNamingConvention(CamelCaseNamingConvention.Instance).Build()`
+(imports YamlDotNet.Serialization + YamlDotNet.Serialization.NamingConventions), then `.Deserialize<ObfuscationConfig>(yaml)`. Null result or null connection = error.
+
+OUTPUT: ONLY complete `ObfuscationConfig.cs` in one fenced ```csharp block. No explanations, no other text.

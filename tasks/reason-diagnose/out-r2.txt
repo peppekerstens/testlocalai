@@ -1,0 +1,12 @@
+The error indicates that the project's environment is missing the required environment variable `CW_PRIVATE_KEY`. This variable is essential for the project's operation, likely related to authentication or configuration. The server expects this variable to function correctly, but it's not provided.
+
+**Step-by-Step Diagnosis:**
+
+1. **Error Message:** The server logs show the error occurs when running `dotnet run --project src/ConnectwiseMcp`.
+2. **Root Cause:** The project's environment lacks the required `CW_PRIVATE_KEY` variable.
+3. **Server Mechanism:** The server startup process checks for environment variables. Without `CW_PRIVATE_KEY`, it aborts execution.
+4. **Fix:** The project should include the `CW_PRIVATE_KEY` variable in its configuration or adjust the project's settings to accept this variable.
+
+**Fix:**
+
+The project should be updated to include the `CW_PRIVATE_KEY` environment variable. This can be done by adding the necessary configuration files or adjusting the project's settings to accept this variable. Once included, the server will recognize the variable and proceed without errors.

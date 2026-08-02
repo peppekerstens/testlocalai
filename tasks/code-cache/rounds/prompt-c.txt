@@ -1,0 +1,111 @@
+C# CODING RULES — apply every one of these to your solution:
+
+1. EXACT SIGNATURE. Implement precisely the types, method names, parameters,
+   return types, and namespaces given in the task. Do not add overloads,
+   parameters, extra methods, extra classes, or extra files.
+2. EXACT CONTRACT. Implement the behavior contract verbatim. Do not invent
+   behavior, headers, environment variables, or features the task did not
+   mention. Nothing more, nothing less.
+3. NULLABILITY. Honor `?` on types. A `string?`/`JsonNode?` return means
+   null IS a valid result path; never throw instead of returning null.
+4. THREAD SAFETY. Shared mutable state (caches, counters, collections used
+   from many threads) MUST use System.Collections.Concurrent types and/or
+   `lock(...)`. Never a plain `Dictionary`/`List` without synchronization.
+5. ERROR HANDLING. Throw the exact exception type the task names. Do not
+   catch and swallow exceptions unless the task explicitly says to skip.
+6. ASYNC. Use `async`/`await`; never `.Result`, never `.Wait()`, never
+   `GetAwaiter().GetResult()`. Always pass a `CancellationToken` through.
+7. RETURN THE PRECISE TYPE. If a task says "returns JsonNode" then return
+   `JsonNode?`, not `object`, not `dynamic`, not `string`.
+8. DI. A service given in a constructor must come from injection. Never
+   `new` up a service that should be injected; never `new` inside a method
+   when a field exists.
+9. SIMPLICITY. Shortest correct implementation that satisfies the contract.
+   No refactoring, no unused usings, no extra feature creep, no comments
+   unless asked.
+10. NO EXTRA INPUTS. If the signature has N parameters, read only those.
+    Do not reach for Environment variables, HttpContext, headers, or
+    globals that the signature does not expose.
+11. COMPLETE FILE. The output must contain EVERY type, class, and method
+    the task asks for — including the ones it only names in passing. Do not
+    truncate the answer; emit the whole file even if it is long. Never end
+    the fenced block before every requested type is present.
+12. IMPORT EVERY NAMESPACE. For every type you reference, add its `using`
+    (e.g. `System.Text.RegularExpressions` for Regex,
+    `System.Text.Json` for JsonException,
+    `YamlDotNet.Serialization.NamingConventions` for
+    CamelCaseNamingConvention, `System.Text.Json.Nodes` for JsonNode).
+    Missing usings are a build error — check each referenced type has its
+    import at the top of the file.
+13. CANONICAL APIs. Use the exact, real API names and overloads:
+    - Remove from a `ConcurrentDictionary` with `TryRemove(key, out _)`.
+    - `Task.FromResult<string?>(null)` for a nullable null result.
+    - `new HttpRequestException(message, innerException)` — the second
+      argument must be an `Exception`, never an HttpResponseMessage.
+    - `HttpClient.GetAsync(path, cancellationToken)`.
+    When in doubt, use the API exactly as written in the task's example.
+14. TRACE EVERY BRANCH. Walk your code line by line against each bullet of
+    the behavior contract. Pay special attention to success paths (200, 204,
+    NoContent), empty/null/whitespace inputs, and the "otherwise" fallbacks
+    of every conditional. If a contract bullet is not covered by your
+    branches, add it.
+
+Follow the OUTPUT FORMAT exactly: one fenced code block, nothing else.
+
+
+--- TASK BELOW ---
+
+ROLE: You are a coding subagent. Implement exactly the task below.
+You are Qwen 2.5 Coder 1.5B: be conservative, prefer simple correct code,
+do not add anything not requested.
+
+TASK: Implement a thread-safe token cache with capacity-based eviction.
+
+FILES TO CREATE: exactly ONE file: `TokenCache.cs`
+Its namespace MUST be: `Bench.Task2`
+
+Implement this type exactly:
+
+```csharp
+namespace Bench.Task2;
+
+public sealed class TokenCache
+{
+    public TokenCache(int capacity)
+    {
+        // capacity must be > 0; throw ArgumentOutOfRangeException otherwise
+    }
+
+    public bool TryGet(string userId, out string? token)
+    {
+        // returns true and sets token if present; otherwise false
+    }
+
+    public void Set(string userId, string token)
+    {
+        // stores token under userId
+    }
+}
+```
+
+BEHAVIOR CONTRACT (must hold exactly):
+1. `Set` stores a token; `TryGet` returns it. Overwriting an existing key
+   keeps only the newest value.
+2. When the number of distinct stored keys would exceed `capacity`, evict
+   the oldest-stored key (the one Set FIRST among the current entries) so
+   that the cache never holds more than `capacity` distinct keys.
+3. `TryGet` on a missing key returns false.
+4. The cache MUST be safe for concurrent use: many threads call `Set` and
+   `TryGet` at the same time with no data loss and no exceptions.
+
+RECOMMENDED IMPLEMENTATION (satisfies all of the above):
+- Use a `System.Collections.Concurrent.ConcurrentDictionary<string, string>`
+  for the data.
+- Keep a `List<string>` (or `LinkedList<string>`) insertion-order queue
+  protected by a lock (`lock(...)`) for eviction bookkeeping: on Set, if
+  the key is new and count >= capacity, remove the oldest queue entry from
+  both the dictionary and the queue, then add the new key to the queue.
+
+OUTPUT FORMAT: output ONLY the complete contents of the single file
+`TokenCache.cs` inside one fenced code block starting with
+```csharp and ending with ```. No explanations, no other text.

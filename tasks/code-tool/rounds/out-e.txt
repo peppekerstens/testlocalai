@@ -1,0 +1,53 @@
+```csharp
+using System;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
+
+namespace Bench.Task5;
+
+public interface ITicketStore
+{
+    Task<string?> GetTicketAsync(int id);
+}
+
+public sealed class InMemoryTicketStore : ITicketStore
+{
+    private readonly ConcurrentDictionary<int, string> _tickets = new();
+
+    public InMemoryTicketStore()
+    {
+        _tickets.Add(1, "Ticket 1");
+        _tickets.Add(2, "Ticket 2");
+    }
+
+    public Task<string?> GetTicketAsync(int id)
+    {
+        return Task.FromResult(_tickets.TryGetValue(id, out var ticket) ? ticket : null);
+    }
+}
+
+public sealed class TicketTool
+{
+    private readonly ITicketStore _store;
+
+    public TicketTool(ITicketStore store)
+    {
+        _store = store;
+    }
+
+    public string? GetTicket(int id)
+    {
+        return _store.GetTicketAsync(id).Result;
+    }
+}
+
+public static class TicketServiceCollectionExtensions
+{
+    public static IServiceCollection AddTicketTool(this IServiceCollection services)
+    {
+        services.AddSingleton<ITicketStore, InMemoryTicketStore>();
+        services.AddSingleton<TicketTool>();
+        return services;
+    }
+}
+```
