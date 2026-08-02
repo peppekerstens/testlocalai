@@ -10,7 +10,7 @@ steering not assumed to transfer untested.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — Phase 1 baseline done, Steering starting | 2/9 → not yet steered | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | 🔬 Preliminary — Steering Tier 1 closed, Confirm next | 2/9 → 3/9 (1 specialist PASS, 2 bare PASS, 1 stable partial) | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
 
 ## Documenter role: current status (preliminary)
 
@@ -28,6 +28,33 @@ attribution)**: `doc-crossref` gets both required facts present but
 describes the tool as performing the obfuscation rather than reporting
 it — a logic error, not a missing-fact error, never seen on 0.8B. Full
 breakdown: `history.md`.
+
+**Steering Tier 1 closed after 2 runs.** `doc-crossref`'s new
+mechanism-reminder fix worked immediately (2/2 PASS so far). One
+severe regression found and reverted: `doc-surgical`'s
+boundary-discipline instruction triggered a degenerate repetition loop
+(same paragraph repeated ~8 times) — an idiom not seen on either 0.8B
+variant. `doc-verbatim` reached a 1-line-defect near-miss; a follow-up
+refinement made it worse and was reverted. `doc-adapt`/`doc-script`/
+`doc-synthesize`/`doc-repair` showed no promise on their first
+attempt, gated to bare. Per-task detail:
+
+| Task | Specialist result | Specialist config | Generalist result |
+|---|---|---|---|
+| `doc-crossref` | **PASS** (2/2 so far, needs Confirm) | [`task-overrides/doc-crossref.md`](task-overrides/doc-crossref.md) — new Q5-specific mechanism reminder | n/a — Tier 2 gate pending |
+| `doc-summarize` | **PASS bare**, no steering needed | bare | n/a |
+| `doc-restructure` | **PASS bare** most draws, needs Confirm (already-documented per-draw instability project-wide) | bare | n/a |
+| `doc-verbatim` | Stable partial — 1-line defect, best-observed state kept after a worse refinement was reverted | [`task-overrides/doc-verbatim.md`](task-overrides/doc-verbatim.md) | n/a |
+| `doc-surgical` | Gated out — **regressed to a degenerate repetition loop**, new idiom not seen on 0.8B | bare | n/a |
+| `doc-adapt` | Gated out (flat after run 1) | bare | n/a |
+| `doc-script` | Gated out (flat after run 1) | bare | n/a |
+| `doc-synthesize` | Gated out (flat after run 1) | bare | n/a |
+| `doc-repair` | Gated out (flat after run 1) | bare | n/a |
+
+**Tier 2 gate**: tasks with a current PASS = `doc-crossref`,
+`doc-summarize`, `doc-restructure` = 3/9 ≈ 33% — below the 60%
+threshold. Tier 2 skipped per `AGENTS.md`'s autonomous rule. Next:
+Confirm.
 
 ## Setup
 

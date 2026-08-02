@@ -59,3 +59,47 @@ perfectly — Q3's near-resolution at this size already shows the idiom
 inventory itself changes with parameter count, not just the reliability
 of fixes for the same idioms. Treat 0.8B's overrides as a source of
 hypotheses to check individually, not a bundle to copy wholesale.
+
+## Steering: Tier 1
+
+**Run 1** (`reports/report-docs-20260802-133310.md`, 3/9): built
+task-specific fixes for all 7 failing tasks — `structure-preservation.md`
+(reused from `qwen3.5-0.8b`) for `doc-verbatim`/`doc-repair`,
+`boundary-discipline.md`+`edit-verification.md` (reused) for
+`doc-surgical`, a new `formatting-fidelity.md` for `doc-adapt`/
+`doc-script` (targeting the whitespace/line-merging gap identified in
+Phase 1, not substitution — that idiom was already resolved bare), a
+new `mechanism-reminder-crossref.md` targeting the new Q5 idiom
+(backwards semantic attribution), and a new
+`structure-completeness-synthesize.md`.
+
+**`doc-crossref` PASSES** — the Q5-specific fix worked immediately.
+**`doc-surgical` regressed catastrophically** — the boundary-discipline
+instruction triggered a degenerate repetition loop, the same paragraph
+about "Error behavior (applies to all tools)..." repeated roughly 8
+times in the output. An unambiguous regression, gated out on the spot
+rather than waiting for a 2nd draw. `doc-verbatim` improved to a single
+1-line defect (missing blank line before the note line) — real
+progress, continuing. `doc-adapt`/`doc-script` showed no movement
+(formatting-fidelity didn't fix the line-merging), `doc-synthesize`
+showed no movement, `doc-repair` showed no clear improvement (a new
+stray `[DOC_END]` leak appeared) — all 4 gated out per the 2nd-run rule,
+reverted to bare.
+
+**Run 2** (`reports/report-docs-20260802-133551.md`, 2/9): refined
+`doc-verbatim`'s remaining defect with an explicit "no blank line
+before the note line" instruction — got worse, not better (leaked
+`Line 16 is exactly this note line:` instruction text into the output).
+Reverted to the simpler run-1 version rather than keep this worse
+variant. `doc-crossref` held PASS (2/2 draws). `doc-restructure`
+regressed on this draw (bare, unrelated to steering — matches its
+already-documented per-draw instability project-wide).
+
+**Tier 1 closed.** Final state: `doc-crossref` confirmed working (2/2),
+`doc-summarize`/`doc-restructure` pass bare (never needed steering),
+`doc-verbatim` kept at its best-observed state (1-line defect, not a
+full PASS — 2 of 4 budget runs used, stopping here since the 2nd
+attempt made things worse rather than closing the gap), 5 tasks
+reverted to bare after real attempts showed no promise or regressed
+(`doc-surgical`, `doc-adapt`, `doc-script`, `doc-synthesize`,
+`doc-repair`).
