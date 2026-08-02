@@ -10,12 +10,35 @@ to transfer untested.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — Phase 0 done, Phase 1 starting | n/a | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | 🔬 Preliminary — Phase 1 baseline done, Steering starting | 5/9 bare (best of qwen3.5 family), 44% truncation rate | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
 
 ## Documenter role: current status (preliminary)
 
-Not yet tested. See "Setup" — this is the first qwen3.5 config tested
-in this project where the runaway-thinking bug does NOT apply.
+**Bare baseline, docs role: 5/9 PASS** —
+`reports/report-docs-20260802-135441.md`, by far the best bare
+baseline of any qwen3.5 config tested this session (0.8B: 1/9, 2B:
+2/9). Single draw.
+
+**Correction to Phase 0's "0/3" framing below: it understated the real
+risk.** Trivial smoke-test prompts (3/3 clean) do not represent real
+docs-task behavior — **4 of 9 tasks (44%) in this single baseline draw
+hit `finish_reason=length` with completely empty final output**
+(`doc-verbatim`, `doc-adapt`, `doc-script`, `doc-repair`), confirmed
+live via `journalctl` monitoring during the run: two tasks truncated
+outright at the 8192-token ceiling (one took 210.9s wall-clock — the
+established reference for "how long does a runaway task take": normal
+~15-45s vs. runaway ~211s at this model's ~37-40 tok/s), and a third
+came within 314 tokens of the same ceiling before narrowly converging.
+Full breakdown: `history.md`.
+
+**Per explicit user instruction: sampling-parameter and thinking-
+control experimentation is the priority lever, with `enable_thinking=
+false` explicitly deprioritized as a last resort, not a default.** A
+real middle-ground lever was identified via research and confirmed
+supported by the installed llama-server build: `--reasoning-budget N`
+(server-startup flag, forces a clean `</think>` at N tokens instead of
+running unrestricted to the context ceiling). Not yet tried — Steering
+starts with alternate sampling parameters first, per instruction.
 
 ## Setup
 
