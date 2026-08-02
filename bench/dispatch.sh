@@ -59,6 +59,7 @@ BACKEND="${DISPATCH_BACKEND:-llamacpp}"
 ALLOWED_MODELS=(
   "qwen2.5-coder:1.5b" "deepseek-r1:1.5b"
   "lfm2.5:1.2b-thinking" "qwen3.5:0.8b" "qwen3.5:2b" "qwen3.5:0.8b-bf16"
+  "qwen3.5:4b"
 )
 MODEL_OK=0
 for m in "${ALLOWED_MODELS[@]}"; do
