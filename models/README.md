@@ -14,9 +14,8 @@ in general; this table is model-specific results.
 | [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | documenter | ❌ Not suitable — quality loop closed 2026-08-02, 1/9 bare and with optimizations (see Final report) | `lfm2.5-1.2b-thinking/README.md` |
 | [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | reasoner | 🔬 Preliminary — one bare baseline + one steering pass, work paused mid-iteration (not part of the closed docs-role loop) | `lfm2.5-1.2b-thinking/README.md` |
 | [`qwen3.5-0.8b`](qwen3.5-0.8b/) | documenter | ⚠️ Mixed — quality loop closed 2026-08-02, 2 of 9 task shapes usable (~67% reliable) with per-task steering, rest unsuitable | `qwen3.5-0.8b/README.md` |
-| [`qwen3.5:0.8b`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
+| [`qwen3.5-0.8b-bf16`](qwen3.5-0.8b-bf16/) | documenter | 🔬 Preliminary — setup done, Phase 1 baseline starting | `qwen3.5-0.8b-bf16/README.md` |
 | [`qwen3.5:2b`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
-| [`qwen3.5:0.8b-bf16`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
 | [`lfm2.5-vl-450m`](lfm2.5-vl-450m/) | visual | 🚧 Scaffold only — model not downloaded, role not wired up | `lfm2.5-vl-450m/README.md` |
 | — (no model tested yet) | tool-use | Task suite built + blind-subagent-validated only (`claude-sonnet-5`) — no real small-model run yet | `claude-sonnet-5/README.md` "Tool-use extension" |
 | — (no model tested yet) | extract | Task suite built + blind-subagent-validated only — no real small-model run yet | `claude-sonnet-5/README.md` "Extract extension" |
@@ -39,13 +38,13 @@ Real small-model smoke tests were run against these during initial setup
 `deepseek-r1-1.5b/history.md` and the qwen3.5 investigation), but no task
 suite has been run against them yet, so there's no role/status to report:
 
-- `lfm2.5:1.2b-thinking-bf16` variants, `qwen3.5:2b`, and
-  `qwen3.5:0.8b-bf16` — downloaded 2026-08-02, whitelisted in
-  `bench/dispatch.sh`, systemd services wired (ports 8084–8085). Same
-  known runaway-thinking finding as `qwen3.5:0.8b` below applies to
-  these too (same model family) — not yet re-verified per-config.
-- `qwen3.5:0.8b` now has a real row above (Phase 1 baseline done
-  2026-08-02) — see `qwen3.5-0.8b/README.md` for the required dispatch
+- `lfm2.5:1.2b-thinking-bf16` variants and `qwen3.5:2b` — downloaded
+  2026-08-02, whitelisted in `bench/dispatch.sh`, systemd service wired
+  (port 8084 for `qwen3.5:2b`). Same known runaway-thinking finding as
+  `qwen3.5:0.8b` below applies to these too (same model family) — not
+  yet re-verified per-config.
+- `qwen3.5:0.8b` and `qwen3.5:0.8b-bf16` now have real rows above — see
+  their own README's Setup section for the required dispatch
   overrides (`enable_thinking=false` is mandatory for this model, not
   optional) before testing it further.
 
