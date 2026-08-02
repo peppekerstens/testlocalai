@@ -11,8 +11,8 @@ in general; this table is model-specific results.
 | [`qwen2.5-coder-1.5b`](qwen2.5-coder-1.5b/) | code-emitter | ✅ Established — two validated recipes (original 6 / new 6 task families) | `qwen2.5-coder-1.5b/README.md` |
 | [`deepseek-r1-1.5b`](deepseek-r1-1.5b/) | documenter | ⚠️ Mixed — suitable for a defined task subset, not general-purpose (see its Verdict table) | `deepseek-r1-1.5b/README.md` |
 | [`deepseek-r1-1.5b`](deepseek-r1-1.5b/) | reasoner | ⚠️ Mixed — 1/3 task types solid, rest need steering or are past this model's ceiling | `deepseek-r1-1.5b/README.md` |
-| [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | documenter | 🔬 Preliminary — one baseline + one steering pass, work paused mid-iteration | `lfm2.5-1.2b-thinking/README.md` |
-| [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | reasoner | 🔬 Preliminary — same status as documenter (combined doc+reason suite) | `lfm2.5-1.2b-thinking/README.md` |
+| [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | documenter | ❌ Not suitable — quality loop closed 2026-08-02, 1/9 bare and with optimizations (see Final report) | `lfm2.5-1.2b-thinking/README.md` |
+| [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | reasoner | 🔬 Preliminary — one bare baseline + one steering pass, work paused mid-iteration (not part of the closed docs-role loop) | `lfm2.5-1.2b-thinking/README.md` |
 | [`qwen3.5:0.8b`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
 | [`qwen3.5:2b`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
 | [`qwen3.5:0.8b-bf16`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |

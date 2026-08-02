@@ -1,12 +1,75 @@
 # lfm2.5:1.2b-thinking — steering profile
 
-**Status: preliminary — bare baseline + 3 steering passes across two
-sessions, both on the same day.** Treat everything below as an early
-read, not a settled verdict like `models/deepseek-r1-1.5b/`'s.
+**Status: docs-role quality loop closed 2026-08-02 — not suitable as a
+general documenter.** See "Final report" below for the verdict and
+usability scores. The reasoner track (`tasks/reason-*`) was not part of
+this closed loop and remains at its original preliminary status — see
+"Current status" further down for that history.
 
 **Role: documenter/reasoner** (same combined role as deepseek-r1 — see
 its README for the doc/reason track split). Tracks: `tasks/doc-*` +
 `tasks/reason-*`.
+
+## Final report — docs role quality loop, closed 2026-08-02
+
+**Why stopped here.** Two full quality-loop phases (Phase 2:
+task-specific steering, 2 of 5 runs used; Phase 3: cross-model idiom
+transfer from `deepseek-r1-1.5b`, 2 of 5 runs used) produced 9 distinct
+SPEC variants tried against the docs role. Every one of those 9 runs
+left the majority of tasks failing (7-8 of 9), and several
+well-motivated, evidence-grounded interventions — a general output-
+discipline preamble (Idiom E), a longer task-specific rules block
+(Idiom F), and a cross-model-validated writing-style technique (STE) —
+measurably made results *worse*, not better, with zero exceptions across
+the full session. That pattern, not a specific remaining idea, is why
+this loop stopped before Phase 4 (external research) or a Performance
+pass: the evidence says more prompt-engineering investment on this
+model+role is low-expected-value, not that one more variant would have
+closed it.
+
+**Usability score without optimizations (bare):** **1/9 (11%) PASS.**
+Only `doc-restructure` — a rule-based structural transformation with no
+byte-exact or multi-edit requirement — passes bare. All 8 other tasks
+(byte-exact copy, multi-step surgical edits, in-place repair, bounded
+multi-fact summarization under a word limit, cross-document synthesis
+with exact-identifier preservation, new-section synthesis) fail
+unsteered.
+
+**Usability score with optimizations:** **practically unchanged — 1/9
+on most draws, occasionally 2/9.** Real per-task content-quality gains
+were measured on 3 of the 4 most-invested-in tasks (`doc-surgical`'s
+wrong-SDK-content leakage eliminated; `doc-adapt`'s broken-edit count
+roughly halved, 5→2; `doc-repair` down to a single remaining defect from
+several) — but **zero of the 9 tasks moved from a stable FAIL to a
+stable PASS** (confirmed via a 3-run consistency check, `history.md`'s
+"Confirm" section). The occasional 2/9 draws are fully explained by two
+tasks' pre-existing, steering-independent per-draw instability
+(`doc-crossref`, and one anomalous `doc-restructure` failure), not by
+anything this loop's optimization work changed.
+
+**Comparison against a mainstream frontier LLM.** Not comparable — no
+restriction narrows this enough to call it comparable overall. A
+frontier small model such as Claude Haiku 4.5 would be expected to pass
+close to all 9 of these tasks zero-shot: they test precise instruction-
+following (exact substitution, verbatim reproduction, identifier
+preservation, fact-count compliance under a word limit), which is well
+inside frontier-small-model capability, not a research-frontier
+challenge. **The one restriction that does hold**: for `doc-restructure`'s
+specific task shape — rule-based restructuring with no exact-text-
+fidelity requirement — this model's output has been indistinguishable
+from correct across every draw tested this session, at near-zero
+cost/latency versus a hosted frontier-model call.
+
+**Final verdict: lfm2.5-1.2b-thinking is not suitable as a documenter,
+general-purpose or narrowly, beyond one task shape, at this optimization
+investment level.** Usable only for `doc-restructure`-style work
+(rule-based restructuring, no byte-exact or multi-edit fidelity
+required) — route everything else in this role to a larger model or a
+human reviewer. This mirrors `deepseek-r1-1.5b`'s own independent
+verdict on an overlapping task set (same 5 tasks flagged as a structural
+ceiling in its README) — evidence this is a capability-scale finding at
+the ~1-2B parameter range, not an artifact of either specific checkpoint
+or of insufficient steering effort on this one.
 
 ## Current status
 
