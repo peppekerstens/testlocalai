@@ -89,7 +89,7 @@ for the full 3-run trace):
 | `doc-script` | Stable partial — 1 forbidden token remains, 0/3 Confirm draws pass but content quality improved over bare | [`task-overrides/doc-script.md`](task-overrides/doc-script.md) | n/a |
 | `doc-verbatim` | 4/4 runs used, contradictory results — reverted to bare | bare — no variant beat bare with confidence | n/a |
 | `doc-surgical` | 3 attempts, noise-dominated — reverted to bare | bare — no variant beat bare with confidence | n/a |
-| `doc-repair` | Gated out (flat after run 1) | bare | n/a |
+| `doc-repair` | **⚠️ Needs re-test — result invalidated 2026-08-02.** Pre-fix: gated out (flat after run 1) — measured against a buggy task version, see Setup | bare | n/a |
 | `doc-adapt` | Gated out (flat after run 1, matches R1's cross-model signal) | bare | n/a |
 | `doc-synthesize` | Gated out (regressed) | bare — steering hurt this task | n/a |
 | `doc-restructure` | Gated out in run 1 (instruction conflicted with the task's job); passes bare ~2/3 draws, pre-existing instability unrelated to this loop | bare | n/a |
@@ -177,6 +177,18 @@ for the full 3-run trace):
   runaway-reasoning warning during session start itself; that warning
   is not evidence about the model's real capability, only about not
   having disabled thinking yet.
+- **`tasks/doc-repair/SPEC.md` had a bug, fixed 2026-08-02 (commit
+  `8d98d91`), invalidating this model's `doc-repair` result.** Its
+  "DEFECT 2" instruction claimed the source table was missing a
+  separator row that was, in fact, already present (confirmed via
+  `git blame`: present since the task's original import). Fixed by
+  removing the separator row from the source so DEFECT 2 is now
+  genuinely real. This model's `doc-repair` result (gated out flat
+  after run 1 — see the per-task table above) was measured against
+  the easier, buggy version and needs a fresh test round; not yet
+  re-run for this model as of this write. Found and fixed while
+  investigating `qwen3.5:9b`'s `doc-repair` failures — see that
+  model's `history.md` for the full diagnosis.
 
 ## Further reading
 

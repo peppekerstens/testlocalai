@@ -34,7 +34,9 @@ or multi-edit requirement — passes bare.
 most draws, occasionally 2/9.** Real per-task content-quality gains
 landed on 3 of the 4 most-invested-in tasks (`doc-surgical`'s
 wrong-SDK-content leakage eliminated; `doc-adapt`'s broken-edit count
-roughly halved; `doc-repair` down to a single remaining defect) — but
+roughly halved; `doc-repair` down to a single remaining defect — ⚠️
+this specific `doc-repair` finding needs re-verification, see Setup)
+— but
 **zero of the 9 tasks moved from a stable FAIL to a stable PASS**
 (confirmed via a 3-run consistency check). The occasional 2/9 draws are
 fully explained by two tasks' pre-existing, steering-independent
@@ -122,6 +124,22 @@ not a reason to keep steering this role further):
   (unlike R1's separate `reasoning_content` field) — `dispatch.sh`
   strips through the *last* `</think>`, not the first, to handle a
   stray unpaired second tag this model occasionally emits.
+- **`tasks/doc-repair/SPEC.md` had a bug, fixed 2026-08-02 (commit
+  `8d98d91`), invalidating this model's `doc-repair` finding.** Its
+  "DEFECT 2" instruction claimed the source table was missing a
+  separator row that was, in fact, already present (confirmed via
+  `git blame`: present since the task's original import). Fixed by
+  removing the separator row from the source so DEFECT 2 is now
+  genuinely real. This model's "`doc-repair` down to a single
+  remaining defect" finding (see the Documenter final report above,
+  with a real steering override at `task-overrides/doc-repair.md`)
+  was measured against the easier, buggy version — the "single
+  remaining defect" was likely the genuine one (fence placement) even
+  before this fix, so the finding may hold up, but it needs a fresh
+  test round to confirm rather than being trusted as-is. Not yet
+  re-run for this model as of this write. Found and fixed while
+  investigating `qwen3.5:9b`'s `doc-repair` failures — see that
+  model's `history.md` for the full diagnosis.
 
 ## Further reading
 

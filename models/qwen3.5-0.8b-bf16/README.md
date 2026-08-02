@@ -53,7 +53,9 @@ precision transfer worked immediately and without modification for the
 2 tasks that matter most (`doc-crossref`, `doc-summarize` — copied
 overrides, zero adaptation, same ~67% reliability both variants). The
 practical differences were narrow: `doc-adapt` reached stable partial
-improvement here but was gated flat on Q4, and `doc-synthesize` looked
+improvement here but was gated flat on Q4 (`doc-repair`'s result is
+excluded from this comparison — invalidated, see Setup), and
+`doc-synthesize` looked
 promising here before Confirm caught it as noise, whereas the same
 instruction was a clean regression on Q4 — different evidence, same
 practical conclusion on both. **Bottom line for anyone choosing between
@@ -70,7 +72,7 @@ justify its ~3x size for this task set.**
 | `doc-verbatim` | Stable partial — consistent 1-line-defect improvement over bare, never a full PASS | [`task-overrides/doc-verbatim.md`](task-overrides/doc-verbatim.md) | n/a |
 | `doc-surgical` | Stable partial — instruction-bleed reduced, substitution still not applied | [`task-overrides/doc-surgical.md`](task-overrides/doc-surgical.md) | n/a |
 | `doc-adapt` | Stable partial — forbidden-token count reduced (differs from Q4, where this task was gated flat) | [`task-overrides/doc-adapt.md`](task-overrides/doc-adapt.md) | n/a |
-| `doc-repair` | Stable partial — near-miss every draw | [`task-overrides/doc-repair.md`](task-overrides/doc-repair.md) | n/a |
+| `doc-repair` | **⚠️ Needs re-test — result invalidated 2026-08-02.** Pre-fix: stable partial, near-miss every draw — measured against a buggy task version, see Setup | [`task-overrides/doc-repair.md`](task-overrides/doc-repair.md) — pre-fix, may need rework | n/a |
 | `doc-script` | Stable partial — same shape as Q4's transferred override | [`task-overrides/doc-script.md`](task-overrides/doc-script.md) | n/a |
 | `doc-synthesize` | 0/3 Confirm, one Steering-phase PASS looked like noise — **reverted to bare** | bare — steering didn't hold up | n/a |
 | `doc-restructure` | Gated out — instruction conflicted with the task's actual job (transform, not preserve) | bare | n/a |
@@ -127,6 +129,19 @@ justify its ~3x size for this task set.**
   local hosters and starts this service exclusively — its own warm-up
   ping does NOT set the overrides above, so expect (and ignore) one
   runaway-reasoning warning during session start itself.
+- **`tasks/doc-repair/SPEC.md` had a bug, fixed 2026-08-02 (commit
+  `8d98d91`), invalidating this model's `doc-repair` result.** Its
+  "DEFECT 2" instruction claimed the source table was missing a
+  separator row that was, in fact, already present (confirmed via
+  `git blame`: present since the task's original import). Fixed by
+  removing the separator row from the source so DEFECT 2 is now
+  genuinely real. This model's `doc-repair` result (stable partial,
+  near-miss every draw, with a real steering override — see the
+  per-task table above) was measured against the easier, buggy version
+  and needs a fresh test round; not yet re-run for this model as of
+  this write. Found and fixed while investigating `qwen3.5:9b`'s
+  `doc-repair` failures — see that model's `history.md` for the full
+  diagnosis.
 
 ## Further reading
 

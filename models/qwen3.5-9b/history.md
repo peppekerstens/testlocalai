@@ -490,3 +490,34 @@ threshold on the strict/honest count — `doc-repair`'s 2/3 is real
 progress but doesn't meet the stability bar to count toward the gate.
 Tier 2 generalist search remains correctly skipped per `AGENTS.md`'s
 autonomous rule; not manually overridden.
+
+## `doc-repair` task bug fixed — every doc-repair result above invalidated
+
+**2026-08-02, later same day.** The `tasks/doc-repair/SPEC.md` bug
+diagnosed above (its "DEFECT 2" describing an already-present
+separator row as missing) was fixed at the user's request (commit
+`8d98d91`): the separator row was removed from the source document so
+DEFECT 2 is now a genuinely real defect, matching the task's original
+two-defect design. Verified via controls (`expected.md` still PASSes,
+empty still FAILs) and a new sanity check (an unmodified copy-through
+of `input.md` now correctly FAILs both defect checks, where before it
+trivially passed the separator-row check).
+
+**Consequence: every `doc-repair` result recorded for this model —
+the original 3-run Confirm's 2/3, and this session's post-closure
+steering work (both the pre-checklist whack-a-mole attempts and the
+final 2/3 checklist result) — was measured against the easier, buggy
+version of the task.** None of it is valid evidence for the fixed
+task going forward. `task-overrides/doc-repair.md` is left in place
+(it may or may not still help — the checklist's heading/fence guidance
+is orthogonal to the separator-row confusion, but this hasn't been
+re-verified) but is now explicitly flagged pre-fix in the README's
+per-task table. A fresh Tier 1 pass against the fixed task is the
+correct next step whenever this model's `doc-repair` result matters
+again; not run as part of this fix, since the fix itself was the
+priority at the time.
+
+Same finding applies to every other model with historical `doc-repair`
+results (`qwen3.5-0.8b`, `-0.8b-bf16`, `-2b`, `-4b`,
+`lfm2.5-1.2b-thinking`) — see each model's own README/`history.md` for
+its own invalidation note.

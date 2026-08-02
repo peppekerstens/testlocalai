@@ -10,7 +10,7 @@ to transfer untested.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | ⚠️ Mixed — quality loop closed 2026-08-02, 3 reliable task shapes, 4 genuinely unstable, 2 unsuitable | 5/9 bare-on-paper (44% empty output) → ~52%/draw with real content every time | Not comparable overall; best qwen3.5-family content reliability so far on 3 task shapes | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-02) |
+| Documenter | ⚠️ Mixed — quality loop closed 2026-08-02, 3 reliable task shapes, 4 genuinely unstable (1 of which, `doc-repair`, ⚠️ needs re-test — task bug fixed, prior result invalidated), 2 unsuitable | 5/9 bare-on-paper (44% empty output) → ~52%/draw with real content every time | Not comparable overall; best qwen3.5-family content reliability so far on 3 task shapes | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-02) |
 
 ## Documenter role: final report (closed 2026-08-02)
 
@@ -75,7 +75,7 @@ this size on this role, not something prompt engineering can close.
 | `doc-synthesize` | **Stable PASS, 3/3 Confirm draws** | [`task-overrides/doc-synthesize.md`](task-overrides/doc-synthesize.md) — forbidden-token reminder | n/a — Tier 2 gate skipped (specialist rate 44% < 60% threshold) |
 | `doc-crossref` | **Stable PASS, 3/3 Confirm draws** (bare) | bare | n/a |
 | `doc-restructure` | **Stable PASS, 3/3 Confirm draws** (bare) | bare | n/a |
-| `doc-repair` | Unstable, 2/3 Confirm draws (bare, never steered) | bare | n/a |
+| `doc-repair` | **⚠️ Needs re-test — result invalidated 2026-08-02.** Pre-fix: unstable, 2/3 Confirm draws (bare, never steered) — measured against a buggy task version, see Setup | bare | n/a |
 | `doc-adapt` | Unstable, 1/3 Confirm draws (bare, never steered) | bare | n/a |
 | `doc-script` | Unstable, 1/3 Confirm draws (bare, never steered) | bare | n/a |
 | `doc-summarize` | Unstable, 1/3 Confirm draws (bare, never steered) | bare | n/a |
@@ -150,6 +150,18 @@ this size on this role, not something prompt engineering can close.
     first. Worth revisiting only if a future session wants this
     model's *thinking* content back (e.g. for a role where reasoning
     traces matter) without reintroducing the runaway risk.
+- **`tasks/doc-repair/SPEC.md` had a bug, fixed 2026-08-02 (commit
+  `8d98d91`), invalidating this model's `doc-repair` result.** Its
+  "DEFECT 2" instruction claimed the source table was missing a
+  separator row that was, in fact, already present (confirmed via
+  `git blame`: present since the task's original import). Fixed by
+  removing the separator row from the source so DEFECT 2 is now
+  genuinely real. This model's `doc-repair` result (2/3, unstable,
+  never steered — see the per-task table above) was measured against
+  the easier, buggy version and needs a fresh test round; not yet
+  re-run for this model as of this write. Found and fixed while
+  investigating `qwen3.5:9b`'s `doc-repair` failures — see that
+  model's `history.md` for the full diagnosis.
 
 ## Further reading
 

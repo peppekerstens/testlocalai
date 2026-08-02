@@ -71,7 +71,7 @@ trades some idioms for others.
 | `doc-adapt` | Gated out (flat after run 1; substitution content itself is already correct bare, only formatting fails) | bare | n/a |
 | `doc-script` | Gated out (flat after run 1; same partial-correctness-bare pattern as `doc-adapt`) | bare | n/a |
 | `doc-synthesize` | Gated out (flat after run 1) | bare | n/a |
-| `doc-repair` | Gated out (flat after run 1) | bare | n/a |
+| `doc-repair` | **⚠️ Needs re-test — result invalidated 2026-08-02.** Pre-fix: gated out (flat after run 1) — measured against a buggy task version, see Setup | bare | n/a |
 
 ## How to optimize (verify before trusting)
 
@@ -136,6 +136,18 @@ trades some idioms for others.
   does NOT set the overrides above and may or may not hit the
   runaway-thinking bug (non-deterministic, see above) — don't treat
   either outcome as evidence about the fix's necessity.
+- **`tasks/doc-repair/SPEC.md` had a bug, fixed 2026-08-02 (commit
+  `8d98d91`), invalidating this model's `doc-repair` result.** Its
+  "DEFECT 2" instruction claimed the source table was missing a
+  separator row that was, in fact, already present (confirmed via
+  `git blame`: present since the task's original import). Fixed by
+  removing the separator row from the source so DEFECT 2 is now
+  genuinely real. This model's `doc-repair` result (gated out flat
+  after run 1 — see the per-task table above) was measured against
+  the easier, buggy version and needs a fresh test round; not yet
+  re-run for this model as of this write. Found and fixed while
+  investigating `qwen3.5:9b`'s `doc-repair` failures — see that
+  model's `history.md` for the full diagnosis.
 
 ## Further reading
 
