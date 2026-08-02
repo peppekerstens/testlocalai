@@ -75,3 +75,69 @@ compared to a 5 minute wait on a runaway task").
 3. Only consider `DISPATCH_ENABLE_THINKING=false` if both of the above
    are exhausted — explicitly deprioritized by the user, not the
    default fallback it was for the smaller configs.
+
+## Steering-parameter escalation: 5 sampling attempts, then `enable_thinking=false`
+
+Per user direction: first tried the full 9-task role under the
+"precise coding" thinking-mode preset (`temp=0.6 top_p=0.95 top_k=20
+presence_penalty=0.0`) as a candidate fix. This ran for **34+ minutes**
+(vs. Phase 1's ~24 min) and accumulated 4+ confirmed truncations before
+being killed mid-run — clearly no better than Phase 1's baseline, and
+far too slow to iterate on at the full-role scale. **Lesson: testing
+sampling-parameter candidates against all 9 tasks is the wrong
+granularity when truncation itself is the failure mode being fixed** —
+a single runaway task alone costs ~211s, so a full run can't
+distinguish "this preset helps" from "this preset doesn't help" without
+burning 20-30+ minutes either way.
+
+**Switched to a fast single-task, 3-minute-capped test loop** (per
+user request) on `doc-repair` (smallest prompt, 419 tokens — fastest
+signal). 5 sampling-parameter combinations tried, each capped at 180s
+via `timeout 180`, none completed within the cap:
+
+1. `temp=1.0 top_p=0.95 top_k=20 pp=1.5` (Phase 1's original preset) —
+   timeout.
+2. `temp=1.0 top_p=0.95 top_k=20 pp=2.0` (strong presence penalty) —
+   timeout.
+3. `temp=0.6 top_p=0.7 top_k=20 pp=1.5` (tighter sampling) — timeout.
+4. `temp=0.3 top_p=0.8 top_k=5 pp=2.0` (low-diversity) — timeout.
+5. `temp=0.01 top_p=1.0 top_k=1 pp=0.0` (near-greedy, effectively
+   deterministic decoding) — timeout.
+
+**No sampling-parameter combination reduced truncation, across the
+full range from the original preset to near-deterministic decoding.**
+This is strong evidence the runaway-thinking behavior isn't a sampling
+artifact at all for this specific task/model combination — it's
+something about the `<think>` token's emission probability never
+naturally dropping regardless of how the rest of the distribution is
+shaped, consistent with the external research done earlier this
+session ("the `</think>` token is probabilistic... quantization shifts
+probability distributions... degrades low-frequency token emission").
+
+**Per the user's own explicit escalation plan** ("try a few loops with
+params (5 loops more) - if no improvement, thinking off"):
+`DISPATCH_ENABLE_THINKING=false` was tried as the fallback on the same
+`doc-repair` task — **succeeded immediately**, well under the 3-minute
+cap (165 completion tokens, `finish_reason=stop`, zero reasoning
+content), and the content was a near-miss (`both repairs present:
+PASS`, only a whitespace/blank-line difference from a full match).
+
+**Full 9-task re-test with `enable_thinking=false`** (per user
+instruction — "if improve, test all again as baseline"):
+`reports/report-docs-20260802-151206.md`, **3/9 PASS**, completed in a
+small fraction of Phase 1's runtime. **Zero truncation** — every task
+`finish_reason=stop`. Lower raw PASS count than Phase 1 (5/9) but a
+categorically better failure profile: Phase 1's 5/9 hid a 44% *empty
+output* rate behind its headline number; this run's 6 FAILs are almost
+all single-defect near-misses with real, mostly-correct content
+(`doc-surgical`/`doc-adapt`/`doc-synthesize` all pass their forbidden/
+required-token checks, failing only on whitespace or one stray token).
+
+**Conclusion: `enable_thinking=false` is now this model's working
+dispatch configuration, same posture as the 0.8B/2B configs.** The
+Phase 0 finding ("this model doesn't need `enable_thinking=false`,
+unlike its siblings") is **superseded, not just refined** — it was
+based on a 3/3-clean smoke test using trivial prompts that never
+exercised the failure mode real docs-task prompts reliably trigger.
+`README.md` corrected accordingly. Proceeding to Steering with this as
+the new reference baseline.

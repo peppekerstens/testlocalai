@@ -10,35 +10,36 @@ to transfer untested.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — Phase 1 baseline done, Steering starting | 5/9 bare (best of qwen3.5 family), 44% truncation rate | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | 🔬 Preliminary — Steering starting | 3/9 bare (`enable_thinking=false`, 0% truncation) | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
 
 ## Documenter role: current status (preliminary)
 
-**Bare baseline, docs role: 5/9 PASS** —
-`reports/report-docs-20260802-135441.md`, by far the best bare
-baseline of any qwen3.5 config tested this session (0.8B: 1/9, 2B:
-2/9). Single draw.
+**Working baseline, docs role: 3/9 PASS, zero truncation** —
+`reports/report-docs-20260802-151206.md`, dispatched with
+`DISPATCH_ENABLE_THINKING=false` (see Setup — this is now this model's
+required configuration, not optional). Single draw. The 6 FAILs are
+almost all single-defect near-misses with real, mostly-correct content
+(`doc-surgical`/`doc-adapt`/`doc-synthesize` all pass their forbidden/
+required-token checks, failing only on whitespace or one stray token)
+— a strong Steering starting point. Full breakdown: `history.md`.
 
-**Correction to Phase 0's "0/3" framing below: it understated the real
-risk.** Trivial smoke-test prompts (3/3 clean) do not represent real
-docs-task behavior — **4 of 9 tasks (44%) in this single baseline draw
-hit `finish_reason=length` with completely empty final output**
-(`doc-verbatim`, `doc-adapt`, `doc-script`, `doc-repair`), confirmed
-live via `journalctl` monitoring during the run: two tasks truncated
-outright at the 8192-token ceiling (one took 210.9s wall-clock — the
-established reference for "how long does a runaway task take": normal
-~15-45s vs. runaway ~211s at this model's ~37-40 tok/s), and a third
-came within 314 tokens of the same ceiling before narrowly converging.
-Full breakdown: `history.md`.
+**This supersedes an earlier thinking-enabled baseline that looked
+better on paper (5/9 PASS) but wasn't usable**: 4 of those 9 tasks
+produced *zero* content (truncated at the 8192-token context ceiling
+after burning the full budget on unresolved reasoning), a 44% failure
+rate hidden behind the headline number. Getting there took a real
+escalation, documented in full in `history.md`:
 
-**Per explicit user instruction: sampling-parameter and thinking-
-control experimentation is the priority lever, with `enable_thinking=
-false` explicitly deprioritized as a last resort, not a default.** A
-real middle-ground lever was identified via research and confirmed
-supported by the installed llama-server build: `--reasoning-budget N`
-(server-startup flag, forces a clean `</think>` at N tokens instead of
-running unrestricted to the context ceiling). Not yet tried — Steering
-starts with alternate sampling parameters first, per instruction.
+1. A full-role sampling-parameter test (34+ min, 4+ truncations,
+   killed mid-run) showed no improvement over the original preset.
+2. Switched to a fast single-task, 3-minute-capped test loop. **5
+   sampling-parameter combinations — spanning the original preset
+   through near-deterministic (near-greedy) decoding — all timed out**;
+   no amount of temperature/top_p/top_k/presence_penalty tuning
+   resolved the runaway-thinking behavior.
+3. `DISPATCH_ENABLE_THINKING=false` (the explicit fallback, only after
+   the above was exhausted) succeeded immediately and eliminated
+   truncation entirely on a full 9-task re-test.
 
 ## Setup
 
@@ -47,40 +48,44 @@ starts with alternate sampling parameters first, per instruction.
 - Downloaded 2026-08-02: `unsloth/Qwen3.5-4B-GGUF`,
   `Qwen3.5-4B-Q4_K_M.gguf`, 2.74GB.
 - Whitelisted in `bench/dispatch.sh` as `qwen3.5:4b`.
-- **Dispatch overrides — genuinely different from every other qwen3.5
-  config tested in this project, per `AGENTS.md`'s "every
-  dispatch-level tweak must be documented" rule:**
-  - **`DISPATCH_ENABLE_THINKING=false` is NOT needed here.** Every
-    smaller qwen3.5 config tested in this project (0.8B: 100%
-    reproduction; 2B: ~50%) hit a runaway-thinking bug where the model
-    never reaches a stop token and burns the full context. At 4B, 3/3
-    bare smoke-test draws completed cleanly (`finish_reason=stop`,
-    559-1770 completion tokens, 1835-6021 reasoning chars) — the model
-    reasons for a while but reliably converges to an answer instead of
-    running away. **Real evidence the bug is a small-model-scale issue
-    within this family, not a universal architecture defect** — don't
-    assume it needs the same fix as the smaller configs without
-    checking first, the way this exact check just did.
-  - **Use thinking-mode sampling params instead** (the model defaults
-    to thinking mode and handles it fine at this size — forcing
-    `enable_thinking=false` would suppress a capability this size
-    doesn't need suppressed): `DISPATCH_TEMPERATURE=1.0
-    DISPATCH_TOP_P=0.95 DISPATCH_TOP_K=20 DISPATCH_PRESENCE_PENALTY=1.5`
-    — the model card's recommended **thinking-mode, text-task**
-    parameters (distinct from the non-thinking-mode params used for
-    the smaller configs).
+- **Required dispatch overrides — mandatory, not optional (corrected
+  2026-08-02 — see `history.md` for why the original "not needed"
+  finding was wrong), per `AGENTS.md`'s "every dispatch-level tweak
+  must be documented" rule:**
+  - **`DISPATCH_ENABLE_THINKING=false` is required.** A Phase 0 smoke
+    test on trivial 3-word prompts (3/3 clean) suggested this model
+    doesn't have the runaway-thinking bug its smaller siblings have
+    (0.8B: 100% reproduction; 2B: ~50%). **That was wrong** — real
+    docs-task prompts (more context, more complexity) truncated 4 of 9
+    tasks (44%) in the Phase 1 baseline, confirmed live via
+    `journalctl` monitoring (two genuine 8192-token truncations, one
+    taking 210.9s wall-clock — the established reference: a normal
+    completion takes ~15-45s, a runaway one ~211s at this model's
+    ~37-40 tok/s). An exhaustive sampling-parameter search (5 distinct
+    combinations, original preset through near-greedy decoding) found
+    no fix that didn't involve disabling thinking. This model family
+    has no in-prompt `/think`/`/no_think` switch —
+    `chat_template_kwargs.enable_thinking` is the only control.
+  - `DISPATCH_TEMPERATURE=1.0 DISPATCH_TOP_P=1.0 DISPATCH_TOP_K=20
+    DISPATCH_PRESENCE_PENALTY=2.0` — the same non-thinking-mode
+    sampling parameters used for the 0.8B/2B configs (same model
+    family).
   - Full reproducible invocation for a docs-role test:
     ```
     DISPATCH_BACKEND=llamacpp LLAMACPP_PORT=8086 \
-    DISPATCH_TEMPERATURE=1.0 DISPATCH_TOP_P=0.95 \
-    DISPATCH_TOP_K=20 DISPATCH_PRESENCE_PENALTY=1.5 \
+    DISPATCH_ENABLE_THINKING=false DISPATCH_TEMPERATURE=1.0 \
+    DISPATCH_TOP_P=1.0 DISPATCH_TOP_K=20 DISPATCH_PRESENCE_PENALTY=2.0 \
     bash bench/report.sh qwen3.5:4b docs llamacpp 8086
     ```
-  - **Cost/latency note**: even a trivial 3-word smoke-test prompt used
-    559-1770 completion tokens (mostly reasoning). Expect real docs
-    tasks to cost meaningfully more tokens/latency per dispatch than
-    the smaller, non-thinking-forced configs — worth factoring into
-    any final usability verdict alongside quality.
+  - **A real llama-server flag was identified but not needed**:
+    `--reasoning-budget N` (confirmed supported by the installed
+    build) caps reasoning tokens and forces a clean `</think>` instead
+    of running unrestricted — a genuine middle ground between
+    unrestricted thinking and disabling it entirely. Not tried, since
+    `enable_thinking=false` fully resolved the truncation problem
+    first. Worth revisiting only if a future session wants this
+    model's *thinking* content back (e.g. for a role where reasoning
+    traces matter) without reintroducing the runaway risk.
 
 ## Further reading
 
