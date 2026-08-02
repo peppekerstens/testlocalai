@@ -354,7 +354,8 @@ are about padding/verbosity, not missing content.
 
 ## Final report
 
-The model+role's `README.md` Current-status section **is** the quality
+The model+role's `README.md` gets its per-role section (see the
+README-shape rule's Overview-table structure) replaced with the quality
 loop's final report — not a separate document. It must state, in
 addition to whatever the existing README-shape rules already require:
 
@@ -370,6 +371,20 @@ addition to whatever the existing README-shape rules already require:
   qualitative judgment call grounded in the loop's actual evidence, not
   a mechanically computed number — show the reasoning, don't just assert
   the comparison.
+
+**Checkpoint before treating the Final report as done: diff it against
+`templates/new-model/MODEL-README-SCAFFOLD.md`.** Confirm, section by
+section: the Overview table has this role's row updated (status, pass
+rate, mainstream comparison, and its Details link still resolves to the
+right heading); the role section reads as current-state/verdict, not a
+round-by-round retelling of the loop (that belongs in `history.md`,
+linked, not summarized); "How to optimize" entries for this role are
+stated as facts/instructions, not narrated as "we tried X and Y
+happened." **Why:** this is the same check that would have caught
+`lfm2.5-1.2b-thinking`'s README growing back into a 115-line narrative
+mid-loop, closing the gap the scaffold was built for instead of relying
+on remembering the rule unprompted at the one moment (loop closure)
+it matters most.
 
 ## After a test run, persist it — don't leave findings only in chat
 
