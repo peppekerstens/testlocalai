@@ -13,7 +13,7 @@ in general; this table is model-specific results.
 | [`deepseek-r1-1.5b`](deepseek-r1-1.5b/) | reasoner | ⚠️ Mixed — 1/3 task types solid, rest need steering or are past this model's ceiling | `deepseek-r1-1.5b/README.md` |
 | [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | documenter | ❌ Not suitable — quality loop closed 2026-08-02, 1/9 bare and with optimizations (see Final report) | `lfm2.5-1.2b-thinking/README.md` |
 | [`lfm2.5-1.2b-thinking`](lfm2.5-1.2b-thinking/) | reasoner | 🔬 Preliminary — one bare baseline + one steering pass, work paused mid-iteration (not part of the closed docs-role loop) | `lfm2.5-1.2b-thinking/README.md` |
-| [`qwen3.5-0.8b`](qwen3.5-0.8b/) | documenter | 🔬 Preliminary — Phase 1 baseline only, 1/9 PASS, 5 idioms diagnosed | `qwen3.5-0.8b/README.md` |
+| [`qwen3.5-0.8b`](qwen3.5-0.8b/) | documenter | ⚠️ Mixed — quality loop closed 2026-08-02, 2 of 9 task shapes usable (~67% reliable) with per-task steering, rest unsuitable | `qwen3.5-0.8b/README.md` |
 | [`qwen3.5:0.8b`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
 | [`qwen3.5:2b`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |
 | [`qwen3.5:0.8b-bf16`](#downloaded-not-yet-profiled) | — | — Downloaded, not yet tested against any role | see "Downloaded, not yet profiled" below |

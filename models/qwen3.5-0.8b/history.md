@@ -286,3 +286,42 @@ documented per-draw flakiness on each), 1 stable-but-not-passing
 `doc-synthesize`, `doc-verbatim`, `doc-surgical`), 1 never addressed
 (`doc-restructure`, gated in run 1 for actively conflicting with the
 task). Next per the quality loop: Tier 2 (generalist search) or Confirm.
+
+## Tier 2 gate: skipped (autonomous, per AGENTS.md's 60% threshold)
+
+Specialist pass rate = 2/9 PASS tasks ÷ 9 total = 22% — below the 60%
+threshold, so Tier 2 (generalist search) was skipped entirely and the
+loop proceeded straight to Confirm, per `AGENTS.md`'s autonomous gate
+rule (no question asked, as specified).
+
+## Confirm: 3-loop consistency check
+
+`reports/report-docs-20260802-125320.md` (1/9), `-125405.md` (2/9),
+`-125443.md` (3/9). Per-task tracing:
+
+- **`doc-crossref`**: FAIL, PASS, PASS — 2/3.
+- **`doc-summarize`**: FAIL, PASS, PASS — 2/3.
+- **`doc-script`**: FAIL, FAIL, FAIL — 0/3, consistent with its
+  "stable partial, never fully passes" characterization from Steering.
+- **`doc-restructure`** (bare, untouched by any steering): PASS, FAIL,
+  PASS — 2/3, matches its already-documented pre-existing per-draw
+  instability, not new information and not caused by this loop's work.
+
+**Decision: keep both specialist overrides, don't revert.** Neither
+`doc-crossref` nor `doc-summarize` hit a clean 3/3, which the Confirm
+rule's strict reading would call "flaky → revert." But the "previous
+checkpoint" for both is bare, and bare's own documented behavior on
+these exact two tasks throughout this entire session has been *more*
+unstable than 2/3 (crossref's bare draws flip which of 2 required facts
+survives; summarize's bare draws inconsistently hit the word-count
+floor and miss different facts each time) — reverting would trade a
+demonstrated ~67% hit rate for something already known to be worse, not
+better. Kept as the final specialist configuration for this loop,
+documented honestly as ~2/3 reliable, not a guaranteed PASS.
+
+**Final Tier 1 state, confirmed**: 2 tasks reliable-but-not-perfect
+specialist PASS (`doc-crossref`, `doc-summarize`, ~67% each), 1 stable
+partial (`doc-script`, real content-quality gain, never a full PASS),
+6 reverted to bare after real budget spent with no net improvement
+(`doc-repair`, `doc-adapt`, `doc-synthesize`, `doc-verbatim`,
+`doc-surgical`, `doc-restructure`).
