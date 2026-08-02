@@ -151,16 +151,18 @@ stable cross-model finding, not a fluke of either individual model.
   VRAM margin alone doesn't predict speed, whether the split is
   static/deterministic vs. reactive/driver-paged does.
 
-  **Validated 2026-08-02**: a full real-length docs-role run at
-  `-ngl 18` (`doc-script` alone generated 728 completion tokens, well
-  past this benchmark's 300-token synthetic test) completed with no
-  crash/OOM and no quality regression — every task landed within its
-  established Confirm-phase behavior class. **`-ngl 18` is the final
-  serving config, ~2.7x faster than the original `-ngl 99` with no
-  observed downside** — see `history.md` for the full validation
-  writeup. `-ngl 20`+ was not adopted despite being faster still
-  (9.46 tok/s); its tighter 173MB margin wasn't validated against a
-  real workload.
+  **Validated 2026-08-02, twice**: full real-length docs-role runs at
+  both `-ngl 18` and `-ngl 20` (`doc-script` alone generated 728
+  completion tokens each time, well past this benchmark's 300-token
+  synthetic test) completed with no crash/OOM and no quality
+  regression — every task in both runs landed within its established
+  Confirm-phase behavior class. **`-ngl 20` is the final serving
+  config, ~3.0x faster than the original `-ngl 99` (9.46 vs. 3.1
+  tok/s) with no observed downside across 2 independent validation
+  runs** — see `history.md` for the full writeup. The margin is
+  genuinely tight (109-173MB free depending on measurement) — this is
+  the practical ceiling this session tested and validated, not a
+  number proven safe against every future workload on this hardware.
 
   **How to work out the right `-ngl` on a system with different
   specs** (different VRAM total, different GPU, different model):

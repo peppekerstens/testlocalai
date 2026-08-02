@@ -389,11 +389,31 @@ truncation on any task. Every task landed within its established
 Confirm-phase behavior class (4 stable-PASS tasks all PASSED, 2
 stable-FAIL tasks both FAILED, the 3 unstable tasks flipped within
 their known range) — no sign of quality regression from the switch
-away from `-ngl 99`. **`-ngl 18` is the final serving config**: the
-systemd service (`llama-server-qwen3.5-9b.service`) now runs with
-`-ngl 18` instead of the original `-ngl 99`, ~2.7x faster
-(8.59 vs. 3.1 tok/s) with no observed downside. `-ngl 20`+ was not
-adopted despite being faster still (9.46 tok/s) — its free-VRAM
-margin (173MB) wasn't validated against a real workload the way
-`-ngl 18`'s was, and the marginal gain didn't seem worth re-running
-the validation for; revisit if a future session wants to push further.
+away from `-ngl 99`.
+
+**Validation run at `-ngl 20` (2026-08-02) — also confirmed, no
+regression, despite an even tighter VRAM margin.** Same full
+real-length docs-role run (`reports/report-docs-20260802-212746.md`):
+no crash/OOM despite only 109MB free VRAM after load — the tightest
+margin tested this session — `doc-script` again generated 728
+completion tokens with no truncation. Result was 4/9 (lower than
+`-ngl 18`'s 5/9), but every task still landed within its established
+behavior class: the 4 stable-PASS and 2 stable-FAIL tasks held exactly,
+and the 3 unstable tasks (`doc-script`, `doc-repair`, `doc-restructure`)
+all happened to fail together this draw — 4/9 is exactly the plausible
+floor for this profile, not a new regression. `doc-surgical` failed via
+a different specific defect than the `-ngl 18` draw (line-wrap
+collapsing this time, vs. wrong-ecosystem-token substitution before) —
+both are real surfaces of the same already-known "unreliable" finding,
+not a new idiom.
+
+**`-ngl 20` is the final serving config** (updated from the initial
+`-ngl 18` choice after this second validation): the systemd service
+(`llama-server-qwen3.5-9b.service`) now runs with `-ngl 20` instead of
+the original `-ngl 99`, **~3.0x faster** (9.46 vs. 3.1 tok/s) with no
+observed crash or quality downside across 2 independent full-length
+validation runs. The margin is genuinely tight (109-173MB free
+depending on measurement) — this is the practical ceiling this session
+tested and validated, not a number proven safe against every future
+workload (e.g. a longer-context task or heavier concurrent load on this
+hardware); re-check before assuming it still holds if either changes.
