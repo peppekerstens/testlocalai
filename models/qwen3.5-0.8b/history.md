@@ -118,5 +118,44 @@ run held up when re-tested cleanly. Retraction note added to the top of
 the original report; it stays on disk as evidence of a second (steered)
 draw rather than being deleted.
 
-**Phase 1 is now genuinely complete and verified.** Proceeding to Phase
-2 starting with Idiom Q1, per the original (unretracted) plan.
+**Phase 1 is now genuinely complete and verified.**
+
+## Research phase (per the restructured quality loop — always both, before any steering)
+
+**Cross-model idiom check** (`deepseek-r1-1.5b`, `lfm2.5-1.2b-thinking` —
+the only other models tested against this role):
+- **No validated fix found for Idiom Q1** (structural-element/heading/
+  table-separator dropping). `lfm2.5-1.2b-thinking`'s own README lists
+  "structural elements (headings, fence placement)" as its own
+  still-open gap, never resolved across its whole closed loop. Genuinely
+  open problem across every model tested in this project so far, not
+  just this one.
+- **No prior instance of Idiom Q2** (instruction/prompt bleed past a
+  document-boundary marker) on either other model. New to this project.
+- **Idiom Q3 (substitution not applied) gets a useful negative
+  signal**: `deepseek-r1-1.5b`'s README calls this exact task family
+  "Not suitable — structural limit... Not a prompting problem," failing
+  across 3 historical steering rounds. Treat as a warning against
+  over-investing Steering-phase budget on `doc-adapt`/`doc-script`
+  before trying the higher-confidence Q1/Q2 levers first.
+
+**External research**: Qwen3.5-0.8B's own model card doesn't cover
+formatting/structural-preservation prompting specifically (checked
+during Phase 0). General search for small-model techniques to prevent
+generation from continuing past a document-boundary marker surfaced a
+concrete, real lever: **API-level `stop` sequences** (e.g. passing
+`"stop": ["[DOC_END]"]` on `/v1/chat/completions`) mechanically halt
+generation the moment the model starts emitting the marker, instead of
+relying on the model "understanding" a textual instruction not to
+continue — directly relevant to Idiom Q2. **Not yet implemented**:
+`dispatch.sh`'s existing override pattern (`DISPATCH_TEMPERATURE` etc.)
+is global-per-run, but this needs to be per-task (different tasks use
+different markers — `[DOC_END]` for `doc-surgical`/`doc-adapt`,
+`[SCRIPT_END]` for `doc-script`) — logging as a documented helper for a
+future dispatch-mechanism extension rather than half-implementing it
+mid-loop. See `README.md`'s "Potential helpers" for the persisted
+version of this finding.
+
+Proceeding to the Steering phase: Q1 first (task-agnostic, no cross-model
+fix to borrow, affects the most tasks), Q3 deprioritized per the
+cross-model negative signal.

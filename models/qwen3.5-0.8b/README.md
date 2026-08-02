@@ -7,7 +7,7 @@ any other role.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Preliminary — Phase 1 baseline done, Steering phase not started | 1/9 → 1/9 (not yet steered) | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
+| Documenter | 🔬 Preliminary — Research phase done, Steering phase not started | 1/9 → 1/9 (not yet steered) | Not assessed | [Documenter role: current status](#documenter-role-current-status-preliminary) |
 
 ## Documenter role: current status (preliminary)
 
@@ -49,6 +49,24 @@ second, independent draw for `doc-surgical`/`doc-adapt`/`doc-restructure`
 5. **`doc-synthesize`** shows the best partial bare performance of any
    model tested here so far (fenced JSON block present) — a relative
    strength, not just a FAIL.
+
+**Research phase complete** (cross-model check + external research, both
+required before Steering per `AGENTS.md`'s quality loop): no validated
+fix exists anywhere in this project for Q1 or Q2; Q3 gets a negative
+signal from `deepseek-r1-1.5b`'s own "structural limit, not a prompting
+problem" verdict on the same task family — deprioritized accordingly.
+Full findings: `history.md`'s "Research phase" section.
+
+## Potential helpers (documented, not yet integrated)
+
+- **API-level `stop` sequences** (e.g. `"stop": ["[DOC_END]"]` on
+  `/v1/chat/completions`) — targets Idiom Q2 (instruction bleed past a
+  document-boundary marker) mechanically instead of relying on a
+  textual instruction. Not yet wired into `dispatch.sh`: the existing
+  override pattern (`DISPATCH_TEMPERATURE` etc.) is global-per-run, but
+  this needs to be per-task (different tasks use different markers —
+  `[DOC_END]` vs `[SCRIPT_END]`). Worth a dedicated dispatch-mechanism
+  extension if Q2 doesn't respond to prompt-level fixes.
 
 ## Setup
 
