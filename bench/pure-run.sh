@@ -20,6 +20,13 @@
 # previous model's steering. See AGENTS.md's "Per-model doc-task steering"
 # rule.
 #
+# Per-model, per-task grammar steering: if
+# models/<model-dir>/grammars/<task>.gbnf exists, it's passed to dispatch.sh
+# as DISPATCH_GRAMMAR_FILE for that task+model only — a structural
+# constraint on the decoder (guaranteed valid shape), not a prompt-text
+# suggestion. Same isolation rule as task-overrides/ above: never a shared,
+# cross-model default.
+#
 # Usage: bash bench/pure-run.sh [model] [--test <tracks>] [task...]
 #   model   : qwen2.5-coder:1.5b | deepseek-r1:1.5b | ... (default deepseek-r1:1.5b)
 #   --test  : select whole track(s) by name, comma-separated:
@@ -94,6 +101,16 @@ for t in $TASKS; do
 
   OVERRIDE="$SELF_DIR/../models/$MODEL_DIR_NAME/task-overrides/$t.md"
   if [ -f "$OVERRIDE" ]; then SPEC_TO_USE="$OVERRIDE"; else SPEC_TO_USE="$D/SPEC.md"; fi
+
+  # Per-model, per-task GBNF grammar auto-resolution, mirroring the
+  # task-overrides/ mechanism above: models/<model-dir>/grammars/<task>.gbnf,
+  # if present, is passed to dispatch.sh as DISPATCH_GRAMMAR_FILE for this
+  # task only (unset again right after, so it never leaks into later tasks
+  # in the same run). See AGENTS.md / models/qwen3.5-9b/history.md for the
+  # reasoning on when a grammar is an appropriate lever (structural
+  # constraints only, never dictating literal answer content).
+  GRAMMAR="$SELF_DIR/../models/$MODEL_DIR_NAME/grammars/$t.gbnf"
+  if [ -f "$GRAMMAR" ]; then export DISPATCH_GRAMMAR_FILE="$GRAMMAR"; else unset DISPATCH_GRAMMAR_FILE || true; fi
 
   OUT="$TMP_DIR/out-$t.txt"
   TRUNCATED=""

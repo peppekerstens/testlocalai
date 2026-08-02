@@ -46,6 +46,18 @@
 #     control for model families with no in-prompt /think //no_think
 #     switch (e.g. qwen3.5); confirmed working via a direct smoke test
 #     before being wired in here, see models/README.md's qwen3.5 section.
+#   DISPATCH_GRAMMAR_FILE=<path>  reads a GBNF grammar file and sends it as
+#     "grammar" in the request body (backend=llamacpp only) — llama-server
+#     masks the next-token distribution at every step to keep output valid
+#     against the grammar, guaranteed by construction, not just encouraged
+#     by a prompt instruction. Use for STRUCTURAL constraints only (e.g.
+#     "a lone ``` line must appear here", "table must have N rows each
+#     with M cells") — never write a grammar that dictates the literal
+#     answer content itself (e.g. hardcoding the expected diff's exact
+#     wording), which would just be hardcoding the test's answer via the
+#     decoding mechanism instead of testing the model. See
+#     models/qwen3.5-9b/history.md for the reasoning behind this line and
+#     any grammars actually tried.
 
 set -euo pipefail
 
@@ -110,14 +122,20 @@ TOP_K="${DISPATCH_TOP_K:-}"
 MIN_P="${DISPATCH_MIN_P:-}"
 PRESENCE_PENALTY="${DISPATCH_PRESENCE_PENALTY:-}"
 ENABLE_THINKING="${DISPATCH_ENABLE_THINKING:-}"
+GRAMMAR_FILE="${DISPATCH_GRAMMAR_FILE:-}"
 
-python3 - "$MODEL" "$PROMPT_FILE" "$MODE" "$URL" "$BACKEND" "$OUT_FILE" "$CHECK_MODEL" "$NOTHINK" "$TEMPERATURE" "$TOP_P" "$TOP_K" "$MIN_P" "$PRESENCE_PENALTY" "$ENABLE_THINKING" <<'PY' > "$OUT_FILE"
+python3 - "$MODEL" "$PROMPT_FILE" "$MODE" "$URL" "$BACKEND" "$OUT_FILE" "$CHECK_MODEL" "$NOTHINK" "$TEMPERATURE" "$TOP_P" "$TOP_K" "$MIN_P" "$PRESENCE_PENALTY" "$ENABLE_THINKING" "$GRAMMAR_FILE" <<'PY' > "$OUT_FILE"
 import json, re, sys, urllib.request
 
 (model, prompt_file, mode, url, backend, out_file, check_model, nothink,
- temperature, top_p, top_k, min_p, presence_penalty, enable_thinking) = sys.argv[1:15]
+ temperature, top_p, top_k, min_p, presence_penalty, enable_thinking,
+ grammar_file) = sys.argv[1:16]
 with open(prompt_file, encoding="utf-8") as f:
     prompt = f.read()
+grammar = None
+if grammar_file:
+    with open(grammar_file, encoding="utf-8") as f:
+        grammar = f.read()
 
 
 def check_loaded_model():
@@ -211,6 +229,8 @@ if backend == "llamacpp":
         body_dict["presence_penalty"] = float(presence_penalty)
     if enable_thinking:
         body_dict["chat_template_kwargs"] = {"enable_thinking": enable_thinking == "true"}
+    if grammar:
+        body_dict["grammar"] = grammar
     body = json.dumps(body_dict)
     if mode == "json":
         body = json.loads(body)
