@@ -80,3 +80,43 @@ Idiom Q1 is the clear highest-leverage first target (task-agnostic,
 the quality loop, 2-3 more bare draws to confirm idiom stability before
 spending steering budget is the recommended next step — see the
 report's Suggested next steps.
+
+## Correction: the above baseline was contaminated, re-run confirms it anyway
+
+Immediately after the Phase 1 baseline above, starting Phase 2 revealed
+6 of 9 `tasks/doc-*/SPEC.md` files still carried leftover
+`lfm2.5-1.2b-thinking` steering text from that model's own quality loop
+earlier this session — `doc-verbatim`, `doc-surgical`, `doc-adapt`,
+`doc-script`, `doc-synthesize`, `doc-repair` were dispatched against
+that model's task-specific prompts, not bare ones, mischaracterized as
+"bare baseline" above. Root cause and fix: `bench/pure-run.sh` had no
+per-model prompt resolution — doc-task steering had been done by
+directly overwriting the shared `SPEC.md`, unlike `bench.sh`'s existing
+non-destructive `--rules` mechanism for code tasks. Fixed in
+`bench/pure-run.sh` (now checks `models/<model-dir>/task-overrides/
+<task>.md` first, falling back to bare `SPEC.md`) — see `AGENTS.md`'s
+"Per-model doc-task steering" rule. All 9 `tasks/doc-*/SPEC.md` restored
+to true bare; `lfm2.5-1.2b-thinking`'s exact tested state preserved
+under its own `task-overrides/`, verified byte-identical to what its
+reports actually dispatched — no evidence lost.
+
+**Re-ran the docs role against the now-verified-bare SPECs**:
+`reports/report-docs-20260802-114242.md`, still **1/9 PASS**, but a
+*different* task passing (`doc-crossref`, not `doc-summarize`) — pure
+per-draw noise, confirmed because those two tasks' SPECs were never
+contaminated in the first place (identical prompt both times). **All 5
+idioms (Q1-Q5) reproduced on the corrected run**, several more clearly:
+Q2 (`doc-surgical`'s instruction bleed) came back *worse* — duplicated
+content plus the entire edit-instructions block copied verbatim,
+stronger confirmation this is a real, robust idiom rather than an
+artifact of the contaminated prompt. `doc-script` showed real
+improvement (1 forbidden token instead of 2, required tokens now pass).
+**Bottom line: the contamination was a real methodological error worth
+fixing at the harness level (done), but it did not invalidate the
+substantive idiom diagnosis** — every idiom identified from the flawed
+run held up when re-tested cleanly. Retraction note added to the top of
+the original report; it stays on disk as evidence of a second (steered)
+draw rather than being deleted.
+
+**Phase 1 is now genuinely complete and verified.** Proceeding to Phase
+2 starting with Idiom Q1, per the original (unretracted) plan.

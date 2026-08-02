@@ -10,12 +10,20 @@ any other role.
 
 **Bare baseline (with the mandatory `enable_thinking=false` +
 non-thinking sampling params, no content-level steering), docs role: 1/9
-PASS** (`doc-summarize`) — `reports/report-docs-20260802-113029.md`. No
-truncation across all 9 tasks, confirming the dispatch fix (see Setup)
-holds for a full role, not just one prompt.
+PASS** — `reports/report-docs-20260802-114242.md` (the corrected,
+verified-bare run; an earlier same-day run was contaminated with
+leftover `lfm2.5-1.2b-thinking` steering on 6 of 9 tasks — see
+`history.md`'s correction note. All 5 idioms below reproduced, several
+more clearly, once re-tested against verified-bare prompts, so the
+diagnosis itself held up). No truncation across all 9 tasks, confirming
+the dispatch fix (see Setup) holds for a full role, not just one prompt.
+`doc-summarize`/`doc-crossref` flipped PASS↔FAIL between the two runs
+despite identical, always-bare SPECs — real per-draw instability on
+both, independent of the contamination.
 
-**Five idioms diagnosed from this single baseline draw** (n=1 — not yet
-a rate, see `history.md`):
+**Five idioms diagnosed** (n=1 per idiom, confirmed reproducing on a
+second, independent draw for `doc-surgical`/`doc-adapt`/`doc-restructure`
+— not yet a rate, see `history.md`):
 1. **Idiom Q1 — structural-element dropping** (headings, table
    separator rows) — the most common failure this run (3 of 8 FAILs:
    `doc-verbatim`, `doc-repair`, `doc-restructure`), otherwise strong
