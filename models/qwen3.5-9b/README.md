@@ -4,7 +4,8 @@
 any other role. Larger sibling of
 [`qwen3.5-4b`](../qwen3.5-4b/)/[`qwen3.5-2b`](../qwen3.5-2b/)/
 [`qwen3.5-0.8b`](../qwen3.5-0.8b/) in the same model family. Runs on
-this GPU (4GB VRAM) only via VRAM oversubscription — see Setup.
+this GPU (4GB VRAM) via an explicit partial `-ngl` offload, tuned to
+~3x the naive `-ngl 99` speed — see Setup.
 
 ## Overview
 
@@ -109,25 +110,85 @@ stable cross-model finding, not a fluke of either individual model.
 - Downloaded 2026-08-02: `unsloth/Qwen3.5-9B-GGUF`,
   `Qwen3.5-9B-Q4_K_M.gguf`, 5.68GB.
 - Whitelisted in `bench/dispatch.sh` as `qwen3.5:9b`.
-- **VRAM oversubscription — a real, load-bearing setup fact, per
-  `AGENTS.md`'s "every dispatch-level tweak must be documented"
-  rule.** This GPU (GTX 1650, 4096MiB total VRAM) does not have enough
-  free VRAM (~3.3GB free after other services stop) to hold this
-  5.68GB model. `-ngl 99` (request all layers on GPU) was used anyway,
-  per explicit user instruction accepting VRAM overflow. The service
-  loads successfully (llama.cpp's own auto-fit heuristic logs `failed
-  to fit params to free device memory... abort` at startup but
-  proceeds regardless) via the NVIDIA driver's transparent VRAM
-  oversubscription (paging between VRAM and system RAM over PCIe,
-  handled by the GPU driver/DMA, not CPU-side code) — confirmed live:
-  GPU utilization sits at 99% during generation while system-wide CPU
-  stays low (~10-12%, one `llama-server` thread pegged near 100% for
-  orchestration/sync, not compute) and `llama-server`'s virtual memory
-  size is ~56.5GB (far exceeding both the 4GB VRAM and 8GB system RAM
-  — the signature of driver-managed paging, not a normal allocation).
-  **Practical consequence: ~12x slower generation** (~2.6-3.1 tok/s vs.
-  `qwen3.5:4b`'s fully-GPU-resident ~37-40 tok/s) — this is a hardware
-  ceiling, not something further tuning fixes.
+- **`-ngl 99` (request all layers on GPU) is a real anti-pattern on an
+  undersized card — corrected 2026-08-02, per `AGENTS.md`'s "every
+  dispatch-level tweak must be documented" rule.** This GPU (GTX 1650,
+  4096MiB total VRAM) does not have enough free VRAM (~3.3GB free
+  after other services stop) to hold this 5.68GB model. The original
+  setup used `-ngl 99` anyway (per explicit user instruction accepting
+  VRAM overflow); the service loaded (llama.cpp's own auto-fit
+  heuristic logs `failed to fit params to free device memory...
+  abort` at startup but proceeds regardless) via the NVIDIA driver's
+  transparent VRAM oversubscription (paging between VRAM and system
+  RAM over PCIe on every layer's matmul) — confirmed live: GPU
+  utilization sat at 99%, `llama-server`'s virtual memory size was
+  ~56.5GB (far exceeding both the 4GB VRAM and 8GB system RAM), and
+  generation ran at **~2.6-3.1 tok/s**. **This was originally
+  documented as "a hardware ceiling, not something further tuning
+  fixes" — that was wrong.** It's a *setup* ceiling, not a hardware
+  one: `-ngl 99` forces the driver to blindly re-page the entire model
+  on every layer, whether or not that layer's weights are still
+  resident from the previous token. An explicit, smaller `-ngl N`
+  gives llama.cpp a fixed, deterministic split instead — N layers
+  permanently GPU-resident, the rest permanently CPU-resident, zero
+  reactive paging either way.
+
+  **Benchmark (2026-08-02, 300-token completion, fixed 23-token
+  prompt, same non-thinking sampling params as below):**
+
+  | `-ngl` | tok/s | Free VRAM after load | vs. `-ngl 99` |
+  |---|---|---|---|
+  | 99 (driver-paged, original) | 3.1–3.15 | 195 MB | 1.0x |
+  | 9 | 5.90 | 1353 MB | 1.9x |
+  | 14 | 7.30 | 655 MB | 2.3x |
+  | 18 | 8.59 | 217 MB | 2.7x |
+  | 20 | 9.46 | 173 MB | 3.0x |
+
+  Speed kept climbing through `-ngl 20` with no reversal found yet —
+  this table is not necessarily the ceiling, just as far as this
+  session tested. Note `-ngl 20`'s free VRAM (173MB) is *about the
+  same* as the original broken `-ngl 99` (195MB), yet 3x faster: free
+  VRAM margin alone doesn't predict speed, whether the split is
+  static/deterministic vs. reactive/driver-paged does.
+
+  **Caveat — this benchmark used a short fixed generation length.**
+  Real docs tasks generate up to ~900 tokens (see `reports/`), which
+  grows the KV cache further than this 300-token test did; at
+  173-217MB free, a longer real task could plausibly hit an actual
+  CUDA out-of-memory crash rather than just slowing down. **Current
+  serving config: `-ngl 18`, pending a full real-workload docs-role
+  run to confirm it survives real task lengths without
+  crashing/regressing quality — check `history.md` for the outcome
+  before trusting this as final.**
+
+  **How to work out the right `-ngl` on a system with different
+  specs** (different VRAM total, different GPU, different model):
+  there's no shortcut that skips measuring your own hardware — a
+  number computed for a GTX 1650 doesn't transfer.
+  1. Check real free VRAM after every other service you'll run
+     alongside it is already up: `nvidia-smi --query-gpu=memory.free
+     --format=csv`. Don't use total VRAM; other processes eat into it.
+  2. Get the model's real per-layer weight size from the actual GGUF
+     file, not a guess — parse the tensor offset table (name, dims,
+     type, byte offset per tensor; consecutive offsets give exact
+     tensor sizes) and sum by layer index. Total model size ÷ layer
+     count is close enough for a first guess but daily varies ±15%
+     per layer depending on architecture (e.g. this model's SSM/linear-
+     attention layers are cheaper than its full-attention layers).
+  3. Start conservative: pick an `-ngl N` that leaves generous free
+     VRAM (a few hundred MB+), confirm the service loads without a
+     driver-paging red flag (`nvidia-smi` free VRAM should track
+     close to the intended budget, not near-zero) and answers
+     correctly.
+  4. Push `-ngl` up in small steps, re-benchmarking tok/s and free
+     VRAM after each (a short fixed-length `/completion` request is
+     enough for this step — see the table above's method). Stop
+     increasing once free VRAM gets uncomfortably close to zero for
+     your real task's expected generation length, not just the short
+     benchmark's.
+  5. **Validate the final choice with a real, full-length workload
+     run before trusting it** — a short benchmark can hide KV-cache
+     growth that only shows up over a longer generation.
 - **Required dispatch overrides**: `DISPATCH_ENABLE_THINKING=false
   DISPATCH_TEMPERATURE=1.0 DISPATCH_TOP_P=1.0 DISPATCH_TOP_K=20
   DISPATCH_PRESENCE_PENALTY=2.0` — same non-thinking-mode sampling

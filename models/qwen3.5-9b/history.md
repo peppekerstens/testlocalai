@@ -310,3 +310,84 @@ structural idioms (`doc-verbatim`'s blank-line instability,
 resolved across its own exhaustive attempts remained unresolved here
 too, now confirmed as a stable cross-model finding at 2 different
 sizes, not a fluke of either individual model.
+
+## Performance: `-ngl` tuning replaces driver-paged `-ngl 99`
+
+**Context.** The Final report above notes this model "only runs on
+this hardware via severe VRAM oversubscription (~3.1 tok/s)" — that
+was the state under `-ngl 99` (request all 32 layers on GPU), which
+this GPU (4096MiB VRAM, ~3.3GB free) cannot hold alongside this
+5.68GB model. The NVIDIA driver silently pages VRAM↔system RAM over
+PCIe as a fallback, and it does so blindly: every layer's matmul may
+require re-fetching weights evicted since the previous token,
+regardless of which layer, because `-ngl 99` tells llama.cpp *all*
+layers should be GPU-resident with no fixed split.
+
+**Investigation, prompted by the user asking whether "smart" CPU/GPU
+splits are possible with llama.cpp.** Web research (see chat context;
+not re-derived here) found no published exact `-ngl`/tensor-override
+recipe for this specific dense 9B variant on ~4GB cards — published
+guidance for Qwen3.5 offload tricks (`--override-tensor`,
+`--n-cpu-moe`) targets the much larger **MoE** variants
+(Qwen3.5-35B-A3B), where skipping inactive experts is the lever. This
+model is dense — every FFN weight is used every token regardless — so
+`--override-tensor` doesn't apply the way it does for MoE; the
+correct lever here is a plain, explicit `-ngl N` (whole-layer split).
+
+One real, useful confirmation from research: Unsloth's own docs state
+Qwen3.5-9B needs ~6.5GB total memory at Q4 — matching an independent
+from-scratch estimate computed from this project's own downloaded
+GGUF file's tensor offsets (exact per-tensor byte sizes, not a
+guess): 32 blocks ≈ 4.26GB (~133MB/layer average) + 1.41GB "always-
+resident" tensors (`token_embd`, `output.weight`, `output_norm`) ≈
+5.67GB, consistent with the 5.68GB file size. Confirms this model
+genuinely does not fit in 4GB VRAM at any reasonable quant — the
+question was never "does it fit," it's "how should the overflow be
+handled."
+
+**Benchmark (2026-08-02): explicit `-ngl N` vs. driver-paged `-ngl
+99`**, 300-token `/completion` request, fixed 23-token prompt, same
+non-thinking sampling params as the docs-role config:
+
+| `-ngl` | tok/s | Free VRAM after load | vs. `-ngl 99` |
+|---|---|---|---|
+| 99 (driver-paged, original) | 3.1–3.15 | 195 MB | 1.0x |
+| 9 | 5.90 | 1353 MB | 1.9x |
+| 14 | 7.30 | 655 MB | 2.3x |
+| 18 | 8.59 | 217 MB | 2.7x |
+| 20 | 9.46 | 173 MB | 3.0x |
+
+Tested incrementally, stopping the upward sweep at `-ngl 20` (not
+because speed reversed — it was still climbing — but because free
+VRAM dropped to 173MB, judged too tight to keep pushing without
+validating against real, longer task lengths first). **The most
+notable finding: `-ngl 20`'s free VRAM (173MB) is almost identical to
+the original `-ngl 99`'s (195MB), yet 3x faster.** Free VRAM margin
+alone does not predict speed — what matters is whether the CPU/GPU
+split is static and deterministic (llama.cpp's own `-ngl N` behavior)
+versus reactive and driver-managed (`-ngl 99` overflowing badly). A
+small, deliberate overflow costs little; a large, blind one is
+catastrophic.
+
+**Why `-ngl 9` (measured 2583MB used) came in well under its own
+naive per-layer budget estimate (~3.3GB predicted)**: KV cache and
+compute-buffer cost only apply to layers actually GPU-resident. This
+model's architecture is hybrid (`full_attention_interval=4` — only 8
+of 32 layers are real growing-KV-cache attention layers, the rest are
+cheaper SSM/linear-attention layers per the GGUF header). With only 9
+layers on GPU, just 2-3 of those 8 full-attention layers fall in
+range, so the real KV-cache VRAM cost was much smaller than an
+estimate assuming full-model attention cost would suggest.
+
+**Caveat, not yet resolved as of this write:** the benchmark above
+used a short, fixed 300-token generation. Real docs tasks generate up
+to ~900 tokens (see `reports/`), which grows the KV cache further
+than this test did — at 173-217MB free (the `-ngl 18`/`20` end of the
+sweep), a longer real task could plausibly hit an actual CUDA
+out-of-memory crash rather than just slowing down, a different
+failure mode than anything tested here. **Serving config changed to
+`-ngl 18` and a full real-length docs-role run was launched to
+validate stability and confirm no quality regression vs. the 3-run
+Confirm's 4-stable/2-stable-fail/3-unstable profile before treating
+this as final** — outcome to be appended here once that run
+completes.
