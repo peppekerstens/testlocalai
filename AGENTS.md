@@ -189,10 +189,26 @@ follows the existing report rules above: write Findings/Suggested next
 steps into the report **before** starting the next run in the loop, not
 after (see the rule just above this one).
 
+**Always check for prior work on this exact model+role before starting
+a loop.** Read `models/<model>/reports/report-<role>-*.md`,
+`README.md`, and `history.md` first. A phase's max-5 run budget is
+cumulative for a given model+role, not reset every time the loop is
+invoked (in a new session, after a `/loop`, whatever) — prior runs are
+real evidence regardless of whether they were originally run under this
+exact phase structure. Map them onto the phases retroactively instead of
+re-running work already done: the most recent report from before the
+current invocation's changes is Phase 1's reference run; an
+already-applied task-specific steering pass is a completed Phase 2 run;
+an already-borrowed cross-model fix is a completed Phase 3 run; and so
+on. Continue the loop from wherever prior work left off — don't discard
+it and restart at Phase 1 just because it predates this section.
+
 **Phase 1 — Reference run.** One baseline `bash bench/report.sh <model>
 <role>` run against the model's current state (bare, or whatever
-steering already exists) before touching anything. This is the anchor
-every later phase's "did it improve" comparison is measured against.
+steering already exists) before touching anything, *or* the most recent
+existing report if the check above found one — see the rule directly
+above. This is the anchor every later phase's "did it improve"
+comparison is measured against.
 
 **Phase 2 — Obvious-improvement runs (max 5 full role re-test runs).**
 Diagnose the reference run's failures per the report-completion rules
