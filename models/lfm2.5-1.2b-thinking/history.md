@@ -219,3 +219,65 @@ new and specific to `doc-surgical`'s draw so far; needs more draws before
 folding a fix into `surgical-edit-discipline.md`. Single draw per task
 throughout this pass — see the report for the full per-task caveats and
 next-step levers.
+
+## Phase 2 run 2: tried a 7-bullet rules variant, reverted
+
+Added 3 more grounded bullets to `surgical-edit-discipline.md`
+(explicit "the document IS visible", "count/check off each edit",
+"don't drop untouched content") targeting the exact gaps run 1's report
+diagnosed. Result: **worse on all 4 targeted tasks**, not better —
+`doc-surgical`'s Idiom F narration got worse despite being told directly
+its premise was false, `doc-adapt`/`doc-script` reintroduced forbidden
+tokens run 1 had already fixed, `doc-repair` introduced a new
+placeholder-comment idiom. Reverted to the run-1 (4-bullet) version per
+the quality loop's stop-early rule
+(`reports/report-docs-20260802-104628.md`). This sharpens Idiom E: even
+a short, task-specific, evidence-grounded instruction addition can cross
+this model's tolerance threshold and flip from helping to triggering
+narration-instead-of-execution — the threshold for this model+task
+family already looked reached at 4 bullets.
+
+## Confirm: 3-loop consistency check on the run-1 (reverted) state
+
+Ran the full docs role 3 more times, unchanged, against the reverted
+run-1 state (`surgical-edit-discipline.md` 4-bullet version on
+`doc-surgical`/`doc-adapt`/`doc-script`/`doc-repair`; old blanket
+`output-discipline.md` still on `doc-verbatim`/`doc-synthesize`/
+`doc-summarize`/`doc-crossref`; `doc-restructure` bare). Results:
+`reports/report-docs-20260802-105008.md` (0/9),
+`report-docs-20260802-105345.md` (2/9),
+`report-docs-20260802-105626.md` (1/9).
+
+**Pass count did swing (0, 2, 1) — but tracing it per task shows the
+swing is entirely explained by two tasks this session never touched:**
+`doc-restructure` (FAIL, PASS, PASS) and `doc-crossref` (FAIL, PASS,
+FAIL). **`doc-surgical`, `doc-adapt`, `doc-script`, and `doc-repair` —
+the actual subject of this steering work — FAILED all 3 confirm runs,
+0/3 each, with no exceptions.** That's a *stable* result for the
+steered tasks specifically: consistently improved content quality (per
+Phase 2 run 1's diagnosis) but consistently short of a full PASS, not a
+flaky one.
+
+`doc-crossref`'s instability was already documented (Idiom E section,
+session 2) — its SPEC hasn't changed since. `doc-restructure` failing
+once (out of what is now 5+ draws across this entire session, all
+others PASS) is new — the one FAIL showed a genuine content defect (an
+invented extra table row, `report-docs-20260802-105008.md`), and
+completion-token counts were elevated across *every* task in that
+specific run (2800–4200 vs. the usual 700–3000), suggesting a real
+higher-variance draw rather than an infra fault — service health and
+GPU state were checked at the time and showed nothing abnormal (56% VRAM
+used, 3% utilization, no truncation).
+
+**Decision: do not revert the steering.** The quality loop's Confirm
+rule says to revert to the previous checkpoint on flakiness, but the
+flakiness measured here isn't attributable to anything changed this
+session — reverting `surgical-edit-discipline.md` further (to the old
+blanket preamble, or to bare) would not touch `doc-restructure` or
+`doc-crossref` at all, since neither was ever part of this steering
+work, and Idiom E already established the blanket-preamble alternative
+is a confirmed *worse* content-quality baseline for these 4 tasks. The
+run-1 4-bullet state stays as this loop's current best-known state:
+0/4 stable on the steered tasks (not yet a fix, but the best content
+quality reached so far and not flaky itself), plus 2 known-unstable,
+unrelated tasks whose instability predates this session's work.

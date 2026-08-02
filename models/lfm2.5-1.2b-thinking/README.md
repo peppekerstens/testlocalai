@@ -61,6 +61,32 @@ next step is 2-3 more draws per task before trusting any of this as a
 rate, plus a `doc-script`-specific completeness instruction and a
 `doc-surgical`-specific fix for Idiom F.
 
+**A 7-bullet expansion of the rules block was tried and reverted** —
+adding 3 more grounded bullets made all 4 targeted tasks worse, not
+better (see `history.md`'s "Phase 2 run 2"). **Do not re-attempt
+expanding `rules/surgical-edit-discipline.md` further** as the next
+lever; this model's tolerance for instruction-block length on this task
+family appears to already be at its ceiling at 4 bullets.
+
+**Confirm (3-loop consistency check) result: the steered tasks are
+stable, the pass-count swing is not theirs.** Re-running the docs role 3
+more times against the reverted 4-bullet state gave 0/9, 2/9, 1/9 — but
+per-task tracing shows `doc-surgical`/`doc-adapt`/`doc-script`/
+`doc-repair` (the tasks actually steered this session) FAILED all 3
+runs with no exceptions. Every bit of the pass-count swing is
+`doc-restructure` (bare, previously 100% reliable, failed once with a
+genuine content defect) and `doc-crossref` (already known unstable, see
+above) — neither touched by this session's work. **Decision: keep the
+current 4-bullet state, do not revert** — nothing tried so far (blanket
+preamble, bare, 4-bullet, 7-bullet) has produced a full PASS on these 4
+tasks, and the 4-bullet version has the best measured content quality of
+everything tried. Full breakdown: `history.md`'s "Confirm" section.
+**This quality loop's Phase 2 is exhausted at diminishing returns** (2
+of 5 runs used, the 2nd made things worse) — next step per
+`AGENTS.md`'s quality loop is Phase 3 (check other models' `history.md`
+for this same docs role for transferable idioms) rather than more
+bullets on this same rules file.
+
 **A real infrastructure bug was found and fixed during this pass**, not
 specific to this model's quality: LFM2.5 embeds its `<think>...</think>`
 block *inline* in `content` (unlike R1, which returns it in a separate
