@@ -298,3 +298,76 @@ is a materially different profile from `qwen3.5-2b`'s single
 rock-solid specialist result — bigger did not mean uniformly more
 reliable here, it meant a wider spread of partially-working task
 shapes with real content instead of empty truncated output.
+
+## Update 2026-08-03: re-test with qwen3.5-9b's findings — doc-repair bug fix + grammar transfer
+
+Following `qwen3.5:9b`'s own quality loop (same day), the user asked
+for this model to be re-tested against 2 findings from that session:
+the `tasks/doc-repair/SPEC.md` bug fix, and GBNF grammar-constrained
+decoding as a lever for structural (not content) idioms.
+
+**`doc-repair`: bug fix applied, but the outcome differs from
+`qwen3.5:9b`'s.** On `9b`, the same fix produced a clean 5/5 bare
+result — no steering needed at all. On `4b`: bare, 6 draws collected
+across 2 separate 3-run Confirm sets, **3/6 (50%)** — genuine, real
+instability, not resolved by the bug fix the way it was for the
+larger sibling. This is a useful, concrete data point against
+assuming a fix transfers identically just because the underlying bug
+was shared: the SPEC bug was real and shared, but `4b`'s own
+reliability ceiling on this task (independent of that bug) is lower
+than `9b`'s.
+
+**`doc-verbatim`: fixed via direct grammar transfer, no adaptation
+needed.** `9b`'s `grammars/doc-verbatim.gbnf` — same task, same
+`expected.md`, so the identical structural grammar applies — copied
+over verbatim and tested: **7/7 PASS** across all draws collected
+(3 isolated + 1 in a 3-run Confirm set + 3 in the final consolidated
+Confirm). This closes `4b`'s own 4-attempt (!) prompt-only exhaustion
+on this exact idiom from the original Steering phase — the grammar
+lever succeeds where prompt iteration had already failed 4 times,
+exactly the pattern `9b`'s own session predicted.
+
+**`doc-surgical`: cross-model confirmation of "genuinely unresolved,"
+not a new attempt.** Fresh bare draws showed the identical defect
+`9b` had (dropped opening "(" / "the C# SDK " prefix from the given
+exact replacement text) — a content-fidelity idiom, not structural, so
+not legitimately grammar-fixable (see `9b`'s own history.md and
+`docs/GRAMMAR-STEERING-PATTERNS.md` for why). One targeted attempt
+(the checklist-style reminder, the closest thing to a partial win on
+`9b`) was tried anyway as a reasonable-effort check rather than the
+full budget, given how strong the cross-model precedent already was:
+**3/3 FAIL**, same defect. `doc-surgical` remains confirmed unsuitable
+on 2 model sizes now via real, varied steering attempts at each — a
+stable cross-model finding, not a fluke of either individual model.
+
+**`doc-restructure`: a genuine surprise — this task had *regressed*
+since the original Confirm** (which found it stable-PASS bare, 3/3).
+A fresh Confirm set (post the other fixes) found it back down to 1/3,
+same idiom as `9b`'s original `doc-restructure` defect (missing table
+separator row on a freshly-generated table). Transferred `9b`'s
+`grammars/doc-restructure.gbnf` directly (same task, same structural
+requirement): **8/8 PASS** across all draws collected (5 isolated + 3
+in the final Confirm). Whatever caused the original 3/3-bare result to
+not hold up over more draws, the grammar closes the gap regardless —
+consistent with `9b`'s own finding that this task's failure is purely
+structural (table shape), not a content/synthesis problem.
+
+**Consolidated Confirm, final state**: `doc-verbatim` 7/7, `doc-restructure`
+8/8, `doc-synthesize` 6/6, `doc-crossref` 6/6 — **4 tasks genuinely
+stable**. `doc-surgical` 0/8 — **stable FAIL, confirmed cross-model**.
+`doc-adapt` 3/6, `doc-script` 1/6, `doc-repair` 3/6, `doc-summarize`
+4/6 — **4 tasks remain genuinely unstable**, unchanged by any of
+today's work (none of the 4 were touched — their instability is real,
+independent of the SPEC bug or the grammar lever, matching this
+model's own already-established finding from the original loop).
+
+**Revised final verdict**: 4 stable-PASS (up from 3 — `doc-verbatim`
+newly resolved), 1 stable-FAIL (down from 2 — `doc-surgical` alone
+now, `doc-verbatim` moved out of this bucket), 4 unstable (unchanged
+in count, though `doc-repair` swapped in for what was previously
+counted differently). This matches `qwen3.5:9b`'s own pattern almost
+exactly in kind (both models: grammar fixes the structural idioms,
+`doc-surgical`'s content-fidelity idiom resists everything, a stable
+core of genuinely unstable tasks persists regardless of steering) —
+strong evidence this is a property of the qwen3.5 architecture/family
+at these sizes, not an artifact of either specific checkpoint.
