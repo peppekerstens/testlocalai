@@ -5,9 +5,17 @@ The harness proves (or disproves) that a small local LLM can write the code
 correctly, and the SPEC is the lever you tune. Tasks live flat under
 `tasks/`, named `<role>-<name>` (role prefix: `code-`/`doc-`/`reason-`/…) —
 not nested under a project subdir, since a task's skill isn't tied to one
-source project. If your project has reference material the SPECs should
-point at (an SDK probe, a domain cheat-sheet), put that — and only that —
-under `tasks/<project>/` (see `tasks/csharp/` for an example).
+source project.
+
+If your project has an unfamiliar SDK/API surface, probe it first (a
+throwaway scratch project you build and verify yourself), then fold the
+*verified* findings directly into the resulting task's `SPEC.md` — don't
+keep a separate standalone reference doc/probe directory around
+afterward. (A `tasks/<project>/` reference-material-only convention
+existed for this earlier but was retired 2026-08-03: its one instance,
+`tasks/csharp/`, was pure overhead once its findings landed in a real
+task — see `tasks/code-mcpidentity/SPEC.md` for what that looks like,
+and root `history.md` for why the standalone version was dropped.)
 
 ## Task-set layout
 
@@ -26,9 +34,9 @@ tasks/
 │   └── history/               # optional: superseded SPEC.md variants worth
 │                               # keeping for iteration comparison (bench.sh
 │                               # --legacy), e.g. history/SPEC-verbose.md
-└── <project>/                # reference material only, not tasks
-    ├── probe/                # optional: throwaway SDK probe project
-    └── <project>-reference.md  # optional: domain cheat-sheet the SPECs can point at
+└── <role>-<name2>/           # every task is a flat sibling — no project
+                                # subdir; fold any SDK/domain findings
+                                # straight into this SPEC.md instead
 ```
 
 ## SPEC skeleton

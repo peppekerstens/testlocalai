@@ -11,7 +11,8 @@ the recipe below surfaces them cheaply.
 2. **Probe the domain — only if the model needs grounding it doesn't
    already have.** If the model's role faces an SDK/API surface it doesn't
    know (a code-emitter role against an unfamiliar library), run a tiny
-   throwaway probe first (see `tasks/csharp/probe/` for a working example).
+   throwaway probe first — a scratch project you build and verify yourself
+   (compile it, run it, check real output) rather than trust unverified.
    Record what compiles and what the model gets wrong — this is the seed of
    the steering cheatsheet. **Skip this step** when the model's role already
    works from the project's own existing docs as ground truth (a
@@ -19,14 +20,24 @@ the recipe below surfaces them cheaply.
    fixtures) — there's nothing to probe first. This is exactly why
    qwen2.5-coder-1.5b (code-emitter-csharp, unfamiliar ConnectWise/MCP SDK)
    went through this step and deepseek-r1-1.5b (documenter/reasoner) didn't.
+   (The original worked example, `tasks/csharp/probe/`, was retired
+   2026-08-03 once its findings were folded into a real task,
+   `tasks/code-mcpidentity/` — read that task's `SPEC.md` for what a
+   probe-derived task looks like once it's done.)
 3. **Probe the model** (skip if step 2 was skipped). Send the probe + a
    "write a cheatsheet for me" prompt through `bench/dispatch.sh` (text
    mode). Fix + re-run once. This tells you how the model talks about the
    domain before you write real SPECs. Keep the round-trips —
    `models/<model>/prompts/`, `/outputs/`, `/logs/` — but only as scratch:
-   once the cheatsheet/probe is finished and promoted into its durable home
-   (`tasks/<project>/`), delete the raw trail rather than leaving it as a
-   stale duplicate (see root README's "Two kinds of history").
+   once the cheatsheet/probe is finished, fold its verified findings
+   directly into the real task's `SPEC.md`/behavior contract (there is no
+   separate intermediate reference-doc location anymore — see root
+   README's Layout table), then delete the raw trail rather than leaving
+   it as a stale duplicate (see root README's "Two kinds of history"). If
+   a finding doesn't map cleanly into a task the harness can check (e.g. a
+   hosting/routing default, not a unit-testable behavior), it's fine for
+   it to not survive anywhere durable — don't invent a task just to store
+   a fact; re-derive it from the SDK/docs again if it's ever needed.
 4. **Bench it.** `BENCH_MODEL=<model> ./.orchestration/bench/bench.sh
    code-<name> <round> <FileName>.cs` (or `bench/report.sh <model> <role>`
    for a doc-kind role track). Use the same round label as other models

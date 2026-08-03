@@ -59,7 +59,7 @@ failure modes, not a re-labeling of another role.
 | `docs/GRAMMAR-STEERING-PATTERNS.md` | when to reach for grammar-constrained decoding instead of prompt text, backend capability notes, and a starter library of structural grammar patterns |
 | `bench/` | generic runner: `dispatch.sh`, `bench.sh`, `pure-run.sh`, `report.sh` |
 | `tasks/<role>-<name>/` | flat task set: SPECs + test harnesses; each task's `rounds/` holds its prompt/output history |
-| `tasks/<project>/` | reference material for a specific source project, not tasks (e.g. `tasks/csharp/probe/`, `sdk-cheat-sheet.md`) |
+| `tasks/<project>/` | reference material for a specific source project, not tasks — optional pattern, retired 2026-08-03 (its one instance, `tasks/csharp/`, was folded into a real task, `tasks/code-mcpidentity/`, and model-specific onboarding evidence moved to `models/<model>/`; see `history.md`) |
 | `models/README.md` | index: which model has been tested against which role, with a status indicator |
 | `models/<model>/README.md` | that model's current steering profile (verdicts, how to optimize per role) — current-state only, see `AGENTS.md`'s README-shape rule |
 | `models/<model>/history.md` | that model's full historical narrative — round-by-round evidence, diagnosed idioms, debugging trails |

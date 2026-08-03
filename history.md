@@ -20,9 +20,10 @@ that's this same project under its earlier name, not a different one.
 Task sets (SPECs + harnesses) live flat under `tasks/`, role-prefixed
 (`code-*`, `doc-*`, `reason-*`, `tool-*`, `extract-*`, `review-*`,
 `visual-*`) — a task's skill isn't tied to one source project, so it
-isn't nested under one. Reference material tied to a specific source
-project (SDK probes, cheat-sheets) lives under `tasks/<project>/`
-instead (e.g. `tasks/csharp/`).
+isn't nested under one. A `tasks/<project>/` convention for
+source-project-specific reference material (SDK probes, cheat-sheets)
+existed for a while (e.g. `tasks/csharp/`) but was retired 2026-08-03 —
+see "Retired: onboarding-trail cleanup example" below.
 
 ## Cross-model finding: specialists don't generalize
 
@@ -66,9 +67,23 @@ its own real test.
 round-trips from onboarding a model before any task SPEC existed for
 it — meant to be provisional. `qwen2.5-coder-1.5b`'s onboarding trail
 was retired once its findings were fully captured in durable artifacts
-local to this repo (`tasks/csharp/sdk-cheat-sheet.md`,
+local to this repo (originally `tasks/csharp/sdk-cheat-sheet.md` +
 `tasks/csharp/probe/`) plus a deviation note in the source
 `connectwise-mcp` repo's own `ORCHESTRATION.md` (not a file that lives
 here) — nothing was lost, the raw transcript was just redundant once
-superseded. Kept here as the reference example for when a future
-model's onboarding trail is ready for the same cleanup.
+superseded.
+
+**⚠️ 2026-08-03: this pattern is a cautionary tale now, not just a clean
+example.** A later session overwrote `tasks/csharp/sdk-cheat-sheet.md`
+in place while doing unrelated sanitation, not realizing it was the
+*sole* remaining copy of the preserved findings this note describes —
+the raw trail really was already gone by then, so that edit nearly
+caused real, permanent loss. Recovered from git history and relocated
+to `models/qwen2.5-coder-1.5b/onboarding-cheatsheet-original.md` — see
+that model's `history.md` for the full incident. `tasks/<project>/` as
+a reference-material location has been retired (nothing currently uses
+it); the lesson generalizes past this one file: **a "durable" artifact
+that isn't clearly marked as the sole surviving copy of something else
+you already deleted is a trap for the next session** — mark it loudly,
+or don't rely on deleting the original until the durable copy is
+confirmed genuinely redundant elsewhere too.

@@ -168,11 +168,35 @@ YAML/JSON/HTTP).
 ## Onboarding history
 
 - The original onboarding round-trips (0.3a-cheatsheet, 0.3b-probe) that
-  built the first steering are gone, not lost — their content is fully
-  superseded: 0.3a-cheatsheet's output is `tasks/csharp/sdk-cheat-sheet.md`
+  built the first steering are gone, not lost — their content was fully
+  superseded: 0.3a-cheatsheet's output was `tasks/csharp/sdk-cheat-sheet.md`
   verbatim; 0.3b-probe's two attempts both regressed and were discarded,
   and the working probe (`tasks/csharp/probe/`) was hand-assembled by the
   orchestrator instead — see `ORCHESTRATION.md` deviation #5.
+- **⚠️ Incident, 2026-08-03: that preservation broke, then was repaired.**
+  A later session, working on an unrelated `tasks/csharp/` sanitation
+  task, overwrote `tasks/csharp/sdk-cheat-sheet.md` in place (fixing its
+  own stale content against a live SDK probe) without realizing this
+  file was the sole surviving record of this model's original verbatim
+  0.3a-cheatsheet output — the raw round-trip logs referenced above were
+  already gone. The true original content was recoverable from git
+  history (commit `62bcb1b`) and is now preserved at this model's own
+  `onboarding-cheatsheet-original.md` — its correct home, not the
+  now-deleted `tasks/<project>/` reference-material convention. The
+  hand-assembled `tasks/csharp/probe/` was verified byte-identical to
+  its original import state (never modified by any session), served its
+  purpose confirming/correcting the cheat sheet's claims, and was
+  deleted along with the rest of `tasks/csharp/` — nothing case-specific
+  to this model was lost there. **Separately, and more consequentially:
+  this model's actual code-* task results were never at risk from any
+  of this — `rules/csharp-rules.md` never referenced the cheat sheet's
+  SDK-hosting claims — but its systemd service was found still running
+  `-ngl 99`, the exact VRAM-oversubscription config a later session
+  found and fixed (replaced with `-ngl 20`) for another model, and every
+  one of its code-* task results still dates to the original import,
+  predating every dispatch-hygiene fix (restart-before-run, sampling
+  params) made since. Treat this model's entire existing steering
+  profile as unverified against current infrastructure until re-tested.**
 
 ## Measured hardware performance (this model, this box)
 

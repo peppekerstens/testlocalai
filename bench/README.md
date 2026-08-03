@@ -6,10 +6,13 @@ small local LLM performs its role against fixed ground truth — code tasks
 (`verify.sh` fidelity assertions) for the documenter role, reason tasks
 (content assertions) for the reasoner role — and tune steering
 (SPECs, rules, per-model quirks) until it passes. Task sets live flat under
-`../tasks/` (role-prefixed: `code-*`, `doc-*`, `reason-*`); a project-scoped
-subdir like `tasks/csharp/` holds reference material only (SDK probes,
-cheat-sheets) — not tasks — since a task's skill (compile C#, reproduce a
-doc, reason about a log) isn't necessarily tied to one source project.
+`../tasks/` (role-prefixed: `code-*`, `doc-*`, `reason-*`), since a task's
+skill (compile C#, reproduce a doc, reason about a log) isn't necessarily
+tied to one source project. A project-scoped `tasks/<project>/` subdir for
+reference-only material (SDK probes, cheat-sheets) was an optional pattern,
+retired 2026-08-03 — its one instance (`tasks/csharp/`) was folded into a
+real task (`tasks/code-mcpidentity/`) once its findings were verified; see
+`history.md`.
 
 ## Protocol
 
