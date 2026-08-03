@@ -1,0 +1,6 @@
+def resolve_user(require_auth: bool, x_dev_user: str | None) -> str:
+    if x_dev_user is not None and x_dev_user.strip():
+        return x_dev_user
+    if require_auth:
+        raise PermissionError()
+    return "anonymous"

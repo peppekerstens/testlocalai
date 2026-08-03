@@ -3,22 +3,29 @@
 # against a task-local verdict, and write a report.
 #
 # Two task kinds, auto-detected:
-#   code tasks — dir has a harness/ csproj. Output's first ```csharp fenced
-#     block is transcribed into harness/src, then built+tested.
+#   code tasks — dir has a harness/ build marker. Output's first fenced code
+#     block (language auto-detected from the marker) is transcribed into
+#     harness/src, then built+tested. Two languages supported so far:
+#       - C#: harness/*.csproj present -> ```csharp fence, `dotnet test`.
+#       - Python: harness/requirements.txt present -> ```python fence,
+#         `pytest` (harness/src/ put on PYTHONPATH so tests can import it
+#         directly; requirements.txt must list pytest itself).
+#     Adding a third language: extend detect_harness_lang() below with its
+#     marker file, fence tag, and build+test+verdict-parse logic — nothing
+#     elsewhere in this script is language-specific.
 #   doc tasks  — dir has a verify.sh. The whole output text is the deliverable;
 #     verdict comes from verify.sh <output> (doc-fidelity assertions).
 #
 # Usage:
 #   bench.sh <task-dir> <round> <src-file> [--rules <lang>|--legacy]   (code task)
 #   bench.sh <task-dir> <round> [--rules <lang>|--legacy]              (doc task)
-#   task-dir : directory under tasks/ (e.g. code-config, doc-adapt); a
-#              project-scoped subdir (e.g. csharp/) holds reference material
-#              only (probes, cheat-sheets), not tasks themselves
+#   task-dir : directory under tasks/ (e.g. code-csharp-config, doc-adapt)
 #   round    : round label used in the report filename (e.g. a, b, c, r1)
 #   src-file : (code tasks) the single source file to produce
-#              (e.g. ObfuscationConfig.cs)
+#              (e.g. ObfuscationConfig.cs, obfuscation_config.py)
 #   --rules <lang> : prepend models/<model>/rules/<lang>-rules.md to the
-#              prompt (default lang: csharp). SPEC.md and <lang>-rules.md
+#              prompt (default lang: the task's own detected harness
+#              language — csharp or python). SPEC.md and <lang>-rules.md
 #              are always the current validated-best for that model+task —
 #              see "Best-first presentation" in the root README. Rules are
 #              per-model steering, not a generic cross-model ruleset — they
@@ -32,7 +39,7 @@
 # models/<model>/reports/round-<round>-<task-basename>.md — model-scoped,
 # not a shared bench/reports/ (findings are always for one specific model,
 # see AGENTS.md). Prompt/output round history lands in
-# tasks/<project>/<task>/rounds/. For an aggregated, enriched, multi-task
+# tasks/<task>/rounds/. For an aggregated, enriched, multi-task
 # report with token deltas vs a previous run, see bench/report.sh instead —
 # this script writes one raw per-task verdict per call, same as always.
 
@@ -49,13 +56,14 @@ TASK_DIR="$1"
 ROUND="$2"
 MODE="${4:-}"
 SRC_NAME="${3:-}"
-RULES_LANG="${5:-csharp}"
 
 SPEC_FILE="$TASKS_DIR/$TASK_DIR/SPEC.md"
 LEGACY_SPEC_FILE="$TASKS_DIR/$TASK_DIR/history/SPEC-verbose.md"
 DOC_VERIFY="$TASKS_DIR/$TASK_DIR/verify.sh"
 SRC_DIR="$TASKS_DIR/$TASK_DIR/harness/src"
-CSPROJ="$(find "$TASKS_DIR/$TASK_DIR/harness" -maxdepth 1 -name '*.csproj' 2>/dev/null | head -1 || true)"
+HARNESS_DIR="$TASKS_DIR/$TASK_DIR/harness"
+CSPROJ="$(find "$HARNESS_DIR" -maxdepth 1 -name '*.csproj' 2>/dev/null | head -1 || true)"
+PY_REQS="$HARNESS_DIR/requirements.txt"
 ROUNDS_DIR="$TASKS_DIR/$TASK_DIR/rounds"
 OUT_FILE="$ROUNDS_DIR/out-${ROUND}.txt"
 PROMPT_FILE="$ROUNDS_DIR/prompt-${ROUND}.txt"
@@ -65,6 +73,20 @@ REPORT_FILE="$REPORT_DIR/round-$ROUND-$(basename "$TASK_DIR").md"
 DOC_MODE=0
 [ -f "$DOC_VERIFY" ] && DOC_MODE=1
 
+# Harness language auto-detection (code tasks only) — add a new marker/case
+# here to support a third language; nothing else in this script needs to
+# know which language a given task is.
+HARNESS_LANG=""
+FENCE_LANG=""
+if [ -n "$CSPROJ" ]; then
+  HARNESS_LANG="csharp"
+  FENCE_LANG="csharp"
+elif [ -f "$PY_REQS" ]; then
+  HARNESS_LANG="python"
+  FENCE_LANG="python"
+fi
+RULES_LANG="${5:-${HARNESS_LANG:-csharp}}"
+
 [ -f "$SPEC_FILE" ] || { echo "ERROR: $SPEC_FILE not found" >&2; exit 1; }
 if [ "$DOC_MODE" -eq 1 ]; then
   if [ -n "$MODE" ]; then
@@ -73,7 +95,7 @@ if [ "$DOC_MODE" -eq 1 ]; then
   fi
 else
   [ -n "$SRC_NAME" ] || { echo "ERROR: code task needs <src-file>" >&2; exit 1; }
-  [ -n "$CSPROJ" ] || { echo "ERROR: no csproj in $TASK_DIR/harness" >&2; exit 1; }
+  [ -n "$HARNESS_LANG" ] || { echo "ERROR: no recognized build marker (*.csproj or requirements.txt) in $TASK_DIR/harness" >&2; exit 1; }
 fi
 mkdir -p "$REPORT_DIR" "$ROUNDS_DIR"
 
@@ -125,45 +147,73 @@ if [ "$DOC_MODE" -eq 1 ]; then
   VERDICT_BODY="$(bash "$DOC_VERIFY" "$OUT_FILE" 2>&1 || true)"
 else
   echo "==> transcribe"
-  python3 - "$OUT_FILE" "$SRC_DIR" "$SRC_NAME" <<'PY'
-import re, sys, os
-out_file, src_dir, name = sys.argv[1], sys.argv[2], sys.argv[3]
+  python3 - "$OUT_FILE" "$SRC_DIR" "$SRC_NAME" "$FENCE_LANG" <<'PY'
+import re, sys, os, shutil
+out_file, src_dir, name, fence_lang = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 with open(out_file, encoding="utf-8") as f:
     text = f.read()
-m = re.search(r"```csharp\s*\n(.*?)```", text, re.S)
+m = re.search(r"```" + re.escape(fence_lang) + r"\s*\n(.*?)```", text, re.S)
 if not m:
     sys.exit(0)  # no fenced block; report will show a missing-block failure
 os.makedirs(src_dir, exist_ok=True)
 for f in os.listdir(src_dir):
-    os.remove(os.path.join(src_dir, f))
+    p = os.path.join(src_dir, f)
+    # rmtree for dirs (e.g. Python's own __pycache__ from a prior round),
+    # remove for files — the C# harness never nests dirs under src/, but
+    # Python's import machinery always will after the first run.
+    shutil.rmtree(p) if os.path.isdir(p) else os.remove(p)
 with open(os.path.join(src_dir, name), "w", encoding="utf-8") as f:
     f.write(m.group(1))
 print(f"transcribed {len(m.group(1))} bytes to {src_dir}/{name}")
 PY
 
-  echo "==> build+test"
-  export PATH="$HOME/.dotnet:$PATH"
-  TEST_OUTPUT="$(dotnet test "$CSPROJ" --nologo -v q 2>&1 || true)"
+  echo "==> build+test ($HARNESS_LANG)"
+  if [ "$HARNESS_LANG" = "csharp" ]; then
+    export PATH="$HOME/.dotnet:$PATH"
+    TEST_OUTPUT="$(dotnet test "$CSPROJ" --nologo -v q 2>&1 || true)"
 
-  VERDICT_BODY="$( {
-    if grep -qE "error CS" <<< "$TEST_OUTPUT"; then
-      echo "## VERDICT: BUILD FAIL"
-      echo '```'
-      grep -E "error CS" <<< "$TEST_OUTPUT" | head -20
-      echo '```'
-    elif grep -qE "Failed:     [1-9]" <<< "$TEST_OUTPUT"; then
-      echo "## VERDICT: TEST FAIL"
-      { grep -E '\[FAIL\]' <<< "$TEST_OUTPUT" | head -20; } || true
-    elif grep -qE "Passed!.*Failed:     0" <<< "$TEST_OUTPUT"; then
-      echo "## VERDICT: PASS"
-      grep -E "Passed!" <<< "$TEST_OUTPUT"
-    else
-      echo "## VERDICT: UNKNOWN"
-      echo '```'
-      echo "$TEST_OUTPUT" | tail -20
-      echo '```'
-    fi
-  } )"
+    VERDICT_BODY="$( {
+      if grep -qE "error CS" <<< "$TEST_OUTPUT"; then
+        echo "## VERDICT: BUILD FAIL"
+        echo '```'
+        grep -E "error CS" <<< "$TEST_OUTPUT" | head -20
+        echo '```'
+      elif grep -qE "Failed:     [1-9]" <<< "$TEST_OUTPUT"; then
+        echo "## VERDICT: TEST FAIL"
+        { grep -E '\[FAIL\]' <<< "$TEST_OUTPUT" | head -20; } || true
+      elif grep -qE "Passed!.*Failed:     0" <<< "$TEST_OUTPUT"; then
+        echo "## VERDICT: PASS"
+        grep -E "Passed!" <<< "$TEST_OUTPUT"
+      else
+        echo "## VERDICT: UNKNOWN"
+        echo '```'
+        echo "$TEST_OUTPUT" | tail -20
+        echo '```'
+      fi
+    } )"
+  elif [ "$HARNESS_LANG" = "python" ]; then
+    TEST_OUTPUT="$(PYTHONPATH="$SRC_DIR" python3 -m pytest "$HARNESS_DIR/tests" --tb=short -q 2>&1 || true)"
+
+    VERDICT_BODY="$( {
+      if grep -qE "error(s)? during collection|^E   (Syntax|Import|Module|Name|Indentation)Error" <<< "$TEST_OUTPUT"; then
+        echo "## VERDICT: BUILD FAIL"
+        echo '```'
+        echo "$TEST_OUTPUT" | tail -20
+        echo '```'
+      elif grep -qE "^[0-9]+ failed" <<< "$TEST_OUTPUT"; then
+        echo "## VERDICT: TEST FAIL"
+        { grep -E '^FAILED ' <<< "$TEST_OUTPUT" | head -20; } || true
+      elif grep -qE "^[0-9]+ passed" <<< "$TEST_OUTPUT"; then
+        echo "## VERDICT: PASS"
+        grep -E "^[0-9]+ passed" <<< "$TEST_OUTPUT"
+      else
+        echo "## VERDICT: UNKNOWN"
+        echo '```'
+        echo "$TEST_OUTPUT" | tail -20
+        echo '```'
+      fi
+    } )"
+  fi
 fi
 
 {

@@ -2,6 +2,11 @@
 bin/
 obj/
 
+# python build/test artifacts (task harnesses) — regenerable, machine-specific
+__pycache__/
+*.pyc
+.pytest_cache/
+
 # bench/pure-run.sh scratch output — freely overwritten, never evidence
 # (see AGENTS.md "Reports are model-scoped; scratch files are not evidence")
 bench/tmp/*
