@@ -42,6 +42,40 @@ mkdir -p "$REPORTS_DIR"
 TIMESTAMP="$(date -u +%Y%m%d-%H%M%S)"
 REPORT_FILE="$REPORTS_DIR/report-$ROLE-$TIMESTAMP.md"
 
+# Mandatory pre-run hygiene (added 2026-08-03, per AGENTS.md's "restart
+# before every test run" rule): a ~2.5-hour sustained session on
+# qwen3.5:9b drove generation from 9.46 tok/s down to 0.73 tok/s -
+# system RAM exhausted, swap 100% full - discovered mid-test, not
+# something the earlier short validation runs ever surfaced. A fresh
+# restart immediately fixed it. Every report.sh run now restarts the
+# target llamacpp service first and logs free VRAM/RAM into the report,
+# so accumulated session state is never silently what's actually being
+# measured, and the report is self-documenting about the memory
+# conditions it ran under.
+if [ "$BACKEND" = "llamacpp" ]; then
+  BENCH_DIR="$SELF_DIR"
+  # shellcheck source=session-lib.sh
+  source "$SELF_DIR/session-lib.sh"
+  TARGET_UNIT=""
+  while IFS= read -r unit; do
+    [ -z "$unit" ] && continue
+    read -r u _active alias _port <<<"$(llama_unit_info "$unit")"
+    [ "$alias" = "$MODEL" ] && TARGET_UNIT="$u"
+  done < <(llama_units)
+  if [ -n "$TARGET_UNIT" ]; then
+    echo "==> restarting $TARGET_UNIT before this test run" >&2
+    systemctl --user restart "$TARGET_UNIT"
+    wait_for_health "http://localhost:$PORT/health" 30 \
+      || { echo "ERROR: $TARGET_UNIT did not become healthy within 30s after restart" >&2; exit 1; }
+  else
+    echo "WARNING: no systemd unit found with --alias $MODEL — skipping mandatory restart" >&2
+  fi
+fi
+
+FREE_VRAM_MB="$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits 2>/dev/null | head -1 || echo unknown)"
+FREE_RAM_MB="$(free -m 2>/dev/null | awk '/^Mem:/{print $NF}' || echo unknown)"
+echo "==> pre-run free VRAM: ${FREE_VRAM_MB} MB, free RAM (available): ${FREE_RAM_MB} MB" >&2
+
 echo "==> running pure-run.sh: model=$MODEL role=$ROLE backend=$BACKEND port=$PORT" >&2
 RESULTS="$(DISPATCH_BACKEND="$BACKEND" LLAMACPP_PORT="$PORT" bash "$SELF_DIR/pure-run.sh" "$MODEL" --test "$ROLE" 2>&1 | grep '^RESULT ')"
 
@@ -58,10 +92,10 @@ RESULTS_FILE="$SELF_DIR/tmp/.report-results-$TIMESTAMP.txt"
 mkdir -p "$SELF_DIR/tmp"
 printf '%s\n' "$RESULTS" > "$RESULTS_FILE"
 
-python3 - "$REPORT_FILE" "$MODEL" "$ROLE" "$BACKEND" "$PORT" "$TIMESTAMP" "${PREV_REPORT:-}" "$RESULTS_FILE" <<'PY'
+python3 - "$REPORT_FILE" "$MODEL" "$ROLE" "$BACKEND" "$PORT" "$TIMESTAMP" "${PREV_REPORT:-}" "$RESULTS_FILE" "$FREE_VRAM_MB" "$FREE_RAM_MB" <<'PY'
 import re, sys, datetime
 
-report_file, model, role, backend, port, timestamp, prev_report, results_file = sys.argv[1:9]
+report_file, model, role, backend, port, timestamp, prev_report, results_file, free_vram_mb, free_ram_mb = sys.argv[1:11]
 with open(results_file, encoding="utf-8") as f:
     results_text = f.read()
 
@@ -114,6 +148,9 @@ lines.append(f"- Model: `{model}`")
 lines.append(f"- Role: {role}")
 lines.append(f"- Backend: {backend} (port {port})")
 lines.append(f"- Generated: {timestamp} UTC")
+lines.append(f"- Pre-run free VRAM: {free_vram_mb} MB, free RAM: {free_ram_mb} MB "
+             f"(service restarted immediately before this run — see AGENTS.md's "
+             f"mandatory-restart rule)")
 lines.append(f"- **Result: {passed}/{total} PASS**")
 lines.append("")
 lines.append("## Results")

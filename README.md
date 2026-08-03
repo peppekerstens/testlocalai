@@ -56,6 +56,7 @@ failure modes, not a re-labeling of another role.
 |---|---|
 | `docs/SETUP.md` | one-time environment/machine setup (WSL2, CUDA, llama.cpp, systemd) |
 | `docs/LOCAL-LLM-BEST-PRACTICES.md` | cross-model guidance — not a specific model's steering profile |
+| `docs/GRAMMAR-STEERING-PATTERNS.md` | when to reach for grammar-constrained decoding instead of prompt text, backend capability notes, and a starter library of structural grammar patterns |
 | `bench/` | generic runner: `dispatch.sh`, `bench.sh`, `pure-run.sh`, `report.sh` |
 | `tasks/<role>-<name>/` | flat task set: SPECs + test harnesses; each task's `rounds/` holds its prompt/output history |
 | `tasks/<project>/` | reference material for a specific source project, not tasks (e.g. `tasks/csharp/probe/`, `sdk-cheat-sheet.md`) |

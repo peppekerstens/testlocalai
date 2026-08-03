@@ -669,3 +669,130 @@ project's specific document-fidelity task shapes, with a
 project-specific steering investment (3 hand-built grammars) behind
 it, not a claim that transfers to untested task shapes or roles
 without its own verification.
+
+## Correction: the "9/9 fully stable" verdict above was wrong — `doc-surgical`'s grammar was invalid
+
+**Same day, caught by the user asking "what is next? a hint: 100%
+pass..."** The `doc-surgical.gbnf` described above as "near-fully-
+literal... legitimate here" was actually **fully literal** — its
+entire `root` rule was one fixed string with zero free-text
+nonterminals. That means the decoder was forced to emit that exact
+string regardless of what the model generated; the "PASS" verdict was
+a tautology, not evidence of the model's capability. The
+"near-fully-literal, legitimate because prompt-given" reasoning above
+was a real mistake — rationalized in the moment rather than checked
+against the file's actual content.
+
+**Fixed by discarding the grammar entirely** and treating
+`doc-surgical` as genuinely unresolved, then trying a legitimate
+partial-grammar redesign (literal only at the 3 EDIT-replacement
+anchors, everything else free `[^\x00]*`) — which caused a **real
+runaway generation** (2000+ tokens before being killed, an unbounded
+free-text rule gives the grammar no natural stopping point). Discarded
+that too. See `docs/GRAMMAR-STEERING-PATTERNS.md`'s "legitimacy line"
+and "pattern that looked promising but wasn't" sections — both
+written directly from this mistake, so a future session doesn't repeat
+either failure mode.
+
+**5 distinct legitimate prompt-based attempts on `doc-surgical`, all
+failed** (word-level reminder, exact-lines-quoted reminder, checklist
+verification, few-shot worked example, and a cross-model transfer of
+`lfm2.5-1.2b-thinking`'s `surgical-edit-discipline.md` +
+`ste-writing.md` rules) — every one produced a different specific
+failure shape (dropped prefix, leaked reminder text into the output,
+reverted to not applying the edit at all, or the original
+dropped-parenthesis defect), never a reliable PASS. **`doc-surgical`
+is genuinely unresolved** — consistent with `qwen3.5-4b`'s own
+exhausted attempts on a related idiom.
+
+**Corrected final state: 8/9 stable (3/3 Confirm), not 9/9.**
+`report-docs-20260803-001704.md` and later Confirm runs
+(`-230829.md`, and 2 more via `bench/report.sh`'s new mandatory
+restart-before-run, `-003410.md`) all show the same clean 8/9: every
+task except `doc-surgical` stable PASS. This is still the best
+qwen3.5-family result of the session (previous best was 4 stable) —
+correcting the headline number doesn't change that, it just makes the
+claim honest.
+
+## New infrastructure found mid-session: sustained-session memory pressure
+
+A ~2.5-hour session with no service restart (many dispatches across
+the re-loop and Tier 2 rounds) drove generation from 9.46 tok/s down
+to **0.73 tok/s** — system RAM exhausted, swap 100% full. A restart
+fixed it immediately. Root cause not fully diagnosed (KV-cache-slot
+accumulation or fragmentation are the leading hypotheses, not
+confirmed) — but the mitigation doesn't need the mechanism understood:
+`bench/report.sh` now restarts the target service and logs free
+VRAM/RAM before every run, made mandatory project-wide via `AGENTS.md`
+(2026-08-03). Reverting `-ngl` was considered and rejected — the math
+runs the wrong way (`-ngl 18` needs *more* CPU-resident weight than
+`-ngl 20`, not less), so it wouldn't have addressed system-RAM
+pressure regardless.
+
+## Tier 2: generalist search, actually run this time
+
+**Initial framing was wrong.** With the (pre-correction) specialist
+rate looking like 100%, this file originally reasoned that Tier 2
+"has little remaining value" and skipped it outright — the user
+caught this too: per `AGENTS.md`'s own autonomous gate rule, ≥60%
+specialist rate means Tier 2 must actually run, not be waved off by
+judgment. Re-opened properly.
+
+**Attempt 1: a hand-written generic "verification reminder"**
+(structural + content-checklist framing, no task-specific detail),
+deployed as every task's override, grammars disabled. 4 draws: 5/9,
+5/9 (+1 unusable — see the memory-pressure section above corrupted
+this specific draw's `doc-restructure` result), 6/9, 4/9. Consistent
+failure set: `doc-verbatim`/`doc-surgical`/`doc-restructure` always
+fail (need grammar, not prompt), `doc-script` mostly fails (needs its
+specific forbidden-token named, which a generic instruction can't do
+without stopping being generic).
+
+**Attempt 2: cross-model transfer of `lfm2.5-1.2b-thinking`'s
+`surgical-edit-discipline.md` + `ste-writing.md`**, both as a
+task-specific reminder for `doc-surgical` alone (failed, same defect
+as every other attempt — see the correction section above) and as a
+blanket generic override (same protocol as attempt 1). 2 full draws:
+6/9, 6/9 (`doc-repair` flipped to FAIL once — a new instability signal
+from wrapping an already-bare-stable task in unnecessary reminder
+text, worth remembering as a general caution). Isolated
+`doc-restructure` re-check: 1 PASS, 1 FAIL — the run-1 PASS was
+per-draw luck, not a fix.
+
+**User's key question, tested directly**: would the lfm2.5 rules
+*replace* most of the specialist configs? No — comparing per-task:
+replaces `doc-synthesize` cleanly-ish (2/2 vs. specialist's 3/3, though
+a follow-up 3-draw check on `doc-synthesize` alone came back 2/3,
+matching-not-beating the specialist override, so the swap wasn't kept
+— see `README.md`'s "How to optimize"), does **not** replace
+`doc-script`/`doc-verbatim`/`doc-restructure` (all fail under the
+generic version), and shows a real regression risk on `doc-repair`
+(bare-perfect until wrapped). Net: replaces ~1 of 8 active levers,
+actively fails 3 of the most important ones. Reverted to specialist
+configs; the STE discipline is now documented as generic
+starting-point advice in `docs/LOCAL-LLM-BEST-PRACTICES.md`, not
+adopted as a literal replacement for anything.
+
+**Attempt 3: lower temperature on the lfm2.5 generic config**
+(`DISPATCH_TEMPERATURE=0.4 DISPATCH_TOP_P=0.9
+DISPATCH_PRESENCE_PENALTY=1.5`, vs. the family's usual 1.0/1.0/2.0).
+Hypothesis: `doc-script`/`doc-restructure`'s failures looked like
+per-draw *noise* (flip between identical draws), which temperature
+should reduce; `doc-verbatim`/`doc-surgical` looked like *systematic*
+bias, which temperature shouldn't touch. **Confirmed exactly that
+split**: 3/3 identical draws at 6/9 (`doc-adapt`, `doc-synthesize`,
+`doc-repair`, `doc-summarize`, `doc-crossref`, `doc-restructure` all
+stable PASS; `doc-verbatim`/`doc-surgical`/`doc-script` all stable
+FAIL) — a real, reproducible stabilization of the generic config's
+floor, from a noisy 4-6/9 range up to a clean, repeatable 6/9.
+
+**Tier 2 result, accepted by the user at 6/9** (short of a theoretical
+9/9 but a genuine, reproducible generalist finding): no single shared
+*config* reaches specialist-level reliability — expected, given the
+specialist configs differ in *kind* (2 grammars, 2 named-token prompt
+overrides, 5 bare). What *does* generalize: the lower-temperature
+generic-reminder combination as a real "good default if you don't know
+the task shape" fallback (6/9, stable), plus the decision-procedure +
+grammar-pattern-library output (`AGENTS.md`, `docs/
+GRAMMAR-STEERING-PATTERNS.md`) as the more valuable generalist
+artifact — a reusable methodology, not a single prompt.

@@ -34,6 +34,25 @@ does not duplicate that; it's genuinely cross-cutting only.
   check it before concluding a model "can't do" a task (see
   `models/deepseek-r1-1.5b/history.md` for the investigation that found
   this being silently mislabeled).
+- **A structural defect (wrong position/shape) needs a structural fix, not
+  more prompt text.** If a task's content is usually right but a fixed
+  element (a blank line, a closing fence, a table separator row) keeps
+  landing in the wrong place across real, varied prompt attempts, that's
+  a signal to check for grammar-constrained decoding support in the
+  serving backend rather than keep rewording the same instruction — see
+  `docs/GRAMMAR-STEERING-PATTERNS.md` and `AGENTS.md`'s Tier 2 rule.
+- **"Use one name for one thing, exact, every time" is a reasonable
+  starting-point default, not a proven universal fix.** Originated as
+  `lfm2.5-1.2b-thinking`'s `rules/surgical-edit-discipline.md` +
+  `rules/ste-writing.md` (Simplified Technical English discipline: exact
+  names never paraphrased, active voice, one idea per sentence). Tested
+  as a cross-model transfer on `qwen3.5:9b` (2026-08-03): non-regressive
+  (every already-passing task stayed passing) but did not clearly
+  outperform a from-scratch generic reminder on that model — worth
+  trying early in a new model's Research/Steering phase given how often
+  exact-token/exact-name fidelity shows up as a failure idiom across
+  this project's models, but treat it as a reasonable first guess to
+  verify, not an assumed win.
 
 ## 2. Token accounting
 
@@ -54,25 +73,28 @@ budgeting a subagent's context window.
 
 | Path | What |
 |---|---|
-| `csharp/.orchestration/AGENTS.md` | working agreements for any AI agent operating this project's tooling — read first |
-| `csharp/.orchestration/README.md` | project purpose, layout, roles, 5-minute setup |
-| `csharp/.orchestration/docs/SETUP.md` | one-time environment/machine setup (WSL2, CUDA, llama.cpp build, systemd) |
-| `csharp/.orchestration/docs/LOCAL-LLM-BEST-PRACTICES.md` | this file — cross-model guidance only |
-| `csharp/.orchestration/bench/dispatch.sh` | dispatch (ollama + llamacpp backends; token sidecar; per-call loaded-model check) |
-| `csharp/.orchestration/bench/bench.sh` | bench runner (code harness vs doc `verify.sh`; `--rules <lang>` → `models/<model>/rules/<lang>-rules.md`) |
-| `csharp/.orchestration/bench/session-start.sh`, `session-stop.sh` | session isolation: stop other local hosters, load the target model |
-| `csharp/.orchestration/bench/pure-run.sh` | pure self-test runner: controls + model run over a role track (`--test docs\|reason\|tool\|extract\|review`) |
-| `csharp/.orchestration/bench/report.sh` | enriched report generator: results table + tokens + delta vs previous report |
-| `csharp/.orchestration/models/README.md` | cross-model index: which model has been tested against which role |
-| `csharp/.orchestration/models/<model>/README.md` | that model's current steering profile — verdicts, how to optimize per role |
-| `csharp/.orchestration/models/<model>/history.md` | that model's full historical narrative (round-by-round evidence) |
-| `csharp/.orchestration/models/<model>/rules/` | that model's own steering rules — not shared across models |
-| `csharp/.orchestration/models/<model>/reports/` | per-run evidence going forward — `round-<round>-<task>.md` (raw) or `report-<role>-<timestamp>.md` (enriched) |
-| `csharp/.orchestration/tasks/<role>-<name>/` | flat task set: SPECs + test harnesses, role-prefixed |
-| `csharp/.orchestration/tasks/<project>/` | reference material for a specific source project (SDK probes, cheat-sheets), not tasks |
-| `csharp/.orchestration/templates/` | copy-to-onboard for a new project or a new model |
-| `csharp/ORCHESTRATION.md` | C# port orchestration (the *port's* doc — not this guide) |
+| `AGENTS.md` | working agreements for any AI agent operating this project's tooling — read first |
+| `README.md` | project purpose, layout, roles, 5-minute setup |
+| `history.md` | this project's own history — origin, cross-model findings, retired conventions |
+| `docs/SETUP.md` | one-time environment/machine setup (WSL2, CUDA, llama.cpp build, systemd) |
+| `docs/LOCAL-LLM-BEST-PRACTICES.md` | this file — cross-model guidance only |
+| `docs/GRAMMAR-STEERING-PATTERNS.md` | when to reach for grammar-constrained decoding, backend capability notes, starter grammar patterns |
+| `bench/dispatch.sh` | dispatch (ollama + llamacpp backends; token sidecar; per-call loaded-model check; `DISPATCH_GRAMMAR_FILE`) |
+| `bench/bench.sh` | bench runner (code harness vs doc `verify.sh`; `--rules <lang>` → `models/<model>/rules/<lang>-rules.md`) |
+| `bench/session-start.sh`, `session-stop.sh` | session isolation: stop other local hosters, load the target model |
+| `bench/pure-run.sh` | pure self-test runner: controls + model run over a role track (`--test docs\|reason\|tool\|extract\|review`) |
+| `bench/report.sh` | enriched report generator: results table + tokens + delta vs previous report; restarts the target service and logs free VRAM/RAM first (mandatory, see `AGENTS.md`) |
+| `models/README.md` | cross-model index: which model has been tested against which role |
+| `models/<model>/README.md` | that model's current steering profile — verdicts, how to optimize per role |
+| `models/<model>/history.md` | that model's full historical narrative (round-by-round evidence) |
+| `models/<model>/rules/` | that model's own steering rules — not shared across models |
+| `models/<model>/grammars/` | that model's per-task GBNF grammars, auto-resolved by `pure-run.sh` |
+| `models/<model>/reports/` | per-run evidence going forward — `round-<round>-<task>.md` (raw) or `report-<role>-<timestamp>.md` (enriched) |
+| `tasks/<role>-<name>/` | flat task set: SPECs + test harnesses, role-prefixed |
+| `tasks/<project>/` | reference material for a specific source project (SDK probes, cheat-sheets), not tasks |
+| `templates/` | copy-to-onboard for a new project or a new model |
 
-Git note: `csharp/.orchestration/` is gitignored scratch — everything
-under it lives there by design (LLM research is the test-bed product, not
-repo-tracked). Tracked port docs live directly under `csharp/`.
+This project (`testlocalai`) was originally a gitignored scratch
+subdirectory of a C# port repo, `csharp/.orchestration/` — hence some
+older references to that path. It's now its own standalone, tracked
+repository; see root `history.md` for the origin story.

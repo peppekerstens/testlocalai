@@ -355,6 +355,31 @@ small models at the scale tested in this project have repeatedly not
 generalized a single steering config across heterogeneous task shapes
 within one role. Expect this outcome, don't fight it.
 
+**When "no generalist config exists," check for a generalist *decision
+procedure* before closing Tier 2 (added 2026-08-03).** A single shared
+config genuinely cannot cover tasks whose fixes differ in *kind*, not
+just detail — e.g. `qwen3.5:9b`'s docs role: 3 tasks needed
+decoding-level grammar constraints (no prompt text fixes them, tested
+extensively), 1 needed a specific named forbidden-token reminder (a
+generic version of the same reminder measurably failed across 4 draws
+— see `models/qwen3.5-9b/history.md`). No wording of one shared prompt
+closes that gap; it was never a phrasing problem. What *does*
+generalize across models and future sessions in that situation isn't
+an artifact, it's a rule: **"when a task's failure is structural/
+positional (wrong place for a fence, blank line, or table separator —
+not wrong content), and resists real prompt-only steering, check
+whether the serving backend supports grammar-constrained decoding
+before spending more prompt-iteration budget."** This is genuinely
+reusable — on any model, not just the one that discovered it — which
+is what "generalist" is actually for. See
+`docs/GRAMMAR-STEERING-PATTERNS.md` for the backend-capability check
+and a starter library of structural grammar patterns to adapt rather
+than re-derive from scratch. Document this kind of finding in the
+model's own README/history.md as what it is — a decision procedure,
+not a shared config — don't force it into the per-task
+Specialist/Generalist table's "Generalist result" column, which is for
+literal shared configs only.
+
 Stop either tier early (move to Confirm) once further runs stop
 producing improvement, or once every task in the role passes. **Moving
 between phases/tiers (Research → Steering, Tier 1 → Tier 2 gate →
@@ -639,6 +664,34 @@ setup fact that rule already requires recording in the model's own
 `README.md`), and restore the previous flag value/config afterward if
 the value being tested doesn't end up as the kept configuration —
 don't leave an untested or rejected value live in the service file.
+
+**Mandatory: restart the target LLM service and log free VRAM/RAM
+before every `bench/report.sh` test run (2026-08-03).** Discovered on
+`qwen3.5:9b`: a ~2.5-hour sustained session (many dispatches across
+several steering rounds, no restart in between) drove generation from
+a validated 9.46 tok/s down to 0.73 tok/s — system RAM exhausted, swap
+100% full — found mid-test, not something any earlier *short*
+validation run had surfaced. A fresh restart fixed it immediately.
+`bench/report.sh` now does this automatically for the `llamacpp`
+backend: restarts the systemd unit matching the target model's
+`--alias`, waits for `/health`, then logs pre-run free VRAM
+(`nvidia-smi`) and free RAM (`free -m`) into the report's header — so
+a report is self-documenting about the memory conditions it ran under,
+and a degraded-session result never silently passes as a clean one.
+This is a **test-measurement** hygiene rule, not a production-serving
+recommendation — it optimizes for clean, reproducible signal about the
+model's own capability, deliberately not representative of how a
+service behaves under continuous real-world load (which is exactly
+the condition that surfaced this problem in the first place). Applies
+to `bench/report.sh` (the "this counts as an official test run" entry
+point); doesn't apply to ad-hoc single-task `dispatch.sh`/`pure-run.sh`
+calls during rapid iterative steering, where restarting before every
+single prompt attempt would be disproportionate overhead — but if a
+steering session runs long (multiple hours, dozens of rounds) without
+going through `report.sh`, check free VRAM/RAM manually
+(`nvidia-smi --query-gpu=memory.free --format=csv`, `free -h`) and
+restart if either looks tight, rather than assuming a slow draw is a
+model/task problem.
 
 ## See also
 
