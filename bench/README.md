@@ -2,16 +2,17 @@
 
 Scratch research (gitignored, `.orchestration/`). Purpose: measure how well a
 small local LLM performs its role against fixed ground truth — code tasks
-(xUnit acceptance tests) for the code-emitter-csharp role, doc tasks
-(`verify.sh` fidelity assertions) for the documenter role, reason tasks
-(content assertions) for the reasoner role — and tune steering
-(SPECs, rules, per-model quirks) until it passes. Task sets live flat under
-`../tasks/` (role-prefixed: `code-*`, `doc-*`, `reason-*`), since a task's
-skill (compile C#, reproduce a doc, reason about a log) isn't necessarily
-tied to one source project. A project-scoped `tasks/<project>/` subdir for
+(xUnit/pytest acceptance tests, per-task harness language auto-detected —
+see `bench.sh`) for the code-emitter role, doc tasks (`verify.sh` fidelity
+assertions) for the documenter role, reason tasks (content assertions) for
+the reasoner role — and tune steering (SPECs, rules, per-model quirks)
+until it passes. Task sets live flat under `../tasks/` (role-prefixed:
+`code-csharp-*`, `code-python-*`, `doc-*`, `reason-*`), since a task's
+skill (write correct code in some language, reproduce a doc, reason about
+a log) isn't necessarily tied to one source project. A project-scoped `tasks/<project>/` subdir for
 reference-only material (SDK probes, cheat-sheets) was an optional pattern,
 retired 2026-08-03 — its one instance (`tasks/csharp/`) was folded into a
-real task (`tasks/code-mcpidentity/`) once its findings were verified; see
+real task (`tasks/code-csharp-mcpidentity/`) once its findings were verified; see
 `history.md`.
 
 ## Protocol
@@ -82,15 +83,17 @@ instead of silently talking to the wrong model. Skip the check with
 
 ```bash
 # baseline (no rules) — one code task at a time:
-bash bench/bench.sh code-config a ObfuscationConfig.cs
+bash bench/bench.sh code-csharp-config a ObfuscationConfig.cs
 # rules-injected (reads models/<BENCH_MODEL>/rules/<lang>-rules.md; default lang csharp):
-bash bench/bench.sh code-config b ObfuscationConfig.cs --rules csharp
+bash bench/bench.sh code-csharp-config b ObfuscationConfig.cs --rules csharp
 # different model (needs its own models/<model>/rules/ if using --rules):
-BENCH_MODEL=deepseek-r1:1.5b bash bench/bench.sh code-config c ObfuscationConfig.cs
+BENCH_MODEL=deepseek-r1:1.5b bash bench/bench.sh code-csharp-config c ObfuscationConfig.cs
 # doc task (whole output is the deliverable; no src-file arg):
 bash bench/bench.sh doc-verbatim r1
-# a future model would need its own models/<that-model>/rules/python-rules.md:
-# bash bench/bench.sh code-config x SomeFile.cs --rules python
+# python code task (harness language auto-detected from requirements.txt;
+# default --rules lang is the task's own detected language, so this reads
+# models/<BENCH_MODEL>/rules/python-rules.md if that model has one):
+bash bench/bench.sh code-python-auth a auth_resolver.py
 ```
 
 Default backend is llama.cpp (`:8080`); switch with
@@ -146,18 +149,18 @@ Task → src file mapping (code tasks):
 
 | task | src file |
 |---|---|
-| code-config | ObfuscationConfig.cs |
-| code-cache | TokenCache.cs |
-| code-httpclient | CwClient.cs |
-| code-auth | AuthResolver.cs |
-| code-tool | TicketTool.cs |
-| code-redactor | Redactor.cs |
-| code-stats | TicketStats.cs |
-| code-equality | CompositeKey.cs |
-| code-events | TicketStatusNotifier.cs |
-| code-repository | InMemoryRepository.cs |
-| code-batch | BatchProcessor.cs |
-| code-workflow | TicketWorkflow.cs |
+| code-csharp-config | ObfuscationConfig.cs |
+| code-csharp-cache | TokenCache.cs |
+| code-csharp-httpclient | CwClient.cs |
+| code-csharp-auth | AuthResolver.cs |
+| code-csharp-tool | TicketTool.cs |
+| code-csharp-redactor | Redactor.cs |
+| code-csharp-stats | TicketStats.cs |
+| code-csharp-equality | CompositeKey.cs |
+| code-csharp-events | TicketStatusNotifier.cs |
+| code-csharp-repository | InMemoryRepository.cs |
+| code-csharp-batch | BatchProcessor.cs |
+| code-csharp-workflow | TicketWorkflow.cs |
 
 Extended code-emitter suite (added 2026-08-01, increasing difficulty and
 length; grounded in SWE-Sharp-Bench's real-world C# bug categories and
@@ -167,12 +170,12 @@ below since the grounding differs):
 
 | task | pattern under test | difficulty / length |
 |---|---|---|
-| code-stats | LINQ deferred execution + aggregation | easy / short |
-| code-equality | manual `IEquatable<T>`/`GetHashCode`, case-insensitive value equality | easy–medium / short–medium |
-| code-events | delegates/events, per-handler exception isolation | medium / medium |
-| code-repository | generics + factory pattern | medium / medium–long |
-| code-batch | async/Task fan-out with partial-failure aggregation | medium–hard / long |
-| code-workflow | exhaustive state-machine transition validation (6 states) | hard / longest |
+| code-csharp-stats | LINQ deferred execution + aggregation | easy / short |
+| code-csharp-equality | manual `IEquatable<T>`/`GetHashCode`, case-insensitive value equality | easy–medium / short–medium |
+| code-csharp-events | delegates/events, per-handler exception isolation | medium / medium |
+| code-csharp-repository | generics + factory pattern | medium / medium–long |
+| code-csharp-batch | async/Task fan-out with partial-failure aggregation | medium–hard / long |
+| code-csharp-workflow | exhaustive state-machine transition validation (6 states) | hard / longest |
 
 Each was validated with the orchestrator-model reference-baseline purity
 protocol before being considered done: an isolated subagent got only
@@ -244,12 +247,12 @@ reasoning-failure taxonomy).
 
 | task | skill under test | production failure it guards |
 |---|---|---|
-| code-config | YAML config parse → typed records | external `ObfuscationConfigLoader` typedness |
-| code-cache | thread-safe token cache | external `TokenGenerator` non-thread-safe cache |
-| code-httpclient | async HTTP + `JsonNode` return (not `object`) | external `ConnectWiseClient` returning `object` |
-| code-auth | follow auth contract exactly, no extra headers | external `AuthResolver` reading `Authorization` |
-| code-tool | DI constructor injection + tool method | SDK tool authoring for Task 5.2 |
-| code-redactor | regex redaction, don't break on bad rule | external `Redactor` |
+| code-csharp-config | YAML config parse → typed records | external `ObfuscationConfigLoader` typedness |
+| code-csharp-cache | thread-safe token cache | external `TokenGenerator` non-thread-safe cache |
+| code-csharp-httpclient | async HTTP + `JsonNode` return (not `object`) | external `ConnectWiseClient` returning `object` |
+| code-csharp-auth | follow auth contract exactly, no extra headers | external `AuthResolver` reading `Authorization` |
+| code-csharp-tool | DI constructor injection + tool method | SDK tool authoring for Task 5.2 |
+| code-csharp-redactor | regex redaction, don't break on bad rule | external `Redactor` |
 
 ## Research sources (2026-07)
 

@@ -22,7 +22,7 @@ the recipe below surfaces them cheaply.
    went through this step and deepseek-r1-1.5b (documenter/reasoner) didn't.
    (The original worked example, `tasks/csharp/probe/`, was retired
    2026-08-03 once its findings were folded into a real task,
-   `tasks/code-mcpidentity/` — read that task's `SPEC.md` for what a
+   `tasks/code-csharp-mcpidentity/` — read that task's `SPEC.md` for what a
    probe-derived task looks like once it's done.)
 3. **Probe the model** (skip if step 2 was skipped). Send the probe + a
    "write a cheatsheet for me" prompt through `bench/dispatch.sh` (text

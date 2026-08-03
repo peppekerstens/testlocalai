@@ -82,8 +82,8 @@ New tasks from the 6+6 split (second draw, same purity protocol):
 ## Code-emitter extension: 6 new tasks (2026-08-01, model: claude-sonnet-5)
 
 When the code-* task suite was extended with 6 new tasks
-(`code-stats`, `code-equality`, `code-events`, `code-repository`,
-`code-batch`, `code-workflow` — increasing difficulty and length, covering
+(`code-csharp-stats`, `code-csharp-equality`, `code-csharp-events`, `code-csharp-repository`,
+`code-csharp-batch`, `code-csharp-workflow` — increasing difficulty and length, covering
 LINQ, value equality, delegates/events, generics+factory, async fan-out,
 and state-machine patterns; see `bench/README.md` for the full table), each
 was validated the same way as the original 12-task baseline: a **fresh,
@@ -97,12 +97,12 @@ implementation was ever shown to the subagent.
 
 | task | verdict | tests |
 |---|---|---|
-| code-stats | **PASS** | 14/14 |
-| code-equality | **PASS** | 14/14 |
-| code-events | **PASS** | 6/6 |
-| code-repository | **PASS** | 14/14 |
-| code-batch | **PASS** | 9/9 |
-| code-workflow | **PASS** | 53/53 |
+| code-csharp-stats | **PASS** | 14/14 |
+| code-csharp-equality | **PASS** | 14/14 |
+| code-csharp-events | **PASS** | 6/6 |
+| code-csharp-repository | **PASS** | 14/14 |
+| code-csharp-batch | **PASS** | 9/9 |
+| code-csharp-workflow | **PASS** | 53/53 |
 
 **Result: 12/12 (6 tasks × 2 layers) PASS** — each task was also verified
 against an independently hand-written reference implementation before the
@@ -114,8 +114,8 @@ verification.
 
 ## Original 6 code-* tasks: retroactive review + blind validation (2026-08-01)
 
-The original 6 code-* tasks (`code-config`, `code-cache`, `code-httpclient`,
-`code-auth`, `code-tool`, `code-redactor`) had never been through this
+The original 6 code-* tasks (`code-csharp-config`, `code-csharp-cache`, `code-csharp-httpclient`,
+`code-csharp-auth`, `code-csharp-tool`, `code-csharp-redactor`) had never been through this
 blind-subagent protocol — they were tuned iteratively against qwen itself
 (rounds A–L) but never independently validated the way the doc/reason
 suite and the 6 new code tasks were. Reviewing them surfaced real,
@@ -124,14 +124,14 @@ behavior and what the test suite actually *checked*:
 
 | task | gap found | fix |
 |---|---|---|
-| code-config | whitespace-only `token` never tested (only empty-string) | added `WhitespaceOnlyTokenThrows` |
-| code-cache | `capacity <= 0` constructor throw never tested | added zero/negative capacity tests |
-| code-httpclient | "empty body → null" only tested via `204`, never a `200` with an empty body | added `GetAsyncReturnsNullForEmptyOkBody` |
-| code-auth | `requireAuth=true` + *whitespace* `xDevUser` never tested (only `null`) | added the missing combination |
-| code-tool | **no test ever substituted a different `ITicketStore`** — a `TicketTool` that silently ignored its constructor parameter and created its own `InMemoryTicketStore` internally would have passed every existing test unchanged; the stated "constructor injection only" contract was unverified | added `UsesTheInjectedStore_NotAnInternallyCreatedOne` with a fake store returning a distinguishable sentinel |
-| code-redactor | the existing test used two non-overlapping patterns (email, phone), so nothing would fail if rules ran out of order or all against the original input instead of chaining | added `RulesChainInOrder_EachOnPreviousResult` (cat→dog→fish) |
+| code-csharp-config | whitespace-only `token` never tested (only empty-string) | added `WhitespaceOnlyTokenThrows` |
+| code-csharp-cache | `capacity <= 0` constructor throw never tested | added zero/negative capacity tests |
+| code-csharp-httpclient | "empty body → null" only tested via `204`, never a `200` with an empty body | added `GetAsyncReturnsNullForEmptyOkBody` |
+| code-csharp-auth | `requireAuth=true` + *whitespace* `xDevUser` never tested (only `null`) | added the missing combination |
+| code-csharp-tool | **no test ever substituted a different `ITicketStore`** — a `TicketTool` that silently ignored its constructor parameter and created its own `InMemoryTicketStore` internally would have passed every existing test unchanged; the stated "constructor injection only" contract was unverified | added `UsesTheInjectedStore_NotAnInternallyCreatedOne` with a fake store returning a distinguishable sentinel |
+| code-csharp-redactor | the existing test used two non-overlapping patterns (email, phone), so nothing would fail if rules ran out of order or all against the original input instead of chaining | added `RulesChainInOrder_EachOnPreviousResult` (cat→dog→fish) |
 
-`code-tool` was the most significant finding — a real, exploitable gap in
+`code-csharp-tool` was the most significant finding — a real, exploitable gap in
 what the test suite actually enforced versus what the SPEC claimed to
 require. All 6 gaps are now closed.
 
@@ -142,14 +142,14 @@ confirmed):
 
 | task | verdict | tests |
 |---|---|---|
-| code-config | **PASS** | 6/6 |
-| code-cache | **PASS** | 6/6 |
-| code-httpclient | **PASS** | 5/5 |
-| code-auth | **PASS** | 7/7 |
-| code-tool | **PASS** | 4/4 |
-| code-redactor | **PASS** | 5/5 |
+| code-csharp-config | **PASS** | 6/6 |
+| code-csharp-cache | **PASS** | 6/6 |
+| code-csharp-httpclient | **PASS** | 5/5 |
+| code-csharp-auth | **PASS** | 7/7 |
+| code-csharp-tool | **PASS** | 4/4 |
+| code-csharp-redactor | **PASS** | 5/5 |
 
-**Result: 12/12 PASS.** One minor, non-blocking finding: `code-tool`'s
+**Result: 12/12 PASS.** One minor, non-blocking finding: `code-csharp-tool`'s
 SPEC-mandated `GetTicketAsync` body (`Task.FromResult("Ticket 1")`
 assigned to a `Task<string?>`-returning method) triggers compiler warning
 `CS8619` (nullable reference mismatch) — present in the SPEC's own
@@ -317,7 +317,7 @@ optional field) → `review-offbyone` (`<=` vs `<` boundary bug, produces a
 silent extra empty page) → `review-async` (`.Result` blocking on a `Task`
 — deadlock/thread-starvation risk) → `review-concurrency` (plain
 `Dictionary` under concurrent access — mirrors this project's own real
-`code-cache`/`TokenGenerator` theme) → `review-logic` (`||` vs `&&`
+`code-csharp-cache`/`TokenGenerator` theme) → `review-logic` (`||` vs `&&`
 operator mixup — silently wrong, doesn't crash, hardest to spot) →
 `review-clean` (negative control: the exact `review-null` snippet with
 the bug fixed — correct answer is `{ "bugs": [] }`; any reported bug is a

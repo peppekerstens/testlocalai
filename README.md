@@ -42,7 +42,7 @@ failure modes, not a re-labeling of another role.
 
 | Role | Prefix | Tests | Status |
 |---|---|---|---|
-| Code-emitter | `code-*` | Generate correct, compiling C# from a spec | Established |
+| Code-emitter | `code-<lang>-*` | Generate correct, compiling code from a spec (C# established; Python added 2026-08-03 — see `bench/bench.sh`'s harness language auto-detection) | Established |
 | Documenter | `doc-*` | Edit/reproduce/adapt real project docs exactly | Established |
 | Reasoner | `reason-*` | Reason about docs/config/behavior — root cause, tradeoffs, coverage | Established |
 | Tool-use | `tool-*` | Pick the right MCP tool + exact arguments from this repo's real `docs/TOOL_CONTRACTS.md`; recognize when no tool applies or when several calls are needed | Added 2026-08-02 |
@@ -59,7 +59,7 @@ failure modes, not a re-labeling of another role.
 | `docs/GRAMMAR-STEERING-PATTERNS.md` | when to reach for grammar-constrained decoding instead of prompt text, backend capability notes, and a starter library of structural grammar patterns |
 | `bench/` | generic runner: `dispatch.sh`, `bench.sh`, `pure-run.sh`, `report.sh` |
 | `tasks/<role>-<name>/` | flat task set: SPECs + test harnesses; each task's `rounds/` holds its prompt/output history |
-| `tasks/<project>/` | reference material for a specific source project, not tasks — optional pattern, retired 2026-08-03 (its one instance, `tasks/csharp/`, was folded into a real task, `tasks/code-mcpidentity/`, and model-specific onboarding evidence moved to `models/<model>/`; see `history.md`) |
+| `tasks/<project>/` | reference material for a specific source project, not tasks — optional pattern, retired 2026-08-03 (its one instance, `tasks/csharp/`, was folded into a real task, `tasks/code-csharp-mcpidentity/`, and model-specific onboarding evidence moved to `models/<model>/`; see `history.md`) |
 | `models/README.md` | index: which model has been tested against which role, with a status indicator |
 | `models/<model>/README.md` | that model's current steering profile (verdicts, how to optimize per role) — current-state only, see `AGENTS.md`'s README-shape rule |
 | `models/<model>/history.md` | that model's full historical narrative — round-by-round evidence, diagnosed idioms, debugging trails |
@@ -94,12 +94,12 @@ rather than letting it sit as a stale shadow copy.
    run, not correctness.
 4. Run one task:
    ```bash
-   BENCH_MODEL=qwen2.5-coder:1.5b bash bench/bench.sh code-config a ObfuscationConfig.cs
+   BENCH_MODEL=qwen2.5-coder:1.5b bash bench/bench.sh code-csharp-config a ObfuscationConfig.cs
    ```
-   Report lands in `models/qwen2.5-coder-1.5b/reports/round-a-code-config.md`
+   Report lands in `models/qwen2.5-coder-1.5b/reports/round-a-code-csharp-config.md`
    (model-scoped, not a shared bench/reports/ — findings are always for one
    specific model); prompt/output round history lands in
-   `tasks/code-config/rounds/`. Verdict = PASS / BUILD FAIL / TEST FAIL.
+   `tasks/code-csharp-config/rounds/`. Verdict = PASS / BUILD FAIL / TEST FAIL.
    Doc tasks (no harness, `verify.sh` scoring) take no src-file:
    `bash bench/bench.sh doc-verbatim r1`. For an aggregated, enriched
    report across a whole role's task suite (results table, token deltas vs

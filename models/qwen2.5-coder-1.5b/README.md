@@ -17,14 +17,14 @@ non-prose scaffolding, or none — don't assume these transfer.
 
 **Two different recipes for two task families — do not mix them:**
 
-- **Original 6** (`code-config`, `code-cache`, `code-httpclient`,
-  `code-auth`, `code-tool`, `code-redactor`): `--rules csharp`
+- **Original 6** (`code-csharp-config`, `code-csharp-cache`, `code-csharp-httpclient`,
+  `code-csharp-auth`, `code-csharp-tool`, `code-csharp-redactor`): `--rules csharp`
   (`rules/csharp-rules.md` + `SPEC.md`) — compressed "caveman-style"
   prompt, validated equal-quality at lower token cost. Pre-compression
   verbose version archived at `rules/history/csharp-rules-verbose.md` +
   each task's `history/SPEC-verbose.md`, runnable via `bench.sh --legacy`.
-- **New 6** (`code-stats`, `code-equality`, `code-events`,
-  `code-repository`, `code-batch`, `code-workflow`): **bare `SPEC.md`, no
+- **New 6** (`code-csharp-stats`, `code-csharp-equality`, `code-csharp-events`,
+  `code-csharp-repository`, `code-csharp-batch`, `code-csharp-workflow`): **bare `SPEC.md`, no
   `--rules` flag.** Prepending `rules/csharp-rules.md` to these tasks
   *hurts* — the rules file's canonical-API examples (YamlDotNet,
   `System.Text.Json.Nodes`) are vivid enough that qwen reproduces them
@@ -77,7 +77,7 @@ model actually has, not a generic "AI tools are good" list:
 | **Official Microsoft NuGet MCP server** ([learn.microsoft.com/en-us/nuget/concepts/nuget-mcp-server](https://learn.microsoft.com/en-us/nuget/concepts/nuget-mcp-server)) | API/overload misuse (e.g. `Remove` vs `TryRemove`, `Task.FromResult<string?>(null)`) | Lets a model query the *real* API surface of a referenced package instead of guessing from training data — targets the canonical-API-hallucination failure that canonical snippets currently work around by brute-force pasting. |
 | **.NET Types Explorer MCP server** ([mcpservers.org/servers/v0v1kkk/dotnetmetadatamcpserver](https://mcpservers.org/servers/v0v1kkk/dotnetmetadatamcpserver)) | same as above, reflection-based | Alternative/complementary to the NuGet server — looks up actual type members instead of published docs. |
 | **Context7** ([context7.com](https://context7.com)) | stale/hallucinated library usage in general | General-purpose fallback for anything the NuGet/Roslyn servers don't cover. |
-| **Roslyn analyzers as a build gate** — built-in .NET analyzers (free), [Roslynator](https://github.com/enisn/Roslynator), `Microsoft.VisualStudio.Threading.Analyzers` + `AsyncFixer`, `StyleCop.Analyzers` | contract-logic gaps, async mistakes | Pipeline step on the model's output before scoring, not an AI capability. The threading analyzers are directly relevant to the `code-batch` task category (concurrent execution, `ConfigureAwait`, blocking-on-async). |
+| **Roslyn analyzers as a build gate** — built-in .NET analyzers (free), [Roslynator](https://github.com/enisn/Roslynator), `Microsoft.VisualStudio.Threading.Analyzers` + `AsyncFixer`, `StyleCop.Analyzers` | contract-logic gaps, async mistakes | Pipeline step on the model's output before scoring, not an AI capability. The threading analyzers are directly relevant to the `code-csharp-batch` task category (concurrent execution, `ConfigureAwait`, blocking-on-async). |
 | **`dotnet format`** | surface-level style/formatting drift | Auto-fixes formatting so a reviewer isn't distracted by noise unrelated to logic correctness. |
 | **Iterative refine loop** (technique, not a product) | output truncation, any build-time-catchable error | Feed the exact `CS####` errors back into a second dispatch round instead of a fresh single-shot attempt. Biggest architectural lift here — touches `bench.sh` and `dispatch.sh`, not just an added tool. |
 

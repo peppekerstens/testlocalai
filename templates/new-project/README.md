@@ -14,7 +14,7 @@ keep a separate standalone reference doc/probe directory around
 afterward. (A `tasks/<project>/` reference-material-only convention
 existed for this earlier but was retired 2026-08-03: its one instance,
 `tasks/csharp/`, was pure overhead once its findings landed in a real
-task — see `tasks/code-mcpidentity/SPEC.md` for what that looks like,
+task — see `tasks/code-csharp-mcpidentity/SPEC.md` for what that looks like,
 and root `history.md` for why the standalone version was dropped.)
 
 ## Task-set layout
@@ -27,7 +27,10 @@ tasks/
 │   │                          # variant (see root README "Best-first
 │   │                          # presentation")
 │   ├── harness/
-│   │   ├── <Task>.csproj
+│   │   ├── <Task>.csproj     # OR requirements.txt for a Python task —
+│   │   │                      # bench.sh auto-detects which from this
+│   │   │                      # marker file; see its header comment for
+│   │   │                      # how to add a third language
 │   │   ├── src/              # subagent transcription lands here (runner clears it)
 │   │   └── tests/            # fixed acceptance tests = GROUND TRUTH
 │   ├── rounds/                # generated: prompt-<round>.txt, out-<round>.txt
@@ -49,7 +52,9 @@ code shape verbatim; never describe behavior you could paste instead.**
 # Task: <one sentence>
 
 ## Contract
-- File: `<Name>.cs` in namespace `<Ns>`
+- File: `<Name>.cs` in namespace `<Ns>` (C#) or `<name>.py` (Python — no
+  namespace, just a module-level function/class per the harness's import
+  convention)
 - <exact behavior, in order of application; numbered if order matters>
 
 ## Input/edge cases

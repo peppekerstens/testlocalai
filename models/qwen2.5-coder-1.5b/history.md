@@ -121,14 +121,14 @@ archived under `rules/history/csharp-rules-verbose.md` + each task's
 `history/SPEC-verbose.md`, still runnable via `bench.sh --legacy`.
 
 **Re-verified post-restructure:** both the current default and the
-archived `--legacy` pair were re-run against `code-config` after a later
+archived `--legacy` pair were re-run against `code-csharp-config` after a later
 directory/rules reorganization — both still PASS, confirming the
 reorganization didn't change behavior, only where things live.
 
 ## Extended to 6 more tasks (2026-08-01)
 
-New tasks: `code-stats`, `code-equality`, `code-events`,
-`code-repository`, `code-batch`, `code-workflow` — increasing
+New tasks: `code-csharp-stats`, `code-csharp-equality`, `code-csharp-events`,
+`code-csharp-repository`, `code-csharp-batch`, `code-csharp-workflow` — increasing
 difficulty/length (see `bench/README.md`'s "Extended code-emitter
 suite"), structurally different from the original 6 (LINQ, value
 equality, events, generics, async fan-out, state machines — none needing
@@ -142,21 +142,21 @@ YAML/JSON/HTTP).
   failure round D diagnosed, now shown to also occur *across* task
   families sharing one static rules file, not just within one
   over-long rules file), 1 TEST FAIL from two real `TopStatuses` logic
-  bugs in `code-stats` (returning the full list instead of empty on
+  bugs in `code-csharp-stats` (returning the full list instead of empty on
   `n==0`; counting occurrences within an already-deduplicated list
   instead of the source data).
 - **Dropping rules entirely (round `run2`):** bare `SPEC.md`, no
   `--rules`, jumped straight to 5/6 with zero other changes — confirmed
   the rules block itself caused both build failures, not the tasks.
-- **Closing the last verbatim gaps:** `code-equality`'s `Deduplicate` and
-  `code-stats`'s `AverageOpenPriority`/`TopStatuses` were the only
+- **Closing the last verbatim gaps:** `code-csharp-equality`'s `Deduplicate` and
+  `code-csharp-stats`'s `AverageOpenPriority`/`TopStatuses` were the only
   methods in either SPEC still left as `{ ... }` instead of shown
-  verbatim — exactly where draws got flaky (`code-equality`:
+  verbatim — exactly where draws got flaky (`code-csharp-equality`:
   `HashSet<CompositeKey>` given a stray `StringComparer` argument, a type
-  error; `code-stats`: `.Average()` called on a possibly-empty sequence,
+  error; `code-csharp-stats`: `.Average()` called on a possibly-empty sequence,
   throwing instead of returning `0.0`). Making both fully verbatim
-  brought both to 100% across repeated draws (`code-equality` 7/7,
-  `code-stats` 7/7 after the fix, vs. intermittent failures before) —
+  brought both to 100% across repeated draws (`code-csharp-equality` 7/7,
+  `code-csharp-stats` 7/7 after the fix, vs. intermittent failures before) —
   same "show, don't describe" lesson as round N, applied per-method
   instead of per-task.
 - **Final 3-draw consistency check (round `consistency`):** new 6 tasks
