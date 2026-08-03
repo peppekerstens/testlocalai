@@ -159,14 +159,17 @@ across the whole suite.
 plus the configs below, mandatory human review for `doc-surgical`-shaped
 work (or route it elsewhere), lighter review for everything else given
 the corrected reliability picture (`doc-synthesize` specifically:
-~83%, not 100%).** The best qwen3.5-family result of the session by a
-clear margin (`4b`: 3 stable, `2b`: 1 stable, `0.8b`: ~2 at 67% each) —
-driven by an unrelated bug fix (`doc-repair`) and a genuinely new
-lever class (grammar) neither of which is specific to this model size.
-**Worth revisiting `qwen3.5-4b`/`-2b`/`-0.8b`'s own stable-FAIL tasks
-with the grammar approach** before assuming their ceilings are real
-capability limits rather than an untried lever — planned as the next
-step after this report.
+~83%, not 100%).** The best qwen3.5-family result by a clear margin —
+8/9 solid with exactly one clean failure, a categorically cleaner
+profile than any sibling (`4b`, re-tested 2026-08-03 with this
+model's own `doc-repair`/grammar findings: 4 stable, but 4 more at
+genuine coin-flip reliability, not a comparably clean shape; `2b`: 1
+stable; `0.8b`: ~2 at 67% each) — driven by an unrelated bug fix
+(`doc-repair`) and a genuinely new lever class (grammar) neither of
+which is specific to this model size. `qwen3.5-4b`'s own
+`doc-verbatim`/`doc-restructure` were successfully re-tested with the
+grammar approach and fixed via direct transfer (see its own README) —
+`-2b`/`-0.8b` not yet done, still worth checking.
 
 **Per-task detail** (Confirm-verified 3/3 unless noted):
 

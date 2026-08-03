@@ -10,7 +10,7 @@ to transfer untested.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | ⚠️ Mixed — quality loop closed 2026-08-03, 4 reliable task shapes, 4 genuinely unstable, 1 unsuitable | 5/9 bare-on-paper (44% empty output) → 4/9 stable, ~62% average per draw | Not comparable overall; best qwen3.5-family content reliability on 4 task shapes | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-03) |
+| Documenter | ⚠️ Mixed — quality loop closed 2026-08-03, 4 reliable task shapes (up from 3, best among the smaller siblings — still behind `qwen3.5-9b`'s cleaner 8/9), 4 genuinely unstable (coin-flip reliability), 1 unsuitable | 5/9 bare-on-paper (44% empty output) → 4/9 stable, ~65% blended average (see caveat in Final report — this number is not the real picture) | ~65% of an assumed frontier ceiling, but this blends 4 solid tasks with 4 coin-flip ones — see Final report for why a single number misleads here | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-03) |
 
 ## Documenter role: final report (closed 2026-08-03)
 
@@ -88,14 +88,32 @@ how strong the cross-model precedent already was: **3/3 FAIL**, same
 defect. Now confirmed unsuitable on 2 model sizes via real, varied
 attempts at each — a stable cross-model finding, not a fluke.
 
-**Comparison against a mainstream frontier LLM**: not comparable
-overall — a model like Claude Haiku 4.5 would be expected to pass
-close to all 9 tasks reliably, not show a 4/1/4 stable-pass/stable-
-fail/unstable split. **This is now the best qwen3.5-family content
-reliability result on 4 specific task shapes** (up from 3), all
-near-zero cost/latency versus a hosted frontier call — but the model
-still cannot be trusted unsupervised even on task shapes it sometimes
-gets right.
+**Comparison against a mainstream frontier LLM**: no direct benchmark
+run exists, so — same as `qwen3.5-9b`'s own report — this is a reasoned
+indicator, not a measured score, expressed as a percentage against an
+assumed ~100% frontier ceiling on this well-specified 9-task suite.
+**Averaged across all 9 tasks' actual per-draw rates: ~65%**
+(`doc-verbatim`/`doc-restructure`/`doc-synthesize`/`doc-crossref` each
+100%, `doc-surgical` 0%, `doc-adapt` 50%, `doc-script` ≈17%,
+`doc-repair` 50%, `doc-summarize` ≈67%). **This number means something
+different in kind from `qwen3.5-9b`'s own 89%, not just a lower
+version of it** — 9b's figure summarizes 8 solid tasks plus one clean
+0%; a single blended average is a fair summary of that shape. 4b's 65%
+blends 4 solid tasks, one clean 0%, and **4 tasks at genuine coin-flip
+reliability** — the average makes it look like "roughly two-thirds
+reliable most of the time," when the real picture is "reliable on 4
+task shapes, a coin-flip on 4 more, useless on 1." A single frontier-
+LLM-relative percentage is a poor summary for this profile; treat the
+per-task table above as the real answer, not this number.
+
+**This is NOT the best qwen3.5-family result overall** —
+`qwen3.5-9b` remains clearly stronger (8/9 solid with one clean
+failure, vs. this model's 4/9 solid, one clean failure, and 4 tasks at
+coin-flip reliability). **What did improve, genuinely**: 3→4 stable
+task shapes for this model specifically, and this is now the best
+result among the *smaller* siblings tested (`2b`: 1 stable, `0.8b`:
+~2 at 67% each) — a real, worthwhile improvement, just not a
+family-wide record.
 
 **Final verdict: usable with mandatory `enable_thinking=false` and
 mandatory human review on every output — not a "sometimes skip
