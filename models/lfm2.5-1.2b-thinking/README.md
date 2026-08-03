@@ -154,6 +154,17 @@ not a reason to keep steering this role further):
   now preserved at `task-overrides/doc-crossref.md` (byte-identical to
   what was dispatched), auto-resolved going forward instead of leaking
   into the shared file.
+- **`tasks/reason-tradeoff/SPEC.md` had the same class of contamination,
+  fixed 2026-08-03 — but from a different, earlier source: `deepseek-
+  r1-1.5b`'s own STE pilot (see that model's `history.md`), present since
+  before this repo's own initial import.** This model never applied STE
+  to `reason-tradeoff` itself (`history.md` explicitly notes STE was
+  never tried on this task for LFM2.5), but its bare `reason-tradeoff`
+  dispatch — one of the original 9-task reasoner suite, reported above —
+  was still measured against the STE-contaminated "bare" file, same
+  issue as `doc-crossref`. It wasn't one of the 2 tasks that passed
+  either way, so the practical conclusion is unchanged, but the "bare"
+  label on that specific result was never accurate.
 
 ## Further reading
 

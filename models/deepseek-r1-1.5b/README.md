@@ -106,6 +106,22 @@ a content failure; it isn't one.
 - Served by `llama-server-deepseek.service` on `:8081` (Q4_K_M GGUF,
   CUDA), context `-c 8192`; run bench with `LLAMACPP_PORT=8081`. Default
   backend is llamacpp.
+- **`tasks/reason-tradeoff/SPEC.md` had a contamination bug, fixed
+  2026-08-03 (same class as the `doc-crossref` bug — see root
+  `history.md`).** The STE ("WRITING STYLE — Simplified Technical
+  English") block this model's `rules/ste-writing.md` documents as a
+  steering technique was ALSO baked directly into the shared canonical
+  SPEC.md — present since the original import, so this model's very
+  first bare `reason-tradeoff` baseline (part of the original 18-task
+  combined suite) was never actually measured against a true-bare
+  prompt. The block is losslessly preserved at `rules/ste-writing.md`
+  (byte-identical), so nothing about the STE-steered results above is
+  lost — but the informal "bare vs. STE" before/after comparison
+  narrated in `history.md` was really "already-STE-contaminated
+  'bare' vs. STE + thinking-mode change," not a clean bare baseline.
+  The `reason-tradeoff` row above ("Not reliable, either mode") is the
+  final verdict either way, so this doesn't change the practical
+  recommendation.
 
 ## Bench plan (two tracks)
 
