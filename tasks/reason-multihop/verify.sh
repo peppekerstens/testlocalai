@@ -30,10 +30,15 @@ else
   echo "- missing hop 2: doesn't name addressLine2 as the specific gap"
   FAIL=1
 fi
-if grep -qiF "fields" "$OUT" || grep -qiF "entities.company" "$OUT"; then
+# "fields" alone is too generic — the raw input material already contains
+# it verbatim (the "entities.<name>.fields" architecture description), so
+# that branch let a raw-input echo pass this check with zero reasoning.
+# "entities.company" only appears once the placeholder <name> has actually
+# been resolved to this specific bug's entity — require it alone.
+if grep -qiF "entities.company" "$OUT"; then
   echo "- hop 2 (names the fields section) present: PASS"
 else
-  echo "- missing hop 2 detail: doesn't name the fields/entities section"
+  echo "- missing hop 2 detail: doesn't name entities.company specifically"
   FAIL=1
 fi
 

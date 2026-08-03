@@ -16,8 +16,12 @@ echo "## reasoning: reason-consequence"
 
 FAIL=0
 
-# required: the removed key, the pass-through mechanism, and the leaking field
-REQUIRED=("owner" "nestedEntities" "passes through" "name")
+# required: the removed key, the pass-through mechanism, and the leaking field.
+# "101"/"Jane Doe" are from the QUESTION's hypothetical payload, not the
+# background document — requiring one closes a bypass where echoing the raw
+# background material (which already contains every other token here)
+# passed with zero actual reasoning about the hypothetical applied.
+REQUIRED=("owner" "nestedEntities" "passes through" "name" "101")
 for t in "${REQUIRED[@]}"; do
   if ! grep -qF "$t" "$OUT"; then
     echo "- missing required token: '$t'"

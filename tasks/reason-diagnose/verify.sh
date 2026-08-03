@@ -15,9 +15,12 @@ echo "## reasoning: reason-diagnose"
 
 FAIL=0
 
-# required: the culprit variable + the exact log-line mechanism (both are in
-# the prompt material — fair to require)
-REQUIRED=("CW_PRIVATE_KEY" "Missing required environment variable")
+# required: the culprit variable + the exact log-line (both are in the
+# prompt material — fair to require) + requireEnv, the actual startup
+# mechanism SPEC.md asks the answer to name, which is NOT in the 2-line
+# log excerpt — without it, echoing the raw log verbatim (zero diagnosis)
+# passed every check here.
+REQUIRED=("CW_PRIVATE_KEY" "Missing required environment variable" "requireEnv")
 for t in "${REQUIRED[@]}"; do
   if ! grep -qF "$t" "$OUT"; then
     echo "- missing required token: '$t'"
