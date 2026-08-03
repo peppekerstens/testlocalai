@@ -298,6 +298,15 @@ DISPATCH_PRESENCE_PENALTY=1.5`, stable 6/9 across 3/3 draws.
   tested against this task, not just this one). Fixed by removing the
   separator row from the source. This model's `doc-repair` result is
   fully re-tested and confirmed against the fixed task.
+- **`tasks/doc-crossref/SPEC.md` also had a bug, fixed (commit
+  `62d3995`), a second contamination the original doc-repair fix
+  missed.** A "WRITING STYLE — Simplified Technical English" steering
+  block — an `lfm2.5-1.2b-thinking` transfer experiment meant to be
+  reverted — was still baked into the shared canonical file, so this
+  model's `doc-crossref` "bare" result was never actually bare.
+  Practical impact checked directly on `qwen3.5:4b`: 3/3 PASS with
+  the contamination removed, unchanged — the verdict itself appears
+  unaffected, but "bare" was inaccurate until this fix.
 
 ## Further reading
 

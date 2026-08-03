@@ -211,6 +211,16 @@ re-tested):
   `doc-repair` result is re-tested against the fixed task (see
   per-task table above) — the fix did not fully stabilize it here,
   unlike `qwen3.5-9b`.
+- **`tasks/doc-crossref/SPEC.md` also had a bug, fixed (commit
+  `62d3995`), a second contamination the original fix missed.** A
+  "WRITING STYLE — Simplified Technical English" steering block —
+  originally an `lfm2.5-1.2b-thinking` transfer experiment, meant to
+  be reverted — was still baked into the shared canonical file,
+  meaning this model's `doc-crossref` "bare" result was never
+  actually bare. Practical impact checked directly: 3/3 PASS with the
+  contamination removed, same as before — the verdict itself appears
+  unaffected, but the "bare" characterization was inaccurate until
+  this fix.
 
 ## Further reading
 

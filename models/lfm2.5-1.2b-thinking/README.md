@@ -140,6 +140,20 @@ not a reason to keep steering this role further):
   re-run for this model as of this write. Found and fixed while
   investigating `qwen3.5:9b`'s `doc-repair` failures — see that
   model's `history.md` for the full diagnosis.
+- **`tasks/doc-crossref/SPEC.md` had a real, longer-standing bug,
+  fixed (commit `62d3995`) — this model is the one that introduced it.**
+  A Phase 3 cross-model transfer experiment (commit `6d95017`, this
+  model's own history) applied a "WRITING STYLE — Simplified Technical
+  English" block to the shared canonical `doc-crossref`/`doc-summarize`
+  SPECs, tested it, and the commit message says it was "reverted to
+  bare" — but only `doc-summarize` was actually fully reverted;
+  `doc-crossref` kept the STE block baked in ever since, missed even by
+  the later "Fix doc-task steering contamination" sweep (`11da74f`).
+  This model's own `doc-crossref` "bare" result (see per-task table
+  above) was therefore never actually bare — its true tested state is
+  now preserved at `task-overrides/doc-crossref.md` (byte-identical to
+  what was dispatched), auto-resolved going forward instead of leaking
+  into the shared file.
 
 ## Further reading
 

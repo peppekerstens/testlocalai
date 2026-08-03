@@ -142,6 +142,17 @@ justify its ~3x size for this task set.**
   this write. Found and fixed while investigating `qwen3.5:9b`'s
   `doc-repair` failures — see that model's `history.md` for the full
   diagnosis.
+- **`tasks/doc-crossref/SPEC.md` also had a bug, fixed (commit
+  `62d3995`), a second contamination the doc-repair fix missed.** A
+  "WRITING STYLE — Simplified Technical English" steering block — an
+  `lfm2.5-1.2b-thinking` transfer experiment meant to be reverted —
+  was baked into the shared canonical file. **This model's own
+  `task-overrides/doc-crossref.md` (copied from `qwen3.5-0.8b`) was
+  built on top of the already-contaminated SPEC** — it includes the
+  STE block internally. The Confirm-verified ~67% result may partly
+  reflect that extra guidance, not solely the reminder attributed to
+  it. Left as-is (a real, working, validated config), but read the
+  attribution with that caveat.
 
 ## Further reading
 

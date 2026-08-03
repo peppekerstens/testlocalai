@@ -189,6 +189,19 @@ for the full 3-run trace):
   re-run for this model as of this write. Found and fixed while
   investigating `qwen3.5:9b`'s `doc-repair` failures — see that
   model's `history.md` for the full diagnosis.
+- **`tasks/doc-crossref/SPEC.md` also had a bug, fixed (commit
+  `62d3995`), a second contamination the doc-repair fix missed.** A
+  "WRITING STYLE — Simplified Technical English" steering block — an
+  `lfm2.5-1.2b-thinking` transfer experiment meant to be reverted —
+  was baked into the shared canonical file. **This model has its own
+  `task-overrides/doc-crossref.md` too, and that file's content was
+  built on top of the already-contaminated SPEC** — it includes the
+  STE block internally, not just this model's own exact-fact reminder.
+  The Confirm-verified ~67% result may partly reflect the extra STE
+  guidance, not solely the reminder this model's own history
+  attributes it to. Left as-is (a real, working, validated config, not
+  worth breaking to "purify"), but the attribution in this file's
+  Steering narrative should be read with that caveat.
 
 ## Further reading
 

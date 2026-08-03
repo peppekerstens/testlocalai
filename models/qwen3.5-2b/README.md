@@ -148,6 +148,20 @@ trades some idioms for others.
   re-run for this model as of this write. Found and fixed while
   investigating `qwen3.5:9b`'s `doc-repair` failures — see that
   model's `history.md` for the full diagnosis.
+- **`tasks/doc-crossref/SPEC.md` also had a bug, fixed (commit
+  `62d3995`), a second contamination the doc-repair fix missed.** A
+  "WRITING STYLE — Simplified Technical English" steering block — an
+  `lfm2.5-1.2b-thinking` transfer experiment meant to be reverted —
+  was baked into the shared canonical file. **This model's own
+  `task-overrides/doc-crossref.md` (this model's strongest, ~3/3
+  Confirm-verified result) was built on top of the already-
+  contaminated SPEC** — it includes the STE block internally, not just
+  this model's own mechanism reminder. This model's single best result
+  of the whole project may partly reflect that extra guidance, not
+  solely the reminder its own history attributes it to. Left as-is (a
+  real, working, validated config), but read the attribution with that
+  caveat — worth a from-scratch re-test to isolate the two effects if
+  this result ever matters for a real decision.
 
 ## Further reading
 
