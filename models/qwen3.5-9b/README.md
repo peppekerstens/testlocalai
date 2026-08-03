@@ -11,158 +11,218 @@ this GPU (4GB VRAM) via an explicit partial `-ngl` offload, tuned to
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | ✅ Established — quality loop closed 2026-08-02, all 9 task shapes stable PASS (3/3 Confirm) | 5/9 bare (zero truncation) → 9/9 stable pass | Matches expected frontier-model reliability on this specific 9-task suite — see caveats in the Final report | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-02) |
+| Documenter | ⚠️ Mixed — quality loop closed 2026-08-03, 8 of 9 task shapes stable (3/3 Confirm), 1 unresolved | 5/9 bare → 8/9 stable (89%) | ~89% of an assumed frontier-model ceiling on this specific 9-task suite — see the Final report for reasoning | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-03) |
 
-## Documenter role: final report (closed 2026-08-02)
+## Documenter role: final report (closed 2026-08-03)
 
-**Why stopped here.** Full quality loop, in two phases. **Phase A**
-(original close): a thinking-enabled spot-check (inconclusive, see
-`history.md`), `enable_thinking=false` Phase 1 baseline, Research
-(cross-model check against `qwen3.5-4b`), Steering Tier 1, an
-autonomous Tier 2 gate (56% < 60%, skipped), and a 3-run Confirm —
-closed at 4 stable-pass/2 stable-fail/3 unstable. **Phase B** (this
-update, same day): the user asked for a full, ungated re-loop of every
-remaining failure with at least 5 attempts each, plus a Research phase
-covering both cross-model history and external web research. That
-re-loop, combined with an unrelated fix to a buggy shared task
-definition, closed every remaining gap — see "What changed since Phase
-A" below.
+**Why stopped here.** Full quality loop across three sessions on the
+same day. **Phase A**: thinking-enabled spot-check (inconclusive),
+`enable_thinking=false` baseline, Research, Steering Tier 1, an
+autonomous Tier 2 gate (56% < 60%, skipped), 3-run Confirm — closed at
+4 stable-pass/2 stable-fail/3 unstable. **Phase B**: user-directed
+ungated re-loop of every remaining failure (5+ attempts each) plus a
+`tasks/doc-repair/SPEC.md` bug fix — closed 8 of 9 tasks; the 9th
+(`doc-surgical`) was *believed* closed too via a grammar, but that
+grammar turned out to be invalid (see "A real mistake, corrected"
+below) — closing at what was genuinely 8/9. **Phase C**: an actual
+Tier 2 generalist search (the initial "100% specialist, skip Tier 2"
+reasoning had itself skipped `AGENTS.md`'s own autonomous gate rule —
+caught and re-opened), plus a Performance phase.
 
 **Usability score without optimizations**: 5/9 (56%) PASS bare, under
-`enable_thinking=false` — genuine 5/9, zero truncation, no hidden
-empty-output failures.
+`enable_thinking=false` — zero truncation, no hidden empty-output
+failures.
 
-**Usability score with optimizations** (Confirm-verified across 3
-draws, post Phase B): **all 9 tasks reliably pass, 3/3, zero
-exceptions** — the first fully-stable, no-caveats result of any model
-tested in this project. Zero truncation across every draw.
+**Usability score with optimizations** (Confirm-verified, 3/3 across
+6 genuine specialist-config draws collected during this session):
+**8 of 9 tasks stable PASS**, 1 (`doc-surgical`) stable FAIL,
+genuinely unresolved after 5 distinct legitimate steering attempts.
+One task (`doc-synthesize`) needs its own honest caveat: Confirm-
+verified 3/3 in two separate small samples, but a larger 6-draw sample
+collected later in the session showed 5/6 (≈83%) — a real, specific
+instability on that one task, not evidence that every "stable" verdict
+in this file is overstated (every other task held a clean 6/6 across
+that same larger sample). Zero truncation across every draw, in every
+phase.
 
-**What changed since Phase A** (full diagnostic narrative in
-`history.md`'s "Full re-loop of remaining failures" section):
-- **`doc-repair`**: not a model problem at all. The shared, canonical
-  `tasks/doc-repair/SPEC.md` had a bug — it described a table
-  separator row as missing when the row was already present in the
-  source document (confirmed via `git blame`: present since the
-  task's original import, affecting every model ever tested against
-  it). Fixed at the user's request (commit `8d98d91`). Once fixed,
-  this model passes **bare, 5/5, no steering needed at all** — the
-  original "unstable" and "improved-but-not-stable" findings were
-  measuring confusion caused by a self-contradictory prompt, not a
-  real capability gap.
-- **`doc-verbatim`, `doc-surgical`, `doc-restructure`**: fixed via
-  **GBNF grammar-constrained decoding** (`models/qwen3.5-9b/grammars/`),
-  a genuinely new lever class added to this project this session
-  (`bench/dispatch.sh`'s new `DISPATCH_GRAMMAR_FILE`, auto-resolved
-  per-task by `bench/pure-run.sh`) — not prompt text, a decoding-time
-  structural constraint. `doc-verbatim`/`doc-restructure` use
-  structure-only grammars (blank-line/fence/table-row shape forced,
-  actual content left free); `doc-surgical` uses a near-fully-literal
-  grammar, legitimate specifically because that task's correct output
-  is 100% prompt-given with zero creative freedom by design (unlike
-  `doc-restructure`, where a literal grammar would have removed the
-  actual thing being tested). All 3 tasks: 5-6/6 PASS in isolated
-  validation, then held 3/3 in the full-suite Confirm. Three distinct
-  prompt-only reminders were tried on `doc-surgical` first and each
-  failed in a different way (one merged stray old text into the
-  output, one leaked the reminder's own example text into the answer,
-  one reverted to not applying the edit at all) — the grammar approach
-  succeeded where prompt iteration alone had already failed 3 times.
-- **`doc-script`**: already fixed earlier this session (post-closure
-  specialist steering, see `history.md`) — held stable in this
-  Confirm too, no new work needed.
-- One correction to Phase A's own text: `doc-verbatim`'s idiom was
-  previously described as "missing a blank line before the Note" —
-  fresh draws showed this was backwards/incomplete: the real pattern
-  was per-draw instability across *two different* shapes (an extra
-  spurious blank line in one draw, both required blank lines dropped
-  in another), matching `qwen3.5-4b`'s own cross-model finding of
-  real instability in *which* line misbehaves. Similarly,
-  `doc-surgical`'s idiom was previously called "line-wrap collapsing"
-  — actually a content-drop issue (dropped words/punctuation in an
-  exact given replacement phrase), not a wrapping problem.
+### A real mistake, corrected: `doc-surgical`'s grammar was invalid
 
-**Comparison against a mainstream frontier LLM**: on this project's
-specific 9-task document-fidelity suite, this configuration now
-matches the reliability bar a frontier model (e.g. Claude Haiku 4.5)
-would be expected to hit — a first for any model tested in this
-project. **This is a narrower claim than general capability parity**:
-it's scoped to these specific task shapes, with real, model-specific
-steering investment behind it (3 hand-built grammars, 2 prompt
-overrides), not a claim that transfers untested to other task shapes
-or roles. The near-zero cost/latency advantage over a hosted frontier
-call still applies, now without the previous reliability caveat.
+Documented here prominently because it's the most important
+methodological finding of this session, not just a `doc-surgical`
+detail. A grammar written for `doc-surgical` was described as "near-
+fully-literal... legitimate because the content is prompt-given" — it
+was actually **fully literal**: one fixed string with zero free-text
+nonterminals. The decoder produced that exact output regardless of
+what the model generated; the "PASS" was a tautology, true for any
+model including a random one. Caught by the user asking directly about
+the 100% pass rate this produced. Corrected: the grammar was discarded,
+`doc-surgical` was retested and confirmed genuinely unresolved. A
+follow-up "partial" grammar attempt (literal only at the 3 specific
+edit-anchors, free text elsewhere) caused a **real runaway generation**
+(2000+ tokens vs. a normal ~230) — an unbounded free-text rule has no
+natural stopping point. Also discarded. See
+`docs/GRAMMAR-STEERING-PATTERNS.md` for the reusable "legitimacy line"
+and "bounded free-text" rules written directly from this mistake, so a
+future session doesn't repeat either failure mode.
 
-**Final verdict: established for the documenter role, with
-`enable_thinking=false` and the grammar/prompt configs below —
-9/9 stable, human review no longer strictly required for correctness
-on these specific task shapes, though still good practice for any
-production use.** This closes the pattern seen across every other
-qwen3.5 variant this session (`4b`: 3 stable/4 unstable/2 unsuitable,
-`2b`: 1 stable, `0.8b`: ~2 at 67%) — this model didn't just do
-"incrementally better," the remaining gaps turned out to be a mix of
-a real bug (unrelated to model capability) and a lever class
-(grammar constraints) not yet tried on any smaller sibling. Worth
-revisiting `qwen3.5-4b`/`-2b`/`-0.8b`'s own stable-FAIL tasks with the
-same grammar approach before assuming their ceilings are real
-capability limits rather than an untried lever — not done as part of
-this session.
+**5 distinct legitimate steering attempts on `doc-surgical`, all
+failed**, each a different failure shape: a word-level reminder (left
+a stray old-text fragment merged with the new text), quoting the exact
+target lines verbatim (backfired — the model duplicated the reminder's
+own example text into the output), a checklist-style verification
+instruction (reverted to not applying the edit at all), a few-shot
+worked example (1/5 reliability, not a fix), and a cross-model
+transfer of `lfm2.5-1.2b-thinking`'s `surgical-edit-discipline.md` +
+`ste-writing.md` rules (same original defect — dropped "(" / "the C#
+SDK " prefix from the given replacement text). This matches
+`qwen3.5-4b`'s own exhausted attempts on a related idiom — a
+structural, not phrasing, limitation.
 
-**Per-task detail** (Confirm-verified, 3/3 unless noted):
+### Tier 2: a real generalist search, and what it found
+
+The original "8/9 [believed 9/9 at the time] specialist, little value
+in Tier 2" framing had itself skipped `AGENTS.md`'s own autonomous
+gate rule (≥60% specialist rate → Tier 2 must run) — caught by the
+user, re-opened properly.
+
+**No single config matches specialist reliability** — expected, since
+the specialist configs differ in *kind* (2 GBNF grammars, 2 named-
+token prompt overrides, 5 bare), not just detail. Tested: a hand-
+written generic reminder (4 draws: 5/9, 5/9, 6/9, 4/9), a cross-model
+transfer of `lfm2.5-1.2b-thinking`'s discipline rules as a blanket
+config (2 draws: 6/9, 6/9), and — the one genuine improvement found —
+**the same lfm2.5-derived generic config at a lower temperature**
+(`0.4` vs. the family's usual `1.0`): **3/3 identical draws at a
+stable 6/9**. The hypothesis behind trying this: `doc-script`/
+`doc-restructure`'s generic-config failures looked like per-draw
+*noise* (temperature should reduce it), while `doc-verbatim`/
+`doc-surgical`/`doc-script`'s failures looked like *systematic* bias
+(temperature shouldn't touch it) — confirmed exactly that split.
+**Accepted by the user as the Tier 2 result at 6/9** (short of
+specialist's 8/9, a real and reproducible generalist finding, not a
+config actually adopted for serving).
+
+**Does the STE/discipline rule replace any specialist config?**
+Tested directly, per the user's own question: no, mostly not.
+Comparison: matches `doc-synthesize`'s specialist reliability closely
+enough to be worth a follow-up check (didn't hold up at 3 more draws,
+kept the specialist override); does **not** replace `doc-script`
+(0/2), `doc-verbatim` (0/2), or `doc-restructure` (1/3, vs. grammar's
+5/5) — these need their specific levers; shows a possible regression
+risk on `doc-repair` (1/2 vs. bare's near-perfect reliability) from
+wrapping an already-solved task in unnecessary reminder text. Net:
+replaces ~1 of 8 active levers, actively underperforms on the 3 most
+important ones.
+
+**The more valuable Tier 2 output wasn't a config at all**: a
+documented **decision procedure** (`AGENTS.md`'s Tier 2 section) —
+"when a task's failure is structural/positional and resists real
+prompt-only steering, check whether the backend supports grammar-
+constrained decoding before spending more prompt budget" — plus
+`docs/GRAMMAR-STEERING-PATTERNS.md`'s backend-capability notes and
+reusable structural-grammar templates. This generalizes across models
+and future sessions the way a single prompt config for 9 specific
+tasks never could.
+
+### Performance phase: prompt compression
+
+Applied this project's proven caveman ruleset (from
+`qwen2.5-coder-1.5b`'s own history — drop filler/articles/hedging in
+prose, keep every verbatim string and technical requirement byte-for-
+byte) to the 2 controllable specialist overrides' framing text.
+`doc-script`: 1172→1123 prompt tokens (**-4.2%**), 7/7 PASS across all
+of this session's remaining testing — kept. `doc-synthesize`:
+661→627 tokens (-5.1%), but a real regression (4 forbidden tokens
+leaked instead of the 1 the reminder targets) — reverted per
+`AGENTS.md`'s "revert anything that regresses" rule. Savings were
+modest overall (~4-5%, not the ~30% seen on `qwen2.5-coder-1.5b`'s own
+caveman round) — this project's doc-task prompts are already lean, so
+there's less filler to trim; not a failure of the technique, just a
+smaller opportunity here.
+
+**Comparison against a mainstream frontier LLM**: no direct benchmark
+run against one exists for this exact suite, so this is a reasoned
+indicator, not a measured score. This 9-task suite tests precise,
+well-specified instruction-following (exact verbatim reproduction,
+exact find-replace edits, structured extraction under strict format
+rules) — the kind of task a frontier model (e.g. Claude Haiku 4.5,
+GPT-4o-class) would be expected to handle reliably, roughly 95-100%,
+since none of it requires novel reasoning, just careful adherence to
+given instructions. Against that assumed ~100% ceiling, **this
+configuration reaches ~89% (8/9)** — a genuinely strong result for a
+9B local model at near-zero cost/latency versus a hosted call, but the
+gap is real and concentrated in exactly one task shape (`doc-surgical`:
+short, exact-quoted replacement text fidelity), not spread thinly
+across the whole suite.
+
+**Final verdict: usable for 8 of 9 task shapes with `enable_thinking=false`
+plus the configs below, mandatory human review for `doc-surgical`-shaped
+work (or route it elsewhere), lighter review for everything else given
+the corrected reliability picture (`doc-synthesize` specifically:
+~83%, not 100%).** The best qwen3.5-family result of the session by a
+clear margin (`4b`: 3 stable, `2b`: 1 stable, `0.8b`: ~2 at 67% each) —
+driven by an unrelated bug fix (`doc-repair`) and a genuinely new
+lever class (grammar) neither of which is specific to this model size.
+**Worth revisiting `qwen3.5-4b`/`-2b`/`-0.8b`'s own stable-FAIL tasks
+with the grammar approach** before assuming their ceilings are real
+capability limits rather than an untried lever — planned as the next
+step after this report.
+
+**Per-task detail** (Confirm-verified 3/3 unless noted):
 
 | Task | Specialist result | Specialist config | Generalist result |
 |---|---|---|---|
-| `doc-adapt` | **Stable PASS, 3/3** (bare, never steered) | bare | n/a |
-| `doc-synthesize` | **Stable PASS, 3/3** (combined fix) | [`task-overrides/doc-synthesize.md`](task-overrides/doc-synthesize.md) — JSON-block + `zod`-token reminders | n/a |
-| `doc-script` | **Stable PASS, 3/3** (steered) | [`task-overrides/doc-script.md`](task-overrides/doc-script.md) — explicit both-lines-must-be-gone + forbidden-token reminder | n/a |
-| `doc-summarize` | **Stable PASS, 3/3** (bare, never steered) | bare | n/a |
-| `doc-crossref` | **Stable PASS, 3/3** (bare, never steered) | bare | n/a |
-| `doc-repair` | **Stable PASS, 3/3** (bare, once the shared task's bug was fixed — no steering needed) | bare | n/a |
-| `doc-verbatim` | **Stable PASS, 3/3** (grammar) | [`grammars/doc-verbatim.gbnf`](grammars/doc-verbatim.gbnf) — structural: blank-line/fence positions forced, line content free | n/a |
-| `doc-surgical` | **Stable PASS, 3/3** (grammar) | [`grammars/doc-surgical.gbnf`](grammars/doc-surgical.gbnf) — near-fully-literal (legitimate: task's correct output is 100% prompt-given) | n/a |
-| `doc-restructure` | **Stable PASS, 3/3** (grammar) | [`grammars/doc-restructure.gbnf`](grammars/doc-restructure.gbnf) — structural: header/separator/4-row shape forced, cell text free | n/a |
+| `doc-adapt` | **Stable PASS, 6/6** (bare, never steered) | bare | 2/2 under the generic config |
+| `doc-synthesize` | **Mostly stable, 5/6 (≈83%)** — real per-draw instability found via extended testing, not a compression artifact (see Performance phase) | [`task-overrides/doc-synthesize.md`](task-overrides/doc-synthesize.md) — JSON-block + `zod`-token reminders | ~2/2 close but not confirmed as a clean replacement |
+| `doc-script` | **Stable PASS, 7/7** (steered + compressed) | [`task-overrides/doc-script.md`](task-overrides/doc-script.md) — compressed both-lines-must-be-gone + forbidden-token reminder | 0/2 — generic version fails, needs the specific token named |
+| `doc-summarize` | **Stable PASS, 6/6** (bare, never steered) | bare | 2/2 |
+| `doc-crossref` | **Stable PASS, 6/6** (bare, never steered) | bare | 2/2 |
+| `doc-repair` | **Stable PASS, 6/6** (bare, once the shared task's bug was fixed) | bare | 1/2 — possible regression risk when wrapped unnecessarily |
+| `doc-verbatim` | **Stable PASS, 6/6** (grammar) | [`grammars/doc-verbatim.gbnf`](grammars/doc-verbatim.gbnf) — structural: blank-line/fence positions forced, content free | 0/2 |
+| `doc-restructure` | **Stable PASS, 6/6** (grammar) | [`grammars/doc-restructure.gbnf`](grammars/doc-restructure.gbnf) — structural: header/separator/4-row shape forced, cell text free | 1/3 |
+| `doc-surgical` | **Stable FAIL, 0/many** — genuinely unresolved after 5 distinct legitimate attempts | bare (no valid config found) | 0/2 |
 
-Tier 2 generalist search: not run. With every task now individually
-solved (specialist rate 9/9 = 100%), searching for one config that
-covers all 9 has little remaining value — the per-task configs above
-(2 grammars structural, 1 grammar near-literal, 2 prompt overrides, 4
-bare) are different enough in kind that a single generalist config
-covering all 9 is unlikely to exist and wasn't searched for.
+**Tier 2 generalist config** (the one adopted result, not used for
+serving — see above): lfm2.5-derived discipline rules +
+`DISPATCH_TEMPERATURE=0.4 DISPATCH_TOP_P=0.9
+DISPATCH_PRESENCE_PENALTY=1.5`, stable 6/9 across 3/3 draws.
 
 ## How to optimize (verify before trusting)
 
-- `DISPATCH_ENABLE_THINKING=false` is required — see Setup.
-  Disabling thinking does NOT speed up per-token generation on this
-  hardware (that's a VRAM-oversubscription/`-ngl` question, see
-  Setup) — what it fixes is total answer *length* (hundreds of tokens
-  instead of thousands+), which is what keeps a full docs-role run
-  practical.
+- `DISPATCH_ENABLE_THINKING=false` is required — see Setup. Does NOT
+  speed up per-token generation (that's a VRAM-oversubscription/`-ngl`
+  question) — it fixes total answer *length*.
 - For `doc-synthesize`/`doc-script`-shaped tasks: a targeted prompt
-  reminder naming the specific dropped/leaked token works reliably —
-  see their `task-overrides/` files.
-- For `doc-verbatim`/`doc-surgical`/`doc-restructure`-shaped tasks
-  (blank-line/fence-position instability, exact-replacement content
-  drift, missing table separator row on a freshly-generated table):
-  **prompt-only steering was tried first and failed** (4 distinct
-  attempts across `qwen3.5-4b` and this model's own `doc-verbatim`
-  history; 3 distinct attempts on this model's `doc-surgical`) — a
-  **GBNF grammar** (decoding-time structural constraint, see
-  `grammars/`) fixed all 3. If a task shape looks like this — the
-  model "almost" gets it right but keeps missing the same
-  structural/positional element across varied prompt attempts —
-  consider a grammar before spending more prompt-iteration budget.
-- For `doc-repair`-shaped tasks: check the shared task's own
-  `SPEC.md` for self-contradictory instructions before assuming a
-  model capability gap — this exact task had one (see Setup), and it
-  fully explained an "unstable" finding that looked like a model
-  problem for most of this session.
-- Grammar-writing rule, not just for this model: constrain STRUCTURE
-  (positions, shapes, required-but-already-given literal spans) —
-  never write a grammar that supplies literal answer *content* the
-  model wasn't already given somewhere in its own prompt. Doing the
-  latter stops testing the model and starts testing the grammar
-  engine. See `history.md` for the specific reasoning on why
-  `doc-surgical`'s near-literal grammar doesn't cross this line but a
-  literal grammar for `doc-restructure` would have.
+  reminder naming the specific dropped/leaked token works — see
+  `task-overrides/`. **`doc-synthesize` specifically is not 100%
+  reliable even with its override (~83% at a larger sample) — always
+  run multiple draws before trusting a single result.**
+- For `doc-verbatim`/`doc-restructure`-shaped tasks (blank-line/fence-
+  position instability, missing table separator row on a freshly-
+  generated table): prompt-only steering was tried and failed first —
+  a **GBNF grammar** (structural, decoding-time) fixed both. See
+  `docs/GRAMMAR-STEERING-PATTERNS.md` for when this lever applies and
+  starter patterns to adapt.
+- For `doc-surgical`-shaped tasks (short, exact-quoted replacement
+  text fidelity): **genuinely unresolved.** 5 distinct prompt attempts
+  and 2 grammar attempts (1 invalid/discarded, 1 caused a runaway
+  generation) all failed. Don't spend further budget here without a
+  new idea — route this task shape to a larger model or human review.
+- For `doc-repair`-shaped tasks: check the shared task's own `SPEC.md`
+  for self-contradictory instructions before assuming a model
+  capability gap — this exact task had one (see Setup).
+- **Grammar legitimacy rule** (see `docs/GRAMMAR-STEERING-PATTERNS.md`
+  for the full reasoning): constrain STRUCTURE only — positions,
+  shapes, required-but-already-given literal spans. A grammar whose
+  `root` rule is a large fixed literal string tests the grammar
+  engine, not the model — this session's `doc-surgical` mistake,
+  corrected above, is the concrete cautionary example.
+- **Unbounded free-text grammar rules can cause runaway generation** —
+  keep every free-text nonterminal bounded (per-line, or anchored to a
+  concrete terminator), never open-ended.
+- **A generic/shared config reliably underperforms specialist configs
+  here** — don't reach for one hoping to simplify maintenance unless
+  you've actually measured the gap; see the Tier 2 section above.
 
 ## Setup
 
@@ -172,17 +232,14 @@ covering all 9 is unlikely to exist and wasn't searched for.
   `Qwen3.5-9B-Q4_K_M.gguf`, 5.68GB.
 - Whitelisted in `bench/dispatch.sh` as `qwen3.5:9b`.
 - **`-ngl 99` (request all layers on GPU) is a real anti-pattern on an
-  undersized card — corrected 2026-08-02, per `AGENTS.md`'s "every
-  dispatch-level tweak must be documented" rule.** This GPU (GTX 1650,
-  4096MiB total VRAM) does not have enough free VRAM (~3.3GB free
-  after other services stop) to hold this 5.68GB model. `-ngl 99`
-  forces the driver to blindly re-page the entire model on every
-  layer via NVIDIA's transparent VRAM oversubscription — ~2.6-3.1
-  tok/s. An explicit, smaller `-ngl N` gives llama.cpp a fixed,
-  deterministic GPU/CPU split instead — no reactive paging.
+  undersized card.** This GPU (GTX 1650, 4096MiB total VRAM) does not
+  have enough free VRAM (~3.3GB free after other services stop) to
+  hold this 5.68GB model. `-ngl 99` forces the driver to blindly
+  re-page the entire model on every layer via NVIDIA's transparent
+  VRAM oversubscription — ~2.6-3.1 tok/s. An explicit, smaller `-ngl N`
+  gives llama.cpp a fixed, deterministic GPU/CPU split instead.
 
-  **Benchmark (2026-08-02, 300-token completion, fixed 23-token
-  prompt, same non-thinking sampling params as below):**
+  **Benchmark (300-token completion, fixed 23-token prompt):**
 
   | `-ngl` | tok/s | Free VRAM after load | vs. `-ngl 99` |
   |---|---|---|---|
@@ -192,96 +249,76 @@ covering all 9 is unlikely to exist and wasn't searched for.
   | 18 | 8.59 | 217 MB | 2.7x |
   | 20 | 9.46 | 173 MB | 3.0x |
 
-  Speed kept climbing through `-ngl 20` with no reversal found — this
-  table is not necessarily the ceiling, just as far as this session
-  tested. `-ngl 20`'s free VRAM (173MB) is *about the same* as the
-  original broken `-ngl 99` (195MB), yet 3x faster: free VRAM margin
-  alone doesn't predict speed, whether the split is
+  **`-ngl 20` is the final serving config**, validated with full
+  real-length docs-role runs — no crash/OOM, no quality regression,
+  ~3.0x faster than `-ngl 99`. `-ngl 20`'s free VRAM (173MB) is about
+  the same as the original broken `-ngl 99` (195MB), yet 3x faster —
+  free VRAM margin alone doesn't predict speed, whether the split is
   static/deterministic vs. reactive/driver-paged does.
 
-  **`-ngl 20` is the final serving config, validated twice** with
-  full real-length docs-role runs (`doc-script` alone generates 728
-  completion tokens, well past the 300-token synthetic benchmark) —
-  no crash/OOM, no quality regression, ~3.0x faster than the original
-  `-ngl 99`. The margin is genuinely tight (109-173MB free depending
-  on measurement) — this is the practical ceiling this session tested
-  and validated, not a number proven safe against every future
-  workload on this hardware. Full writeup: `history.md`.
-
-  **How to work out the right `-ngl` on a system with different
-  specs**: there's no shortcut that skips measuring your own hardware
-  — a number computed for a GTX 1650 doesn't transfer.
-  1. Check real free VRAM after every other service you'll run
-     alongside it is already up: `nvidia-smi --query-gpu=memory.free
-     --format=csv`. Don't use total VRAM; other processes eat into it.
-  2. Get the model's real per-layer weight size from the actual GGUF
-     file, not a guess — parse the tensor offset table (name, dims,
-     type, byte offset per tensor; consecutive offsets give exact
-     tensor sizes) and sum by layer index.
-  3. Start conservative: pick an `-ngl N` that leaves generous free
-     VRAM, confirm the service loads without a driver-paging red flag
-     and answers correctly.
-  4. Push `-ngl` up in small steps, re-benchmarking tok/s and free
-     VRAM after each (a short fixed-length `/completion` request is
-     enough for this step). Stop increasing once free VRAM gets
-     uncomfortably close to zero for your real task's expected
-     generation length, not just the short benchmark's.
-  5. **Validate the final choice with a real, full-length workload
-     run before trusting it** — a short benchmark can hide KV-cache
-     growth that only shows up over a longer generation.
+  **How to work out the right `-ngl` on different hardware**: no
+  shortcut skips measuring your own system. Check real free VRAM
+  (`nvidia-smi --query-gpu=memory.free --format=csv`), get the model's
+  real per-layer weight size from the GGUF's own tensor offset table
+  (not a guess), start conservative, push up in small steps re-
+  benchmarking each time, and validate the final choice with a real
+  full-length workload before trusting it.
+- **Mandatory: restart the service and log free VRAM/RAM before every
+  test run** (`bench/report.sh`, now automatic — see `AGENTS.md`).
+  Found mid-session: ~2.5 hours of continuous dispatching (no restart)
+  drove generation from 9.46 down to **0.73 tok/s** — system RAM
+  exhausted, swap 100% full. A restart fixed it immediately; root
+  cause not fully diagnosed (KV-cache accumulation or fragmentation
+  are the leading hypotheses). This is a test-measurement hygiene
+  rule, not a production-serving recommendation — it deliberately
+  isn't representative of sustained real-world load.
 - **Required dispatch overrides**: `DISPATCH_ENABLE_THINKING=false
   DISPATCH_TEMPERATURE=1.0 DISPATCH_TOP_P=1.0 DISPATCH_TOP_K=20
-  DISPATCH_PRESENCE_PENALTY=2.0` — same non-thinking-mode sampling
-  parameters as the other qwen3.5 configs (same model family).
-  Full reproducible invocation for a docs-role test:
+  DISPATCH_PRESENCE_PENALTY=2.0`. Full reproducible invocation:
   ```
   DISPATCH_BACKEND=llamacpp LLAMACPP_PORT=8087 \
   DISPATCH_ENABLE_THINKING=false DISPATCH_TEMPERATURE=1.0 \
   DISPATCH_TOP_P=1.0 DISPATCH_TOP_K=20 DISPATCH_PRESENCE_PENALTY=2.0 \
   bash bench/report.sh qwen3.5:9b docs llamacpp 8087
   ```
-- **GBNF grammar steering** (`DISPATCH_GRAMMAR_FILE`, new 2026-08-02):
-  `bench/pure-run.sh` auto-resolves `models/qwen3.5-9b/grammars/<task>.gbnf`
-  per task, same mechanism as `task-overrides/` — no manual env var
-  needed for a normal `bash bench/report.sh` run. Used for
-  `doc-verbatim`, `doc-surgical`, `doc-restructure` — see Overview
-  table and `grammars/`.
-- **`bench/dispatch.sh`'s hardcoded 30-minute (1800s) client-side
-  `urlopen` timeout is shorter than an outer `timeout` wrapper may
-  suggest** — not relevant with `enable_thinking=false`, where
-  generation is fast enough this ceiling is never approached; relevant
-  if ever testing this model with thinking re-enabled.
-- **`tasks/doc-repair/SPEC.md` had a bug, fixed 2026-08-02 (commit
-  `8d98d91`).** Its "DEFECT 2" instruction claimed the embedded source
-  table was missing a separator row — it wasn't; both the SPEC's
-  embedded document and `tasks/doc-repair/input.md` already contained
-  it (confirmed via `git blame`: present since the original import,
-  commit `11da74f` — affected every model ever tested against this
-  task, not just this one). Fixed by removing the separator row from
-  the source so DEFECT 2 is now genuinely real. This model's
-  `doc-repair` result is fully re-tested and confirmed against the
-  fixed task (see Overview table) — nothing pending here anymore.
+- **GBNF grammar steering** (`DISPATCH_GRAMMAR_FILE`):
+  `bench/pure-run.sh` auto-resolves
+  `models/qwen3.5-9b/grammars/<task>.gbnf` per task, same mechanism as
+  `task-overrides/` — no manual env var needed for a normal
+  `bash bench/report.sh` run. Used for `doc-verbatim`/`doc-restructure`
+  only — `doc-surgical`'s grammar was found invalid and discarded (see
+  the Final report above).
+- **`tasks/doc-repair/SPEC.md` had a bug, fixed (commit `8d98d91`).**
+  Its "DEFECT 2" instruction claimed the embedded source table was
+  missing a separator row — it wasn't (confirmed via `git blame`:
+  present since the original import, affecting every model ever
+  tested against this task, not just this one). Fixed by removing the
+  separator row from the source. This model's `doc-repair` result is
+  fully re-tested and confirmed against the fixed task.
 
 ## Further reading
 
-- `history.md` — full narrative: the thinking-enabled spot-check, the
-  original Steering/Confirm phases, the `-ngl` tuning investigation,
-  and the full re-loop that closed every remaining gap (idiom
-  corrections, the `doc-repair` bug discovery, and the grammar-based
-  fixes with the reasoning on when a grammar is a legitimate lever).
+- `history.md` — full narrative: every phase, the grammar-legitimacy
+  mistake and its correction in full detail, the Tier 2 generalist
+  search, the Performance-phase compression work, and the
+  `doc-synthesize` reliability finding.
+- `docs/GRAMMAR-STEERING-PATTERNS.md` — when to reach for
+  grammar-constrained decoding, backend capability notes, reusable
+  structural grammar templates, and the legitimacy/bounded-free-text
+  rules written from this session's mistakes.
 - `models/qwen3.5-4b/`, `models/qwen3.5-2b/`, `models/qwen3.5-0.8b/` —
   smaller siblings; their own `doc-verbatim`/`doc-surgical`-shaped
   stable-FAIL findings predate this session's grammar-lever discovery
-  and may be worth revisiting with it, not yet done.
+  and are next up for a grammar-based re-test.
 - `models/README.md` — cross-model index and role-coverage table.
 - `reports/` — per-run evidence (`bash bench/report.sh qwen3.5:9b
   <role>`, with the env vars above).
-- `task-overrides/` — literal prompts for `doc-synthesize`/`doc-script`
-  — auto-resolved by `bench/pure-run.sh`, never a direct edit to the
-  shared `tasks/<task>/SPEC.md` (see `AGENTS.md`'s "Per-model doc-task
-  steering" rule). `doc-repair.md.pre-fix-archived` and
-  `doc-surgical.md.superseded-by-grammar` are retired, kept for
-  reference only.
-- `grammars/` — GBNF grammars for `doc-verbatim`/`doc-surgical`/
-  `doc-restructure`, auto-resolved by `bench/pure-run.sh` via
-  `DISPATCH_GRAMMAR_FILE` (new mechanism, `bench/dispatch.sh`).
+- `task-overrides/` — active: `doc-script.md` (compressed),
+  `doc-synthesize.md` (original wording, compression reverted).
+  Retired, kept for reference: `doc-repair.md.pre-fix-archived`,
+  `doc-surgical.md.superseded-by-grammar`,
+  `doc-surgical.md.few-shot-attempt-unreliable`,
+  `doc-surgical.md.lfm25-discipline-attempt-failed`.
+- `grammars/` — `doc-verbatim.gbnf`, `doc-restructure.gbnf` (both
+  structural, both validated). `doc-surgical.gbnf` does not exist —
+  found invalid and discarded, see the Final report above.

@@ -1,23 +1,22 @@
-EDIT-COMPLETENESS REMINDER — read before answering:
+EDIT-COMPLETENESS REMINDER:
 
-EDIT 2 replaces TWO separate lines with ONE line:
+EDIT 2 replaces TWO lines with ONE:
   SERVER_ENTRYPOINT="$SCRIPT_DIR/dist/index.js"
   node "$SERVER_ENTRYPOINT" > "$LOG_FILE" 2>&1 &
-becomes exactly:
+becomes:
   dotnet run --project src/ConnectwiseMcp --no-build > "$LOG_FILE" 2>&1 &
 
-Both original lines must be GONE — including the `SERVER_ENTRYPOINT`
-variable assignment line itself, not just the `node` line that uses it.
-The string `dist/index.js` must not appear anywhere in your output.
-Check your draft specifically for this string before finishing.
+Both lines GONE — including the `SERVER_ENTRYPOINT` assignment, not
+just the `node` line. String `dist/index.js` must not appear anywhere
+in output. Check before finishing.
 
-ROLE: You are a careful document editor. Copy the bash script below
-byte-for-byte, then apply the two FIND→REPLACE edits inside it. The result
-must remain a valid bash script that passes `bash -n`. Do not reword,
-reorder, merge, or add anything outside the edits.
+ROLE: careful document editor. Copy the bash script below byte-for-byte,
+apply the two FIND→REPLACE edits inside it. Result must remain valid
+bash, passing `bash -n`. No rewording, reordering, merging, or adding
+outside the edits.
 
-The script begins at the [SCRIPT_START] marker and ends at the [SCRIPT_END]
-marker. The markers are delimiters ONLY — never copy them into the output.
+Script begins at [SCRIPT_START], ends at [SCRIPT_END]. Markers are
+delimiters only — never copy them into output.
 
 [SCRIPT_START]
 
@@ -129,8 +128,8 @@ and replace them with this exact one line:
 dotnet run --project src/ConnectwiseMcp --no-build > "$LOG_FILE" 2>&1 &
 
 OUTPUT FORMAT (strict):
-- Output ONLY the full script with the two edits applied.
-- The output is one valid bash script — the old strings must be GONE; do NOT
-  list the edits after the script.
+- Output ONLY the full script with both edits applied.
+- One valid bash script — old strings GONE; do NOT list edits after
+  the script.
 - No code fences, no commentary, no [SCRIPT_START]/[SCRIPT_END].
 - Print the script exactly once.

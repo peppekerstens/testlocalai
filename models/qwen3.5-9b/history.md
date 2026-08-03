@@ -796,3 +796,48 @@ the task shape" fallback (6/9, stable), plus the decision-procedure +
 grammar-pattern-library output (`AGENTS.md`, `docs/
 GRAMMAR-STEERING-PATTERNS.md`) as the more valuable generalist
 artifact — a reusable methodology, not a single prompt.
+
+## Performance phase: caveman-style prompt compression
+
+Applied the project's proven caveman ruleset (from
+`qwen2.5-coder-1.5b`'s own history: drop articles/filler/pleasantries/
+hedging in prose; keep every verbatim string, technical term, and
+order-dependent requirement byte-for-byte — the Auto-Clarity rule) to
+the 2 controllable specialist prompt overrides' framing text only,
+never touching the embedded SPEC content (input documents, exact
+required/forbidden tokens, exact structure definitions).
+
+**`doc-script`: kept, validated.** 1172→1123 prompt tokens (-4.2%).
+7/7 PASS across all of today's testing (3 isolated draws + 4 full-suite
+Confirm draws) — a clean, real win with zero observed regression.
+
+**`doc-synthesize`: reverted.** 661→627 prompt tokens (-5.1%), but a
+real regression: 4 forbidden TypeScript-ecosystem tokens leaked
+(`zod`, `fetch failed`, `@modelcontextprotocol/sdk`, `node_modules`)
+on the first full-suite draw, not just the 1 (`zod`) the original
+reminder was written against. Reverted to the exact original wording
+per `AGENTS.md`'s Performance-phase rule ("revert anything that
+regresses") — confirmed via `git diff` showing zero change from the
+committed version.
+
+**Token savings were modest overall (~4-5%), not the ~30% seen on
+`qwen2.5-coder-1.5b`'s own caveman round** — expected, not a failure
+of the technique: this project's doc-task prompts are already fairly
+lean (short reminders, no large rules files), so there's less filler
+to trim. The technique itself worked exactly as documented elsewhere
+in this project; the *opportunity* here was just smaller.
+
+**Real finding along the way, unrelated to compression**:
+`doc-synthesize`'s true reliability isn't literally 100%. The original
+Confirm's 3/3 (and this session's earlier 6/6 across 2 separate
+3-draw checks) was a real result, but a larger sample — 6 draws on the
+exact original wording collected during Performance-phase testing —
+shows 5/6 PASS (≈83%), one genuine FAIL (`verify.sh`: `forbidden
+token present: 'zod'`, the identical idiom the override targets, just
+not caught this specific draw). Every other task in the role held a
+clean 6/6 across this same larger sample (`doc-verbatim`, `doc-adapt`,
+`doc-script`, `doc-repair`, `doc-summarize`, `doc-crossref`,
+`doc-restructure`) — this isn't evidence that "small samples always
+overstate," it's a specific, real finding about `doc-synthesize`
+itself, surfaced only because Performance-phase testing happened to
+collect more draws than the original Confirm did.
