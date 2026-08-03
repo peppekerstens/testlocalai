@@ -81,7 +81,8 @@ the dropped-topic idiom.
 
 **Result, first pass:** `doc-crossref` 4/5, `reason-tradeoff` 3/5 (both up
 from ~25–33% pre-STE) — genuine improvement, both promoted; pre-STE SPECs
-archived to `history/SPEC-pre-ste.md`.
+archived to `history/SPEC-pre-ste.md` (deleted 2026-08-03 as a stale
+artifact of the pre-`task-overrides/` pattern — see `AGENTS.md`).
 
 **Real infrastructure bug found along the way, not a model failure:** two
 `reason-tradeoff` draws produced 0-byte output despite burning ~7446

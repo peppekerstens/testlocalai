@@ -204,7 +204,11 @@ leftover-lfm2.5-steered prompts — contaminating the very first data
 point for a brand new model, mischaracterized as "bare" in a report and
 committed before the mistake was caught. The steering itself wasn't
 lost (it was reconstructable from `models/lfm2.5-1.2b-thinking/rules/`
-+ each task's `history/SPEC-pre-<model>-steer.md` archive), but nothing
++ each task's `history/SPEC-pre-<model>-steer.md` archive — those
+per-task archives were themselves a symptom of the same anti-pattern
+this rule ends, and were deleted 2026-08-03 once the underlying `SPEC.md`
+files were confirmed genuinely bare; the full narrative survives in
+`models/lfm2.5-1.2b-thinking/history.md`), but nothing
 stopped the next model's baseline from stepping on it, and would have
 kept happening for every subsequent model tested against `tasks/doc-*`
 without this fix.

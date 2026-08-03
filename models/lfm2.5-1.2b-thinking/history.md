@@ -77,8 +77,11 @@ meta-commentary/wrapper tags, preserve exact identifiers verbatim,
 complete every required element before finalizing, reproduce copy tasks
 exactly including fence markers, perform substitutions directly instead
 of narrating them). Prepended into each of the 15 failing tasks' `SPEC.md`
-(pre-steering versions archived to each task's own
-`history/SPEC-pre-lfm2-steer.md`).
+(pre-steering versions archived at the time to each task's own
+`history/SPEC-pre-lfm2-steer.md` — this was the direct-SPEC.md-edit
+anti-pattern `AGENTS.md`'s per-model `task-overrides/` rule later ended;
+the archive files were deleted 2026-08-03 as stale, the narrative below
+is the permanent record).
 
 **Result: 0/15 on the next draw** — no clean win, but real, mixed signal
 underneath the headline number:
