@@ -1,6 +1,0 @@
-| Capability | What it does |
-|---|---|
-| Companies | List ConnectWise companies (obfuscated). |
-| Contacts | List the contacts for a specific company. |
-| Tickets | Search a company's support tickets, with status, priority, type, board, owner, and key dates. |
-| Ticket detail | Pull the full detail on one specific ticket, including its notes/comments and logged time entries. |
