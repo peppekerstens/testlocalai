@@ -48,6 +48,29 @@ for t in "${FORBIDDEN[@]}"; do
   fi
 done
 
+# SPEC requires "a short FAQ-style answer (2-3 sentences)" and explicitly
+# forbids copying either source verbatim as a block quote — neither was
+# previously checked, which meant literally echoing the unedited two-source
+# input (both required facts are trivially present in the raw sources)
+# passed every check above. Catch that directly: the verbatim markdown
+# table syntax from Source B, and the "Source A"/"Source B" labels, must
+# not appear in a real synthesized answer.
+if grep -qiE '\| *Field *\| *Type *\|' "$OUT" || grep -qF '| `email`' "$OUT"; then
+  echo "- forbidden: Source B's raw markdown table copied verbatim"
+  FAIL=1
+fi
+if grep -qiE 'source a|source b' "$OUT"; then
+  echo "- forbidden: copied the 'Source A'/'Source B' labels instead of writing an independent answer"
+  FAIL=1
+fi
+WORD_COUNT="$(wc -w < "$OUT" | tr -d ' ')"
+if [ "$WORD_COUNT" -gt 80 ]; then
+  echo "- too long for a 2-3 sentence FAQ answer: $WORD_COUNT words (max 80)"
+  FAIL=1
+else
+  echo "- length within 2-3 sentence FAQ range ($WORD_COUNT words): PASS"
+fi
+
 # forbidden: conflating describe_obfuscation_policy (a verification/reporting
 # tool per Source A) with the mechanism that actually performs obfuscation.
 # Both required tokens can be individually present while the answer still
