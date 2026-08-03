@@ -1,1 +1,0 @@
-The root cause of the error is that the project wasn't configured to include the required environment variable, CW_PRIVATE_KEY. The fix is to add this variable to the project's configuration file, ensuring it's set before running the SDK.

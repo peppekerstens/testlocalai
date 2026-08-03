@@ -1,9 +1,0 @@
-[DOC_START]
-
-src/ConnectwiseMcp/Program.cs
-(`npm start` / `node dist/index.js`)
-ObfuscationConfigLoader.Load
-Builds the ASP.NET Core (`WebApplication`) host
-> C# adaptation (§7 #4): the config is reloaded per plan §7 #4 — edits take effect without a restart; boot-time validation still fails fast.
-
-[DOC_END]

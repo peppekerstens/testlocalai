@@ -1,5 +1,0 @@
-1. Run `dotnet build` to verify the project is built. If it fails, the server is not running, so the app can't start.
-2. Use `curl` to check if the server listens on the correct port. If it doesn't, the app won't be accessible.
-3. Check if the `CW_COMPANY_ID`, `CW_PUBLIC_KEY`, and `CW_PRIVATE_KEY` environment variables are set. If any are missing, the server won't start.
-4. Validate the `CW_OBFUSCATION_CONFIG` file using `curl`. If it's invalid, the server won't respond correctly.
-5. Use `curl` to check if the server responds with the `mcp-session-id` header when an `initialize` request is sent. If it doesn't, the server is not running properly.
