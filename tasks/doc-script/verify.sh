@@ -15,13 +15,14 @@ echo "## doc-fidelity: doc-script"
 
 # 1) must be valid bash (also punishes fence-wrapping, R1's habit)
 SYNTAX=0
-if bash -n "$OUT" 2>/tmp/opencode/doc-script-bashn.err; then
+BASHN_ERR="$(mktemp)"
+trap 'rm -f "$BASHN_ERR"' EXIT
+if bash -n "$OUT" 2>"$BASHN_ERR"; then
   SYNTAX=1
   echo "- bash -n: PASS"
 else
   echo "- bash -n: FAIL"
-  cat /tmp/opencode/doc-script-bashn.err
-  rm -f /tmp/opencode/doc-script-bashn.err
+  cat "$BASHN_ERR"
 fi
 
 # 2) no stale Node/TS tooling
