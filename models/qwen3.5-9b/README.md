@@ -271,6 +271,21 @@ checklist category rather than getting it wrong).
 
 ## Setup
 
+**⚠️ This section describes the PRIMARY host's deployment specifically
+(GTX 1650, 4GB VRAM) — as of 2026-08-04, qwen3.5:9b also runs on a
+second, different machine (8GB VRAM remote worker, see
+`docs/REMOTE-WSL2-SETUP.md`) with its own separately-tuned config. The
+two services happen to share the same systemd unit name/alias, which
+already caused a real mistake once: an agent on the remote machine read
+the `-ngl 20` finding below, assumed it was a universal fix for "the
+qwen3.5:9b service," and overwrote the remote's own correct `-ngl 99`
+(right for 8GB VRAM) with this host's `-ngl 20` (tuned for 4GB VRAM) —
+cutting the remote's generation speed by ~4x for no reason (fixed
+2026-08-04). **The `-ngl` value below is NOT a property of the model —
+it's a property of this specific card's VRAM. Never copy it to a
+different machine without re-measuring; see "How to work out the right
+`-ngl` on different hardware" below, every time, on every machine.**
+
 - Served by `llama-server-qwen3.5-9b.service` on `:8087` (Q4_K_M GGUF,
   CUDA), context `-c 8192`; run bench with `LLAMACPP_PORT=8087`.
 - Downloaded 2026-08-02: `unsloth/Qwen3.5-9B-GGUF`,
