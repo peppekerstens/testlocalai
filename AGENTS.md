@@ -95,10 +95,11 @@ record.)
 `bench/report.sh` mechanically generates the header, the results table,
 token counts, and the delta vs. the previous report — everything it can
 know without reading content. It leaves `## Findings` and `## Suggested
-next steps` as `<!-- TODO -->` on purpose, because it cannot read *why* a
-task failed. **A report with those sections still empty is not
-finished** — do not treat report generation as complete until they're
-filled in per the checklist below. This is deliberately specific, not
+next steps` with a `<!-- NOT DONE YET` placeholder comment on purpose,
+because it cannot read *why* a task failed. **A report with those
+sections still templated is not finished** — do not treat report
+generation as complete until they're filled in per the checklist below
+(`bash bench/report-check.sh <report-file>` verifies mechanically). This is deliberately specific, not
 "go add some analysis," because vague findings are exactly what made the
 old `bench/reports/round-*` tree low-value in the first place.
 
@@ -177,6 +178,13 @@ interrupted (a permission prompt, a context compaction, the session
 ending) is lost exactly like the un-persisted-report failure mode this
 section already warns about, just one layer earlier: mid-diagnosis
 instead of post-run.
+
+**Before treating a report as done, run `bash bench/report-check.sh
+<report-file>`** — mechanically confirms `## Findings` and `## Suggested
+next steps` were actually filled in (exit 0) rather than left at
+report.sh's placeholder (exit 1). This only catches "still templated",
+not "filled in badly" — the checklist above is still what makes the
+content correct, this just makes forgetting it impossible to miss.
 
 ## Per-model doc-task steering: never edit tasks/<task>/SPEC.md
 
@@ -440,19 +448,21 @@ addition to whatever the existing README-shape rules already require:
   a mechanically computed number — show the reasoning, don't just assert
   the comparison.
 
-**Checkpoint before treating the Final report as done: diff it against
-`templates/new-model/MODEL-README-SCAFFOLD.md`.** Start with a
-mechanical heading check, not a read-through — run `grep "^## "` on
-both the scaffold and the model's README and compare the two lists
-side by side. **A "How to optimize" section missing entirely reads as
-nothing wrong on a read-through** (the file just flows from the Final
-report straight to Setup, which looks complete) — it only shows up as
-a gap when the heading lists are literally compared. This exact
-failure happened: all 4 `qwen3.5-*` model READMEs written in one
+**Checkpoint before treating the Final report as done: run `bash
+bench/check-readme-shape.sh <model>`.** Mechanically diffs the model's
+`README.md` headings against `templates/new-model/MODEL-README-SCAFFOLD.md`
+(exit 0 if every scaffold heading/pattern is present, exit 1 with the
+missing ones listed otherwise). **A "How to optimize" section missing
+entirely reads as nothing wrong on a read-through** (the file just
+flows from the Final report straight to Setup, which looks complete)
+— it only shows up as a gap when the heading lists are compared. This
+exact failure happened: all 4 `qwen3.5-*` model READMEs written in one
 session skipped "How to optimize" entirely, despite this checkpoint
-rule already existing, caught only when the user asked "does your
-latest report conform to the template?" and a heading diff was finally
-run. Once headings match, confirm content per section: the Overview
+rule already existing as a manual "run grep and compare" instruction,
+caught only when the user asked "does your latest report conform to
+the template?" and a heading diff was finally run by hand — the reason
+this is now a script instead of a step an agent has to remember to run
+manually. Once headings match, confirm content per section: the Overview
 table has this role's row updated (status, pass rate, mainstream
 comparison, and its Details link still resolves to the right heading);
 the role section reads as current-state/verdict, not a round-by-round
