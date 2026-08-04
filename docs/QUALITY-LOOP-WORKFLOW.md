@@ -77,11 +77,13 @@ flowchart TD
 
     P0["Phase 0 — Pre-flight infra research<br/>(conditional)"] --> P1
 
-    P1["Phase 1 — Reference run<br/>bash bench/report.sh &lt;model&gt; &lt;role&gt;"] --> RES
+    P1["Phase 1 — Reference run<br/>bash bench/report.sh &lt;model&gt; &lt;role&gt;"] --> RES1
 
-    RES["Research phase — always both, uncapped<br/>1. cross-model idiom check<br/>2. external research (web, model card)"] --> T1
+    RES1["Research phase — cross-model idiom check<br/>map-reduce: 1 call/other-model + 1 combine call<br/>writes models/&lt;model&gt;/research-&lt;role&gt;.md<br/>skipped if that file already exists"] --> RES2
 
-    T1["Tier 1 — per-task specialist steering<br/>≤4 runs/task · gate on run 2 once<br/>writes models/&lt;model&gt;/task-overrides/&lt;task&gt;.md<br/>(same-model history.md check folded in;<br/>NOT the cross-model/external Research step above)"] --> GATE
+    RES2["Research phase — external research<br/>web search, model card lookup"] --> T1
+
+    T1["Tier 1 — per-task specialist steering<br/>≤4 runs/task · gate on run 2 once<br/>writes models/&lt;model&gt;/task-overrides/&lt;task&gt;.md<br/>(reads research-&lt;role&gt;.md above as candidate<br/>techniques, plus same-model history.md)"] --> GATE
 
     GATE{"bash bench/tier2-gate.sh &lt;report&gt;<br/>≥60% specialist hit rate?"}
     GATE -- "exit 0 — GO" --> T2["Tier 2 — generalist search<br/>≤5 runs · one shared config attempt"]
@@ -101,8 +103,8 @@ flowchart TD
 
     classDef auto fill:#1a5c2e,stroke:#2ecc71,color:#fff
     classDef manual fill:#7a3b0e,stroke:#e67e22,color:#fff
-    class Start,Prior,Resume,P1,T1,GATE,CONFIRM,V auto
-    class P0,RES,T2,REVERT,PERF,FINAL,SHAPE,DONE manual
+    class Start,Prior,Resume,P1,RES1,T1,GATE,CONFIRM,V auto
+    class P0,RES2,T2,REVERT,PERF,FINAL,SHAPE,DONE manual
 ```
 
 `bench/loop.sh` stops right after Confirm and prints what's left

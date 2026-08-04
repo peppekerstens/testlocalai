@@ -24,11 +24,14 @@
 # a structural guarantee is available instead.
 #
 # NOT automated by this script (deliberately, for now): Phase 0
-# (pre-flight infra research), the Research phase's cross-model idiom
-# check and external research (both need real tool use - web search,
-# reading other models' history.md - which `--tools ""` deliberately
-# rules out; only a same-model history.md check is folded into
-# author_override's prompt, not the full mandated Research step),
+# (pre-flight infra research), and the Research phase's EXTERNAL half
+# (web search, model card lookup) - that genuinely needs real tool
+# access this script's claude calls deliberately don't have (--tools
+# ""), so it stays manual. The Research phase's CROSS-MODEL half (read
+# every other tested model's history.md/README.md for this role's
+# diagnosed idioms, extract transferable candidates) IS automated -
+# see cross_model_research() - since it needs only file reads this
+# script already does itself, not a tool call. Also not automated:
 # Tier 2's generalist search, the Performance run, and the Final
 # report's qualitative frontier-LLM comparison - these stay
 # manual/Claude-Code-driven. This script stops cleanly and says so once
@@ -94,6 +97,24 @@ mkdir -p "$REPORTS_DIR" "$OVERRIDES_DIR" "$CLAUDE_TMP"
 
 log() { echo "[loop.sh] $*"; }
 
+# Per-model mandatory dispatch-level env vars (AGENTS.md's "every
+# dispatch-level tweak must be documented" rule already requires these
+# be written in the model's own README Setup section in prose; this is
+# the same values in a sourceable form so this script can actually
+# apply them instead of relying on whoever invokes it to have exported
+# them first). Real bug this prevents, not hypothetical: qwen3.5:4b's
+# docs role and qwen3.5:9b's reason role both require
+# DISPATCH_ENABLE_THINKING=false - missing it caused real
+# context-exhaustion truncation (qwen3.5:4b: 4/9 tasks in its Phase 1
+# baseline; qwen3.5:9b: the exact bug an autonomous run on the remote
+# hit and self-diagnosed 2026-08-04, before this file existed).
+DISPATCH_ENV_FILE="$MODEL_DIR/dispatch-env.sh"
+if [ -f "$DISPATCH_ENV_FILE" ]; then
+  log "sourcing required dispatch overrides: $DISPATCH_ENV_FILE"
+  # shellcheck source=/dev/null
+  source "$DISPATCH_ENV_FILE"
+fi
+
 # ---------------------------------------------------------------------
 # ask_claude PROMPT_FILE SCHEMA_JSON OUT_JSON_FILE
 # Stateless, tool-free, structured-output call. Writes the full JSON
@@ -103,8 +124,11 @@ log() { echo "[loop.sh] $*"; }
 ask_claude() {
   local prompt_file="$1" schema="$2" out_file="$3"
   local rc=0
-  claude -p "$(cat "$prompt_file")" --tools "" --output-format json \
-    --json-schema "$schema" > "$out_file" 2>"$out_file.stderr" || rc=$?
+  # Prompt goes in via stdin, never as a CLI argument - a large prompt
+  # (e.g. cross_model_research's multi-model history.md dump) hit "argument
+  # list too long" (E2BIG) as a literal argument; stdin has no such limit.
+  claude -p --tools "" --output-format json \
+    --json-schema "$schema" < "$prompt_file" > "$out_file" 2>"$out_file.stderr" || rc=$?
   if [ "$rc" -ne 0 ]; then
     log "ERROR: claude call exited $rc (see $out_file.stderr)"
     return 1
@@ -239,6 +263,149 @@ open(path, 'w', encoding='utf-8').write(text)
 }
 
 # ---------------------------------------------------------------------
+# cross_model_research ROLE
+# AGENTS.md's Research phase, cross-model idiom check half only
+# ("always both parts, uncapped, before any steering"). The external/
+# web research half is NOT automated here — it needs real tool access
+# this script's claude calls deliberately don't have (--tools "") —
+# that half stays manual. Bucket 3 (generative): reads every OTHER
+# model that has a report for this exact role, asks Claude to extract
+# candidate techniques that MIGHT transfer, and persists the result to
+# models/<model-dir>/research-<role>.md so it (a) survives to inform
+# every author_override/author_rules call this session, not just one,
+# and (b) isn't silently lost like AGENTS.md's "name any useful
+# finding so it isn't lost" rule requires. Runs once per role — skips
+# if the file already exists, since the persisted file already
+# captures the finding; re-run by deleting it if other models have
+# since gained new relevant history.
+# ---------------------------------------------------------------------
+role_display_name() {
+  case "$1" in
+    docs) echo "Documenter" ;;
+    reason) echo "Reasoner" ;;
+    tool) echo "Tool-use" ;;
+    extract) echo "Extract" ;;
+    review) echo "Review" ;;
+    code) echo "Code-emitter" ;;
+    visual) echo "Visual" ;;
+    *) echo "$1" ;;
+  esac
+}
+
+cross_model_research() {
+  local role="$1"
+  local research_file="$MODEL_DIR/research-$role.md"
+  if [ -f "$research_file" ]; then
+    log "cross-model research already done for role=$role: $research_file"
+    return 0
+  fi
+
+  local other_models=() d om_dir_name
+  for d in "$ORCH_DIR"/models/*/; do
+    om_dir_name="$(basename "$d")"
+    [ "$om_dir_name" = "$MODEL_DIR_NAME" ] && continue
+    ls "${d}reports/report-$role-"*.md >/dev/null 2>&1 && other_models+=("$om_dir_name")
+  done
+
+  if [ "${#other_models[@]}" -eq 0 ]; then
+    log "cross-model research: no other model has a role=$role report yet — nothing to check"
+    printf 'No other model had a `%s`-role report as of %s — nothing to cross-check yet. Delete this file to re-check once another model has.\n' \
+      "$role" "$(date -u +%Y-%m-%d)" > "$research_file"
+    return 0
+  fi
+
+  log "cross-model research: checking [${other_models[*]}] for role=$role idioms — map step, one call per model"
+
+  # Map: one small, focused call per source model - avoids ever
+  # building one giant multi-model prompt (a real 200KB prompt hit
+  # "argument list too long" here before this was map-reduce; stdin
+  # fixed the crash, this fixes the underlying growth-without-bound
+  # problem, since per-model cost stays flat as more models get added).
+  local display_name
+  display_name="$(role_display_name "$role")"
+  local summaries="" om om_dir prompt_file schema out_file s
+  for om in "${other_models[@]}"; do
+    om_dir="$ORCH_DIR/models/$om"
+    prompt_file="$CLAUDE_TMP/research-map-prompt-$om-$role.txt"
+    {
+      echo "Extract THIS model's ($om) diagnosed idioms/fixes for its '$role' role from the material below. Be short and structured: 3-6 bullets max, each stating the failure shape, the fix/lever that worked (or didn't), and whether it was confirmed or single-draw. Skip anything not relevant to '$role'."
+      echo
+      echo "=== $om — README.md, '$role' role section only ==="
+      # Mechanical filter, not a judgment call: the README-shape
+      # scaffold guarantees a "## <Role> role: ..." heading per tested
+      # role (see check-readme-shape.sh's own pattern) - extract just
+      # that section, not the whole file (Setup/other-role sections
+      # are noise for this purpose).
+      awk -v want="## $display_name role:" '
+        index($0, want) == 1 { found=1; print; next }
+        found { if (/^## /) exit; print }
+      ' "$om_dir/README.md" 2>/dev/null
+      echo
+      echo "=== $om — history.md (full — no reliable section markers to filter by, and this is usually where the real diagnosis lives) ==="
+      [ -f "$om_dir/history.md" ] && cat "$om_dir/history.md"
+    } > "$prompt_file"
+
+    schema='{"type":"object","properties":{"summary":{"type":"string"}},"required":["summary"]}'
+    out_file="$CLAUDE_TMP/research-map-result-$om-$role.json"
+    if ask_claude "$prompt_file" "$schema" "$out_file"; then
+      s="$(extract_field "$out_file" summary)"
+      if [ -n "${s// /}" ]; then
+        summaries="$summaries
+
+### $om
+$s"
+      fi
+    else
+      log "WARNING: per-model research extraction failed for $om — skipping it, continuing with the rest"
+    fi
+  done
+
+  if [ -z "${summaries// /}" ]; then
+    log "WARNING: cross-model research got no usable per-model summaries — steering proceeds without it"
+    return 1
+  fi
+
+  log "cross-model research: reduce step — combining summaries from ${#other_models[@]} model(s)"
+
+  # Reduce: one final call over the SHORT summaries only, never the
+  # raw source text again - this call's size is bounded by the number
+  # of models times a few bullets each, not by how much history.md
+  # content exists in total.
+  local reduce_prompt="$CLAUDE_TMP/research-reduce-prompt-$role.txt"
+  {
+    echo "AGENTS.md's Research phase, cross-model idiom check: below are short per-model summaries of diagnosed idioms/fixes for the SAME role ($role), already extracted from each model's own history.md/README.md. Turn them into a candidate-techniques list for the model about to be steered, \`$MODEL\`. These are hypotheses, not guaranteed fixes — a technique validated on one model has backfired on another before (e.g. STE negative-transferred from deepseek-r1-1.5b to lfm2.5-1.2b-thinking, per AGENTS.md/history.md). State that caveat for every candidate and cite which model it's sourced from."
+    echo
+    echo "$summaries"
+    echo
+    echo "Return a markdown list of candidate techniques for \`$MODEL\`'s $role role: which idiom/failure shape it targets, the source model, the technique itself, and the negative-transfer caveat."
+  } > "$reduce_prompt"
+
+  local reduce_schema='{"type":"object","properties":{"candidates":{"type":"string"}},"required":["candidates"]}'
+  local reduce_out="$CLAUDE_TMP/research-result-$role.json"
+  if ! ask_claude "$reduce_prompt" "$reduce_schema" "$reduce_out"; then
+    log "WARNING: cross-model research reduce-call failed — steering proceeds without it"
+    return 1
+  fi
+
+  local candidates
+  candidates="$(extract_field "$reduce_out" candidates)"
+  if [ -z "${candidates// /}" ]; then
+    log "WARNING: cross-model research returned empty — steering proceeds without it"
+    return 1
+  fi
+
+  {
+    echo "# Cross-model research: $role role, candidates for \`$MODEL\`"
+    echo
+    echo "Generated $(date -u +%Y-%m-%dT%H:%M:%SZ) by bench/loop.sh's Research phase (cross-model idiom check only — external/web research is NOT automated, stays manual). Map-reduce: one extraction call per source model, then one combining call."
+    echo "Source models checked: ${other_models[*]}"
+    echo
+    echo "$candidates"
+  } > "$research_file"
+  log "cross-model research written: $research_file"
+}
+
+# ---------------------------------------------------------------------
 # author_override TASK
 # Bucket 3b. Writes models/<model-dir>/task-overrides/<task>.md.
 # ---------------------------------------------------------------------
@@ -259,6 +426,11 @@ author_override() {
     echo "=== Model's history.md (check for an already-diagnosed idiom/fix pattern before inventing a new one) ==="
     [ -f "$MODEL_DIR/history.md" ] && cat "$MODEL_DIR/history.md"
     echo
+    if [ -f "$MODEL_DIR/research-$ROLE.md" ]; then
+      echo "=== Cross-model research (candidate techniques from other models — hypotheses, verify before trusting) ==="
+      cat "$MODEL_DIR/research-$ROLE.md"
+      echo
+    fi
     local example
     example="$(find "$OVERRIDES_DIR" -maxdepth 1 -name '*.md' ! -name '.gated-*' 2>/dev/null | head -1)"
     if [ -n "$example" ]; then
@@ -339,6 +511,11 @@ author_rules() {
     echo "=== Model's history.md (check for an already-diagnosed idiom/fix pattern before inventing a new one) ==="
     [ -f "$MODEL_DIR/history.md" ] && cat "$MODEL_DIR/history.md"
     echo
+    if [ -f "$MODEL_DIR/research-$ROLE.md" ]; then
+      echo "=== Cross-model research (candidate techniques from other models — hypotheses, verify before trusting) ==="
+      cat "$MODEL_DIR/research-$ROLE.md"
+      echo
+    fi
     echo "Return the complete $lang-rules.md content (what gets prepended to every $lang task's SPEC at dispatch time), and separately your rationale."
   } > "$prompt_file"
 
@@ -475,9 +652,13 @@ commit_if_changed "$MODEL role=$ROLE: loop.sh Phase 1/resume report"
 
 FAILS="$(fail_tasks "$LATEST")"
 if [ -z "$FAILS" ]; then
-  log "no FAIL tasks — role already passing, skipping Tier 1"
+  log "no FAIL tasks — role already passing, skipping Tier 1 (and Research, nothing to steer)"
 else
   log "FAIL tasks: $(echo "$FAILS" | tr '\n' ' ')"
+
+  log "=== Research phase (cross-model idiom check) ==="
+  cross_model_research "$ROLE"
+  commit_if_changed "$MODEL role=$ROLE: loop.sh Research phase (cross-model idiom check)"
 
   for round in $(seq 1 "$MAX_ROUNDS"); do
     ACTIVE="$(fail_tasks "$LATEST" | while read -r t; do is_gated "$t" || echo "$t"; done)"

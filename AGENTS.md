@@ -128,15 +128,16 @@ ad hoc diagnosis. A "run" = one full role re-test (`bash bench/report.sh
 <model> <role>`), not a single task. Write Findings/Suggested-next-steps
 before the next run, every time (see rule above).
 
-**`bash bench/loop.sh <model> <role>` automates Phase 1, Tier 1
-steering, the Tier 2 gate, and Confirm** (orchestration is scripted;
-only report-completion and per-task steering content, plus the
-gate-on-run-2 decision, call out to `claude -p`). It does NOT do Phase
-0 or the Research phase's cross-model/external-research parts — those
-need real tool use (web search) the script deliberately doesn't have;
-only a same-model `history.md` check is folded into steering. It stops
-cleanly after Confirm and states what it skipped — Tier 2's generalist
-search, the Performance run, and the Final report stay manual. Prefer
+**`bash bench/loop.sh <model> <role>` automates Phase 1, the Research
+phase's cross-model idiom check, Tier 1 steering, the Tier 2 gate, and
+Confirm** (orchestration is scripted; report-completion, cross-model
+research, and per-task steering content, plus the gate-on-run-2
+decision, call out to `claude -p`). It does NOT do Phase 0 or the
+Research phase's *external* half (web search, model card lookup) —
+that needs real tool use the script deliberately doesn't have. It
+stops cleanly after Confirm and states what it skipped — Tier 2's
+generalist search, the Performance run, and the Final report stay
+manual. Prefer
 it over doing the automated phases by hand; the phase-by-phase
 description that follows is what it implements (plus the parts it
 doesn't, which still need a human/Claude Code session).
