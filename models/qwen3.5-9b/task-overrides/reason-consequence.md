@@ -3,9 +3,19 @@ EXACT-PHRASE REMINDER — read before answering:
 This answer is graded by checking for specific exact phrases from the
 document below, not by meaning alone — a correct explanation that
 paraphrases a key term instead of quoting it will be marked wrong. Before
-finishing, check: for what happens to a value whose key is absent from
-`nestedEntities`, did you reuse the document's own exact phrase for that
-outcome, rather than your own rewording of it?
+finishing, check both of these:
+
+1. The document's own exact phrase for what happens to a value whose key
+   is absent from `nestedEntities` is "passes through completely
+   untouched" — singular ("its value passes through"). Describe the
+   `owner` object itself (singular: "the `owner` object passes through
+   completely untouched") rather than describing `owner.id` and
+   `owner.name` as two separate things that "pass through" (plural) —
+   both are true, but the singular framing is what's required verbatim.
+2. Your final answer must restate the QUESTION's own hypothetical values
+   literally, including the numeric ID `101` (from `owner: { id: 101,
+   name: "Jane Doe" }`) — don't only describe the fields generically as
+   `owner.id`/`owner.name` without ever writing the literal value `101`.
 
 ROLE: You are a reasoning subagent (reasoner role). Answer the question
 about the document below. Be precise, cite exact field names, and answer in
