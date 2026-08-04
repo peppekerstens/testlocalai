@@ -34,6 +34,28 @@ session is run. This file is the map of what's here and how to use it.
 
 Full reasoning, past findings, and the project's origin: [`history.md`](history.md).
 
+## Where this fits in the optimization spectrum
+
+Steering a prompt is the cheapest way to make a small LLM better at a
+task — not the only one. From hardest/most powerful to easiest/most
+accessible:
+
+| Approach | Difficulty | What it needs | Changes the model? |
+|---|---|---|---|
+| Train an LLM from scratch ([video](https://www.youtube.com/watch?v=T9egZA5ppQw)) | Highest | Huge compute, huge dataset, ML research expertise | Yes — from nothing |
+| Fine-tune, e.g. Unsloth/QLoRA ([video](https://www.youtube.com/watch?v=4JofSJIrjwU)) | High | A GPU, a training run, labeled examples | Yes — adjusts weights |
+| RAG ([video](https://www.youtube.com/watch?v=Of19Mu0F8o0)) | Medium | An embedding pipeline + vector store + retrieval logic | No — adds context at query time |
+| **Steer the prompt/decoding — this project** | Lowest | A prompt, sampling params, maybe a grammar file | No — same GGUF, untouched |
+
+This project lives entirely in the last row: no training, no retrieval
+infra — just squeezing more correctness out of an already-quantized
+GGUF via prompt content, sampling parameters, and (when prompting
+alone hits a wall) grammar-constrained decoding. A "poor man's
+Unsloth," working purely at inference time. See `AGENTS.md`'s quality
+loop for how that search is actually run, and
+`docs/GRAMMAR-STEERING-PATTERNS.md` for when prompting alone stops
+being enough.
+
 ## Roles
 
 Grounded in real usage-pattern research (see `bench/README.md` for
