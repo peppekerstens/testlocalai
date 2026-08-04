@@ -963,3 +963,63 @@ result is mixed); (2) a distinct "don't restate the input schema's
 other field names" reminder for `reason-config-validity`; (3) a
 distinct "enumerate every requirement category before writing" reminder
 for `reason-coverage`. This is where the next session should resume.
+
+## A third, separate concurrent session's note found mid-run, and the `reason-diagnose` bug it flagged
+
+While updating `~/claude-remote/roles/reasoner/roadmap.md` at the end
+of this run, found it already contained a detailed progress note dated
+`2026-08-04T17:04Z-17:16Z`, from a session neither started nor visible
+in this one — confirmed via `ps -ef` that only this session's own
+process (PID 180066, running continuously since 16:55Z) was active at
+check time; the note's author had already exited. `run.sh`/
+`claude-autonomous.timer` has no lockfile, so periodic autonomous
+invocations can genuinely overlap — this one apparently ran read-only
+research work in parallel with this session's own dispatches without
+either session coordinating. Real infra gap, flagged in
+`~/claude-remote/status.md` for whoever owns that tooling; not
+something to fix from inside this repo.
+
+That session's note flagged, but deliberately did not fix (to avoid
+racing an in-progress edit it observed on the same files), that
+`tasks/reason-diagnose/verify.sh` required the literal token
+`requireEnv` — which it had checked does not appear anywhere in
+`SPEC.md`/`input.md`, only in `expected.md`. Independently re-verified
+this directly (grepped both files myself, confirmed absent) before
+acting on it — matches this project's own accuracy-verification
+standard, not taken on the other session's word alone. Fixed
+(commit `350f276`): replaced the single hidden-token requirement with
+an any-of check over legitimate mechanism descriptions (`requireEnv`,
+`validat[e/es/ion]`, `fail-fast`, `fail fast`, `abort`) — still rejects
+a bare echo of the log (verified with a synthetic echo-only answer),
+still passes `expected.md`, and flips this model's own real bare
+`reason-diagnose` output from FAIL to PASS.
+
+## Second valid bare draw (5/9) and the corrected picture
+
+Re-ran `bash bench/report.sh qwen3.5:9b reason` once more after the
+`reason-diagnose` fix (`report-reason-20260804-152027.md`): **5/9
+PASS** — `reason-diagnose` now correctly PASSes (bug fix, not model
+improvement); `reason-config-validity` and `reason-coverage` flipped
+PASS this draw (real sampling variance at `DISPATCH_TEMPERATURE=1.0`,
+not resolved yet — need more draws); `reason-consequence` flipped to a
+new FAIL (`missing required token: 'passes through'`, confirmed
+legitimately disclosed in `SPEC.md`/`input.md`, same "exact required
+phrase" idiom family). `reason-trace`, `reason-compare`,
+`reason-multihop` failed the same specific way as the first draw —
+this idiom (correct reasoning, doesn't reproduce the required exact
+phrase) is now confirmed stable across 2 independent draws on 4
+distinct tasks, the strongest, most actionable finding from Phase 1 so
+far. `reason-config-validity`/`reason-coverage`'s idioms are each only
+1-for-2 so far — not yet confirmed as stable, more draws needed before
+steering either.
+
+**Where this leaves the loop**: Phase 1 (now 2 valid draws) and the
+Research phase (cross-model + external, both parts) are done. Next
+session should either gather 2-3 more bare draws first (per the
+sample-size caveat — 2 draws already produced 2 real flips) or, if
+budget favors starting sooner, begin Tier 1 on the 4-task
+exact-phrase-idiom cluster (`reason-trace`/`reason-compare`/
+`reason-consequence`/`reason-multihop`) which is already confirmed
+stable, while continuing to gather bare draws on
+`reason-config-validity`/`reason-coverage` in parallel before deciding
+whether those two need steering at all.
