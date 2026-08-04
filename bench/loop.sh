@@ -23,11 +23,17 @@
 # scoping its regex to one section: don't trust free-text parsing when
 # a structural guarantee is available instead.
 #
-# NOT automated by this script (deliberately, for now): Tier 2's
-# generalist search, the Performance run, and the Final report's
-# qualitative frontier-LLM comparison - these stay manual/Claude-Code-
-# driven. This script stops cleanly and says so once Tier 1 -> gate ->
-# Confirm settles.
+# NOT automated by this script (deliberately, for now): Phase 0
+# (pre-flight infra research), the Research phase's cross-model idiom
+# check and external research (both need real tool use - web search,
+# reading other models' history.md - which `--tools ""` deliberately
+# rules out; only a same-model history.md check is folded into
+# author_override's prompt, not the full mandated Research step),
+# Tier 2's generalist search, the Performance run, and the Final
+# report's qualitative frontier-LLM comparison - these stay
+# manual/Claude-Code-driven. This script stops cleanly and says so once
+# Tier 1 -> gate -> Confirm settles; it never silently claims to have
+# done a phase it skipped.
 #
 # Usage: bash bench/loop.sh [--verbose] <model> <role> [max_rounds] [backend] [port]
 #   --verbose: also enables bash's own command trace (`set -x`) into the
