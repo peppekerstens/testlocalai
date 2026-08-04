@@ -97,6 +97,23 @@ mkdir -p "$REPORTS_DIR" "$OVERRIDES_DIR" "$CLAUDE_TMP"
 
 log() { echo "[loop.sh] $*"; }
 
+# Resolve the claude binary once, don't rely on bare `claude` being on
+# $PATH in every invocation context. Real failure this prevents: a
+# non-interactive SSH session (e.g. `ssh host "bash -s" <<EOF`, as
+# opposed to a login/interactive shell or run.sh's own explicit
+# $HOME/.local/bin/claude calls) had $PATH = the OS default only, no
+# ~/.local/bin - bare `claude` resolved to "command not found" (exit
+# 127) on every ask_claude call, even with the OAuth token correctly
+# sourced. `command -v` first (respects a correctly configured PATH,
+# e.g. this project's primary host), falls back to the native
+# installer's standard location otherwise.
+CLAUDE_BIN="$(command -v claude 2>/dev/null || true)"
+[ -z "$CLAUDE_BIN" ] && [ -x "$HOME/.local/bin/claude" ] && CLAUDE_BIN="$HOME/.local/bin/claude"
+if [ -z "$CLAUDE_BIN" ]; then
+  log "FATAL: claude binary not found on \$PATH or at \$HOME/.local/bin/claude - cannot make any ask_claude call."
+  exit 1
+fi
+
 # Per-model mandatory dispatch-level env vars (AGENTS.md's "every
 # dispatch-level tweak must be documented" rule already requires these
 # be written in the model's own README Setup section in prose; this is
@@ -127,7 +144,7 @@ ask_claude() {
   # Prompt goes in via stdin, never as a CLI argument - a large prompt
   # (e.g. cross_model_research's multi-model history.md dump) hit "argument
   # list too long" (E2BIG) as a literal argument; stdin has no such limit.
-  claude -p --tools "" --output-format json \
+  "$CLAUDE_BIN" -p --tools "" --output-format json \
     --json-schema "$schema" < "$prompt_file" > "$out_file" 2>"$out_file.stderr" || rc=$?
   if [ "$rc" -ne 0 ]; then
     log "ERROR: claude call exited $rc (see $out_file.stderr)"
