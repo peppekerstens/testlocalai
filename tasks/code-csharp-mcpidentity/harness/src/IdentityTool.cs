@@ -1,8 +1,6 @@
 using System.Security.Claims;
 using ModelContextProtocol.Server;
 
-namespace Bench.McpIdentity;
-
 [McpServerToolType]
 public sealed class IdentityTool
 {

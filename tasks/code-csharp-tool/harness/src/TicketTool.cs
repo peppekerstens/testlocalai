@@ -28,16 +28,16 @@ public sealed class InMemoryTicketStore : ITicketStore
 
 public class TicketTool
 {
-    private readonly ITicketStore _ticketStore;
+    private readonly ITicketStore _store;
 
     public TicketTool(ITicketStore store)
     {
-        _ticketStore = store;
+        _store = store;
     }
 
     public string? GetTicket(int id)
     {
-        return _ticketStore.GetTicketAsync(id).Result;
+        return _store.GetTicketAsync(id).Result;
     }
 }
 

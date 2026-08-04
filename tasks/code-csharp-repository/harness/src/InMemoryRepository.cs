@@ -21,8 +21,10 @@ public sealed class InMemoryRepository<T> : IRepository<T>
     {
         if (id == null)
             throw new ArgumentNullException(nameof(id));
+
         if (_items.ContainsKey(id))
-            throw new ArgumentException("Duplicate key", nameof(id));
+            throw new ArgumentException($"Duplicate key: {id}", nameof(id));
+
         _items[id] = item;
     }
 
@@ -30,15 +32,18 @@ public sealed class InMemoryRepository<T> : IRepository<T>
     {
         if (id == null)
             return default(T);
-        return _items.TryGetValue(id, out T? value) ? value : default(T);
+
+        return _items.TryGetValue(id, out T value) ? value : default(T);
     }
 
     public bool Update(string id, T item)
     {
         if (id == null)
             return false;
+
         if (!_items.ContainsKey(id))
             return false;
+
         _items[id] = item;
         return true;
     }
@@ -47,6 +52,7 @@ public sealed class InMemoryRepository<T> : IRepository<T>
     {
         if (id == null)
             return false;
+
         return _items.Remove(id);
     }
 

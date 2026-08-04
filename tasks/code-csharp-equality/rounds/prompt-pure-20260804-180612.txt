@@ -1,0 +1,98 @@
+C# RULES. Apply ALL.
+
+1. EXACT SIGNATURE. Implement exactly types, methods, params, return types, namespaces given. No overloads, no extra params, no extra methods, classes, or files.
+2. EXACT CONTRACT. Implement contract verbatim. No invented behavior, headers, env vars, features.
+3. NULLABILITY. Honor `?`. `string?`/`JsonNode?` = null valid path. Never throw instead of null.
+4. THREAD SAFETY. Shared mutable state MUST use System.Collections.Concurrent and/or `lock(...)`. Never plain Dictionary/List without sync.
+5. ERRORS. Throw exact exception type task names. Never catch+swallow unless task says skip.
+6. ASYNC. async/await. Never `.Result`, `.Wait()`, `GetAwaiter().GetResult()`. Always pass CancellationToken.
+7. PRECISE TYPE. "returns JsonNode" = `JsonNode?`, not object/dynamic/string.
+8. DI. Service in constructor comes from injection. Never `new` a service; never `new` inside method when field exists.
+9. SIMPLICITY. Shortest correct impl. No refactor, no unused usings, no feature creep, no comments unless asked.
+10. NO EXTRA INPUTS. Signature has N params — read only those. No env vars, HttpContext, headers, globals.
+11. COMPLETE FILE. Output MUST contain EVERY type/class/method asked — including ones named in passing. Never truncate. Never close fenced block before every type present.
+12. IMPORT EVERYTHING. Every referenced type needs its using: Regex -> System.Text.RegularExpressions; JsonException -> System.Text.Json; CamelCaseNamingConvention -> YamlDotNet.Serialization.NamingConventions; JsonNode -> System.Text.Json.Nodes. Missing usings = build error.
+13. CANONICAL APIs. Exact real API names:
+   - ConcurrentDictionary remove: `TryRemove(key, out _)`.
+   - nullable null result: `Task.FromResult<string?>(null)`.
+   - `new HttpRequestException(message, innerException)` — 2nd arg MUST be Exception, never HttpResponseMessage.
+   - `HttpClient.GetAsync(path, cancellationToken)`.
+   In doubt, use API exactly as in task example.
+14. TRACE EVERY BRANCH. Walk code line by line against each contract bullet. Cover success (200/204/NoContent), empty/null/whitespace inputs, and every "otherwise" fallback. Uncovered bullet = missing branch.
+15. USING = NAMESPACE, never single type. Never `using System.Threading.CancellationToken;`. CancellationToken lives in System.Threading (implicit) — do not import again.
+16. USING ONLY TASK NEEDS. Import ONLY namespaces THIS task uses. Importing a package project lacks = build error.
+
+OUTPUT FORMAT exact: one fenced code block, nothing else.
+
+
+--- TASK BELOW ---
+
+TASK: value-equality composite key, case-insensitive.
+FILE: one file `CompositeKey.cs`. Namespace: `Bench.Equality`.
+
+File MUST start with this EXACT using line:
+```csharp
+using System;
+using System.Collections.Generic;
+```
+
+WRITE CompositeKey FIRST with EXACTLY this shape (fill in the bodies), THEN KeyDeduplicator.
+
+```csharp
+namespace Bench.Equality;
+
+public sealed class CompositeKey : IEquatable<CompositeKey>
+{
+    public string TenantId { get; }
+    public string ResourceId { get; }
+
+    public CompositeKey(string tenantId, string resourceId)
+    {
+        TenantId = tenantId ?? throw new ArgumentNullException(nameof(tenantId));
+        ResourceId = resourceId ?? throw new ArgumentNullException(nameof(resourceId));
+    }
+
+    public bool Equals(CompositeKey? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return string.Equals(TenantId, other.TenantId, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(ResourceId, other.ResourceId, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public override bool Equals(object? obj) => Equals(obj as CompositeKey);
+
+    public override int GetHashCode() =>
+        HashCode.Combine(TenantId.ToUpperInvariant(), ResourceId.ToUpperInvariant());
+
+    public static bool operator ==(CompositeKey? left, CompositeKey? right) =>
+        left is null ? right is null : left.Equals(right);
+
+    public static bool operator !=(CompositeKey? left, CompositeKey? right) => !(left == right);
+}
+```
+
+AFTER CompositeKey, append KeyDeduplicator with EXACTLY this shape — copy it
+verbatim, do not add a second constructor argument to `HashSet<CompositeKey>`:
+
+```csharp
+public sealed class KeyDeduplicator
+{
+    public HashSet<CompositeKey> Deduplicate(IEnumerable<CompositeKey> keys)
+    {
+        if (keys is null) throw new ArgumentNullException(nameof(keys));
+        return new HashSet<CompositeKey>(keys);
+    }
+}
+```
+
+CLASS CHECKLIST: output MUST contain exactly these TWO types in this order: CompositeKey, KeyDeduplicator. Both MUST include every member shown above verbatim for CompositeKey (do not drop `Equals`, `GetHashCode`, `==`, or `!=` — a missing override is the single most common failure on this task). Do not stop early.
+
+BEHAVIOR (must hold exactly):
+1. `TenantId`/`ResourceId` comparison is case-insensitive (`OrdinalIgnoreCase`) on BOTH fields.
+2. `GetHashCode()` MUST be consistent with `Equals`: two keys that compare equal MUST return the same hash code (use `.ToUpperInvariant()` on both fields before combining, exactly as shown).
+3. `Equals(null)` (both the typed and `object?` overload) returns `false`, never throws.
+4. `==`/`!=` handle null on either side: `null == null` is `true`; `null` compared to a non-null instance is `false`; never call a method on a possibly-null operand without a null check first (avoid `NullReferenceException`).
+5. `KeyDeduplicator.Deduplicate`: `keys == null` -> throw `ArgumentNullException`. Otherwise `new HashSet<CompositeKey>(keys)` — no second argument. `CompositeKey`'s own `Equals`/`GetHashCode` already make this case-insensitive; passing a `StringComparer` there is a type error (`HashSet<CompositeKey>` needs an `IEqualityComparer<CompositeKey>`, not a string comparer) and is never needed.
+
+OUTPUT: ONLY complete `CompositeKey.cs` in one fenced ```csharp block. No explanations, no other text.

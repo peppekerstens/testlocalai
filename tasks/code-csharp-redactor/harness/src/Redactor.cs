@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Bench.Task6;
 
@@ -27,7 +28,6 @@ public sealed class Redactor
             catch (ArgumentException)
             {
                 // Skip this rule and continue
-                continue;
             }
         }
 

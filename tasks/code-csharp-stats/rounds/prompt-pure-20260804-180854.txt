@@ -1,0 +1,95 @@
+C# RULES. Apply ALL.
+
+1. EXACT SIGNATURE. Implement exactly types, methods, params, return types, namespaces given. No overloads, no extra params, no extra methods, classes, or files.
+2. EXACT CONTRACT. Implement contract verbatim. No invented behavior, headers, env vars, features.
+3. NULLABILITY. Honor `?`. `string?`/`JsonNode?` = null valid path. Never throw instead of null.
+4. THREAD SAFETY. Shared mutable state MUST use System.Collections.Concurrent and/or `lock(...)`. Never plain Dictionary/List without sync.
+5. ERRORS. Throw exact exception type task names. Never catch+swallow unless task says skip.
+6. ASYNC. async/await. Never `.Result`, `.Wait()`, `GetAwaiter().GetResult()`. Always pass CancellationToken.
+7. PRECISE TYPE. "returns JsonNode" = `JsonNode?`, not object/dynamic/string.
+8. DI. Service in constructor comes from injection. Never `new` a service; never `new` inside method when field exists.
+9. SIMPLICITY. Shortest correct impl. No refactor, no unused usings, no feature creep, no comments unless asked.
+10. NO EXTRA INPUTS. Signature has N params — read only those. No env vars, HttpContext, headers, globals.
+11. COMPLETE FILE. Output MUST contain EVERY type/class/method asked — including ones named in passing. Never truncate. Never close fenced block before every type present.
+12. IMPORT EVERYTHING. Every referenced type needs its using: Regex -> System.Text.RegularExpressions; JsonException -> System.Text.Json; CamelCaseNamingConvention -> YamlDotNet.Serialization.NamingConventions; JsonNode -> System.Text.Json.Nodes. Missing usings = build error.
+13. CANONICAL APIs. Exact real API names:
+   - ConcurrentDictionary remove: `TryRemove(key, out _)`.
+   - nullable null result: `Task.FromResult<string?>(null)`.
+   - `new HttpRequestException(message, innerException)` — 2nd arg MUST be Exception, never HttpResponseMessage.
+   - `HttpClient.GetAsync(path, cancellationToken)`.
+   In doubt, use API exactly as in task example.
+14. TRACE EVERY BRANCH. Walk code line by line against each contract bullet. Cover success (200/204/NoContent), empty/null/whitespace inputs, and every "otherwise" fallback. Uncovered bullet = missing branch.
+15. USING = NAMESPACE, never single type. Never `using System.Threading.CancellationToken;`. CancellationToken lives in System.Threading (implicit) — do not import again.
+16. USING ONLY TASK NEEDS. Import ONLY namespaces THIS task uses. Importing a package project lacks = build error.
+
+OUTPUT FORMAT exact: one fenced code block, nothing else.
+
+
+--- TASK BELOW ---
+
+TASK: LINQ ticket-stats aggregator.
+FILE: one file `TicketStats.cs`. Namespace: `Bench.Stats`.
+
+File MUST start with this EXACT using line:
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Linq;
+```
+
+WRITE record TYPE FIRST, THEN the aggregator class.
+
+```csharp
+namespace Bench.Stats;
+
+public sealed record Ticket(string Status, int Priority);
+```
+
+AFTER Ticket, append TicketStatsAggregator with EXACTLY this shape — copy all
+three method bodies verbatim, do not rewrite any of them. Each one has a
+known easy mistake that only shows up on some draws, so none of them are
+left to inference:
+
+```csharp
+public sealed class TicketStatsAggregator
+{
+    public Dictionary<string, int> CountByStatus(IEnumerable<Ticket> tickets)
+    {
+        if (tickets is null) throw new ArgumentNullException(nameof(tickets));
+        return tickets
+            .GroupBy(t => t.Status)
+            .ToDictionary(g => g.Key, g => g.Count());
+    }
+
+    public double AverageOpenPriority(IEnumerable<Ticket> tickets)
+    {
+        if (tickets is null) throw new ArgumentNullException(nameof(tickets));
+        var open = tickets.Where(t => t.Status == "Open").ToList();
+        return open.Count == 0 ? 0.0 : open.Average(t => t.Priority);
+    }
+
+    public List<string> TopStatuses(IEnumerable<Ticket> tickets, int n)
+    {
+        if (tickets is null) throw new ArgumentNullException(nameof(tickets));
+        if (n == 0) return new List<string>();
+        return tickets
+            .GroupBy(t => t.Status)
+            .OrderByDescending(g => g.Count())
+            .ThenBy(g => g.Key, StringComparer.Ordinal)
+            .Take(n)
+            .Select(g => g.Key)
+            .ToList();
+    }
+}
+```
+
+CLASS CHECKLIST: output MUST contain exactly these TWO types in this order: Ticket, TicketStatsAggregator. Count both before closing the fenced block. Do not stop early.
+
+BEHAVIOR (must hold exactly — the verbatim bodies above already implement all of this, this section explains why each shape is the way it is):
+1. `tickets == null` on ANY of the three methods -> throw `ArgumentNullException`. Checked FIRST in every method, before enumerating.
+2. Each method enumerates `tickets` EXACTLY ONCE. Never call `.Count()`, `.Any()`, or a second `foreach`/LINQ chain over the same parameter.
+3. `CountByStatus`: count of tickets per exact `Status` string (case-sensitive). Empty input -> empty dictionary.
+4. `AverageOpenPriority`: `.Average()` on a possibly-EMPTY filtered sequence throws `InvalidOperationException` — that is why the body materializes to `open` and checks `Count == 0` FIRST, never calling `.Average()` directly on an unchecked `.Where(...)` result.
+5. `TopStatuses`: `n == 0` returns an empty list BEFORE anything else runs; the `GroupBy` shape is what makes the count-per-status correct (do not compute counts by re-scanning an already-deduplicated list, that always yields 1).
+
+OUTPUT: ONLY complete `TicketStats.cs` in one fenced ```csharp block. No explanations, no other text.

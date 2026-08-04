@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Bench.Events
 {
@@ -11,16 +12,24 @@ namespace Bench.Events
 
         public void Publish(string ticketId, string oldStatus, string newStatus)
         {
-            if (StatusChanged == null) return;
+            if (StatusChanged == null)
+                return;
 
             var exceptions = new List<Exception>();
             foreach (var d in StatusChanged?.GetInvocationList() ?? Array.Empty<Delegate>())
             {
-                try { ((StatusChangedHandler)d)(ticketId, oldStatus, newStatus); }
-                catch (Exception ex) { exceptions.Add(ex); }
+                try
+                {
+                    ((StatusChangedHandler)d)(ticketId, oldStatus, newStatus);
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Add(ex);
+                }
             }
 
-            if (exceptions.Count > 0) throw new AggregateException(exceptions);
+            if (exceptions.Count > 0)
+                throw new AggregateException(exceptions);
         }
     }
 }

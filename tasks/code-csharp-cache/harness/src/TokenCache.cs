@@ -20,7 +20,9 @@ public sealed class TokenCache
     {
         lock (_lock)
         {
-            return _data.TryGetValue(userId, out token);
+            if (_data.TryGetValue(userId, out token))
+                return true;
+            return false;
         }
     }
 

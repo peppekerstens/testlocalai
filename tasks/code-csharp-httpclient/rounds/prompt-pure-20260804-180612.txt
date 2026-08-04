@@ -1,0 +1,85 @@
+C# RULES. Apply ALL.
+
+1. EXACT SIGNATURE. Implement exactly types, methods, params, return types, namespaces given. No overloads, no extra params, no extra methods, classes, or files.
+2. EXACT CONTRACT. Implement contract verbatim. No invented behavior, headers, env vars, features.
+3. NULLABILITY. Honor `?`. `string?`/`JsonNode?` = null valid path. Never throw instead of null.
+4. THREAD SAFETY. Shared mutable state MUST use System.Collections.Concurrent and/or `lock(...)`. Never plain Dictionary/List without sync.
+5. ERRORS. Throw exact exception type task names. Never catch+swallow unless task says skip.
+6. ASYNC. async/await. Never `.Result`, `.Wait()`, `GetAwaiter().GetResult()`. Always pass CancellationToken.
+7. PRECISE TYPE. "returns JsonNode" = `JsonNode?`, not object/dynamic/string.
+8. DI. Service in constructor comes from injection. Never `new` a service; never `new` inside method when field exists.
+9. SIMPLICITY. Shortest correct impl. No refactor, no unused usings, no feature creep, no comments unless asked.
+10. NO EXTRA INPUTS. Signature has N params — read only those. No env vars, HttpContext, headers, globals.
+11. COMPLETE FILE. Output MUST contain EVERY type/class/method asked — including ones named in passing. Never truncate. Never close fenced block before every type present.
+12. IMPORT EVERYTHING. Every referenced type needs its using: Regex -> System.Text.RegularExpressions; JsonException -> System.Text.Json; CamelCaseNamingConvention -> YamlDotNet.Serialization.NamingConventions; JsonNode -> System.Text.Json.Nodes. Missing usings = build error.
+13. CANONICAL APIs. Exact real API names:
+   - ConcurrentDictionary remove: `TryRemove(key, out _)`.
+   - nullable null result: `Task.FromResult<string?>(null)`.
+   - `new HttpRequestException(message, innerException)` — 2nd arg MUST be Exception, never HttpResponseMessage.
+   - `HttpClient.GetAsync(path, cancellationToken)`.
+   In doubt, use API exactly as in task example.
+14. TRACE EVERY BRANCH. Walk code line by line against each contract bullet. Cover success (200/204/NoContent), empty/null/whitespace inputs, and every "otherwise" fallback. Uncovered bullet = missing branch.
+15. USING = NAMESPACE, never single type. Never `using System.Threading.CancellationToken;`. CancellationToken lives in System.Threading (implicit) — do not import again.
+16. USING ONLY TASK NEEDS. Import ONLY namespaces THIS task uses. Importing a package project lacks = build error.
+
+OUTPUT FORMAT exact: one fenced code block, nothing else.
+
+
+--- TASK BELOW ---
+
+TASK: async HTTP client method returning a JsonNode.
+FILE: one file `CwClient.cs`. Namespace: `Bench.Task3`.
+
+File MUST start with these EXACT using lines, in order:
+```csharp
+using System.Net;
+using System.Net.Http;
+using System.Text.Json.Nodes;
+using System.Threading;
+using System.Threading.Tasks;
+```
+(System and System.Text.Json implicit; never import single types — CancellationToken is a type in System.Threading, never write `using System.Threading.CancellationToken;`.)
+
+```csharp
+namespace Bench.Task3;
+
+public sealed class CwClient
+{
+    private readonly HttpClient _http;
+
+    public CwClient(HttpClient httpClient)
+    {
+        _http = httpClient;
+    }
+
+    public async Task<System.Text.Json.Nodes.JsonNode?> GetAsync(
+        string path, CancellationToken cancellationToken = default)
+    {
+        // implement per the behavior contract
+    }
+}
+```
+
+BEHAVIOR (must hold exactly):
+1. GET request for `path` (relative to BaseAddress, e.g. "/companies"). Pass `cancellationToken` through to HttpClient call.
+2. Status 204 No Content (or empty body) -> return null.
+3. Status NOT 2xx -> throw `HttpRequestException` (use `response.EnsureSuccessStatusCode()`).
+4. Otherwise read body text, parse with `System.Text.Json.Nodes.JsonNode.Parse(body)`, return node. Empty/whitespace body -> null.
+5. Canceled token -> call must throw (HttpClient throws OperationCanceledException when token passed through).
+
+Use EXACTLY this method body shape (no extra throw statements; never pass `response` to exception constructor — 2nd arg of HttpRequestException must be Exception, not HttpResponseMessage):
+```csharp
+using var response = await _http.GetAsync(path, cancellationToken);
+if (response.StatusCode == HttpStatusCode.NoContent)
+    return null;
+response.EnsureSuccessStatusCode();
+var body = await response.Content.ReadAsStringAsync(cancellationToken);
+if (string.IsNullOrWhiteSpace(body))
+    return null;
+return JsonNode.Parse(body);
+```
+(HttpStatusCode is System.Net.HttpStatusCode; add using if needed.)
+
+DO NOT use `GetFromJsonAsync<T>`; return type must be `JsonNode?` exactly.
+
+OUTPUT: ONLY complete `CwClient.cs` in one fenced ```csharp block. No explanations, no other text.
