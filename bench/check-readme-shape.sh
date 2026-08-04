@@ -8,15 +8,39 @@
 # when someone manually ran this exact diff) is a structural gap a
 # script can check every time, not just when someone remembers to ask.
 #
-# Usage: bash bench/check-readme-shape.sh <model>
+# Usage: bash bench/check-readme-shape.sh [--verbose] <model>
 # Exit code: 0 if every required scaffold heading is present, 1 if any
-# are missing (prints which ones).
+# are missing (prints which ones). --verbose enables bash's own command
+# trace (`set -x`) into the log; every run always writes a full
+# transcript to bench/logs/check-readme-shape.sh-<timestamp>.log
+# regardless.
 set -euo pipefail
 
 SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
 ORCH_DIR="$(cd "$SELF_DIR/.." && pwd)"
 
-MODEL="${1:?usage: check-readme-shape.sh <model>}"
+VERBOSE=0
+ARGS=()
+for arg in "$@"; do
+  if [ "$arg" = "--verbose" ]; then
+    VERBOSE=1
+  else
+    ARGS+=("$arg")
+  fi
+done
+set -- "${ARGS[@]}"
+
+LOG_DIR="$ORCH_DIR/bench/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/check-readme-shape.sh-$(date -u +%Y%m%d-%H%M%S)-$$.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+echo "[check-readme-shape.sh] full trace: $LOG_FILE"
+if [ "$VERBOSE" -eq 1 ]; then
+  export PS4='+ $(date -u +%H:%M:%S) ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:-main}: '
+  set -x
+fi
+
+MODEL="${1:?usage: check-readme-shape.sh [--verbose] <model>}"
 MODEL_DIR_NAME="$(echo "$MODEL" | tr ':' '-')"
 README="$ORCH_DIR/models/$MODEL_DIR_NAME/README.md"
 SCAFFOLD="$ORCH_DIR/templates/new-model/MODEL-README-SCAFFOLD.md"

@@ -14,13 +14,36 @@
 # that's a judgment call for whoever reads this report, same as
 # report.sh's own Findings/Suggested-next-steps split.
 #
-# Usage: bash bench/confirm.sh <model> <role> [backend] [port]
+# Usage: bash bench/confirm.sh [--verbose] <model> <role> [backend] [port]
 #   Same arguments as bench/report.sh - see that script's own usage
-#   comment for what each one means.
+#   comment for what each one means. --verbose enables bash's own
+#   command trace (`set -x`) into the log; every run always writes a
+#   full transcript to bench/logs/confirm.sh-<timestamp>.log regardless.
 set -euo pipefail
 
 SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
 ORCH_DIR="$(cd "$SELF_DIR/.." && pwd)"
+
+VERBOSE=0
+ARGS=()
+for arg in "$@"; do
+  if [ "$arg" = "--verbose" ]; then
+    VERBOSE=1
+  else
+    ARGS+=("$arg")
+  fi
+done
+set -- "${ARGS[@]}"
+
+LOG_DIR="$ORCH_DIR/bench/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/confirm.sh-$(date -u +%Y%m%d-%H%M%S)-$$.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+echo "[confirm.sh] full trace: $LOG_FILE"
+if [ "$VERBOSE" -eq 1 ]; then
+  export PS4='+ $(date -u +%H:%M:%S) ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:-main}: '
+  set -x
+fi
 
 MODEL="${1:?usage: confirm.sh <model> <role> [backend] [port]}"
 ROLE="${2:?usage: confirm.sh <model> <role> [backend] [port]}"

@@ -128,6 +128,14 @@ ad hoc diagnosis. A "run" = one full role re-test (`bash bench/report.sh
 <model> <role>`), not a single task. Write Findings/Suggested-next-steps
 before the next run, every time (see rule above).
 
+**`bash bench/loop.sh <model> <role>` automates Phase 1 through Confirm**
+end to end (orchestration is scripted; only report-completion and
+per-task steering content, plus the gate-on-run-2 decision, call out to
+`claude -p`). It stops cleanly after Confirm — Tier 2's generalist
+search, the Performance run, and the Final report stay manual. Prefer
+it over doing the phases below by hand; the phase-by-phase description
+that follows is what it implements, not an alternative procedure.
+
 **Check for prior work before starting.** Read
 `models/<model>/reports/report-<role>-*.md`, `README.md`, `history.md`.
 Run budgets (4/task Tier 1, 5 Tier 2) are cumulative across sessions,

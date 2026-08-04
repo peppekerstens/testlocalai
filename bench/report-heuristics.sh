@@ -19,13 +19,38 @@
 # needs real judgment for; see bench/report-check.sh for the one part
 # of report-completion that #is# a reliable mechanical gate.
 #
-# Usage: bash bench/report-heuristics.sh <report-file>
+# Usage: bash bench/report-heuristics.sh [--verbose] <report-file>
 # Exit code: 0 always (advisory only), 2 if the file doesn't exist.
+# --verbose enables bash's own command trace (`set -x`) into the log;
+# every run always writes a full transcript to
+# bench/logs/report-heuristics.sh-<timestamp>.log regardless.
 set -euo pipefail
 
 SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
+ORCH_DIR="$(cd "$SELF_DIR/.." && pwd)"
 
-REPORT_FILE="${1:?usage: report-heuristics.sh <report-file>}"
+VERBOSE=0
+ARGS=()
+for arg in "$@"; do
+  if [ "$arg" = "--verbose" ]; then
+    VERBOSE=1
+  else
+    ARGS+=("$arg")
+  fi
+done
+set -- "${ARGS[@]}"
+
+LOG_DIR="$ORCH_DIR/bench/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/report-heuristics.sh-$(date -u +%Y%m%d-%H%M%S)-$$.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+echo "[report-heuristics.sh] full trace: $LOG_FILE"
+if [ "$VERBOSE" -eq 1 ]; then
+  export PS4='+ $(date -u +%H:%M:%S) ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:-main}: '
+  set -x
+fi
+
+REPORT_FILE="${1:?usage: report-heuristics.sh [--verbose] <report-file>}"
 [ -f "$REPORT_FILE" ] || { echo "ERROR: $REPORT_FILE not found" >&2; exit 2; }
 
 section() {

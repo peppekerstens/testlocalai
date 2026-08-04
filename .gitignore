@@ -12,6 +12,11 @@ __pycache__/
 bench/tmp/*
 !bench/tmp/.gitkeep
 
+# bench/*.sh --verbose/log-trace output — debug traces (can include full
+# prompt/response content), never evidence, never committed
+bench/logs/*
+!bench/logs/.gitkeep
+
 # Claude Code / AI-tool runtime state — local session state, not project
 # content, EXCEPT settings.json which is this project's own committed
 # permission policy (see AGENTS.md "Unattended operation is authorized

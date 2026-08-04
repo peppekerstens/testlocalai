@@ -7,12 +7,38 @@
 # just confirms the placeholder was actually replaced, since that's a
 # structural grep, not a judgment call.
 #
-# Usage: bash bench/report-check.sh <report-file>
+# Usage: bash bench/report-check.sh [--verbose] <report-file>
 # Exit code: 0 if both sections were filled in, 1 if either still has
-# the "NOT DONE YET" placeholder.
+# the "NOT DONE YET" placeholder. --verbose enables bash's own command
+# trace (`set -x`) into the log; every run always writes a full
+# transcript to bench/logs/report-check.sh-<timestamp>.log regardless.
 set -euo pipefail
 
-REPORT_FILE="${1:?usage: report-check.sh <report-file>}"
+SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
+ORCH_DIR="$(cd "$SELF_DIR/.." && pwd)"
+
+VERBOSE=0
+ARGS=()
+for arg in "$@"; do
+  if [ "$arg" = "--verbose" ]; then
+    VERBOSE=1
+  else
+    ARGS+=("$arg")
+  fi
+done
+set -- "${ARGS[@]}"
+
+LOG_DIR="$ORCH_DIR/bench/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/report-check.sh-$(date -u +%Y%m%d-%H%M%S)-$$.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+echo "[report-check.sh] full trace: $LOG_FILE"
+if [ "$VERBOSE" -eq 1 ]; then
+  export PS4='+ $(date -u +%H:%M:%S) ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:-main}: '
+  set -x
+fi
+
+REPORT_FILE="${1:?usage: report-check.sh [--verbose] <report-file>}"
 [ -f "$REPORT_FILE" ] || { echo "ERROR: $REPORT_FILE not found" >&2; exit 2; }
 
 INCOMPLETE=0

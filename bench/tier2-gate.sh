@@ -13,11 +13,37 @@
 # Prints the computed rate and decision either way - script the check,
 # not the "what does this mean" framing, which stays human/agent-readable
 # output rather than another thing to parse.
+#
+# --verbose enables bash's own command trace (`set -x`) into the log;
+# every run always writes a full transcript to
+# bench/logs/tier2-gate.sh-<timestamp>.log regardless.
 set -euo pipefail
 
 SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
+ORCH_DIR="$(cd "$SELF_DIR/.." && pwd)"
 
-REPORT_FILE="${1:?usage: tier2-gate.sh <report-file>}"
+VERBOSE=0
+ARGS=()
+for arg in "$@"; do
+  if [ "$arg" = "--verbose" ]; then
+    VERBOSE=1
+  else
+    ARGS+=("$arg")
+  fi
+done
+set -- "${ARGS[@]}"
+
+LOG_DIR="$ORCH_DIR/bench/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/tier2-gate.sh-$(date -u +%Y%m%d-%H%M%S)-$$.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+echo "[tier2-gate.sh] full trace: $LOG_FILE"
+if [ "$VERBOSE" -eq 1 ]; then
+  export PS4='+ $(date -u +%H:%M:%S) ${BASH_SOURCE##*/}:${LINENO}:${FUNCNAME[0]:-main}: '
+  set -x
+fi
+
+REPORT_FILE="${1:?usage: tier2-gate.sh [--verbose] <report-file>}"
 [ -f "$REPORT_FILE" ] || { echo "ERROR: $REPORT_FILE not found" >&2; exit 2; }
 
 RESULT="$(python3 - "$SELF_DIR/lib" "$REPORT_FILE" <<'PY'
