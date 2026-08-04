@@ -841,3 +841,63 @@ clean 6/6 across this same larger sample (`doc-verbatim`, `doc-adapt`,
 overstate," it's a specific, real finding about `doc-synthesize`
 itself, surfaced only because Performance-phase testing happened to
 collect more draws than the original Confirm did.
+
+## Reasoner role: kickoff, and two same-day tooling bugs found before Phase 1 counted
+
+Starting the reasoner-role quality loop (`tasks/reason-*`, 9 tasks) —
+first role after the documenter loop closed. `models/qwen3.5-9b/` had
+no prior `reason-*` work (checked `reports/`, `task-overrides/`,
+`history.md` per `AGENTS.md`'s "check for prior work" rule — none
+found).
+
+**Live service drift found before any dispatch.** The systemd unit
+(`~/.config/systemd/user/llama-server-qwen3.5-9b.service`) was
+actually running `--port 8080 -ngl 99` — the exact driver-paged
+oversubscription anti-pattern this README's own Setup section
+documents as ~3x slower than the validated `--port 8087 -ngl 20`
+config, not `:8087`/`-ngl 20` as documented. Restored via
+`systemctl --user daemon-reload` + restart; verified healthy on
+`:8087` (`/v1/models`, `nvidia-smi` showing 3633 MiB free post-load)
+before running anything.
+
+**First reasoner dispatch (`report-reason-20260804-150043.md`) turned
+out invalid**, for a reason unrelated to the model itself: 7 of 9
+`reason-*` SPEC.md files (`checklist`, `compare`, `config-validity`,
+`consequence`, `diagnose`, `trace`, `tradeoff`) still had
+`lfm2.5-1.2b-thinking`'s "OUTPUT DISCIPLINE" steering block (byte-
+identical to `models/lfm2.5-1.2b-thinking/rules/output-discipline.md`)
+baked directly into the shared canonical file — the same direct-
+SPEC.md-edit anti-pattern already caught once for `doc-crossref`
+(commit `62d3995`) and once more for `reason-tradeoff`'s separate STE
+contamination (commit `184bae9`), but missed by both of those sweeps
+for this specific block. lfm2.5's own recorded numbers are unaffected
+(its bare baseline predates this steering pass; its own bare-vs-
+steered comparison used separately archived pre-steer files, not
+shared-file identity — see its own README/history for the full
+story). qwen3.5:9b is the first model other than lfm2.5 to dispatch
+against `reason-*` at all, so only this run was contaminated. Fixed
+(commit `cd77859`): stripped the block (lines 1-23, no blank-line
+separator before each task's own `ROLE:` line) from all 7 files;
+re-ran every task's `verify.sh` against its own `expected.md` to
+confirm the removal didn't break the task definition itself — clean
+PASS on all 9. The invalid report is kept in `reports/`, marked
+INVALID at the top, as a record of the mistake rather than deleted.
+
+**Second tooling bug found in the same session**: `bench/report.sh`'s
+mandatory pre-run restart safeguard (`AGENTS.md`, added 2026-08-03
+specifically because of this model's own sustained-session memory-
+pressure finding above) silently no-op'd for this exact service
+("WARNING: no systemd unit found with --alias qwen3.5:9b — skipping
+mandatory restart") during the invalid run. Root cause:
+`bench/session-lib.sh`'s `llama_unit_info()` parsed `--alias`/`--port`
+from `ExecStart=`, but only read the first physical line via
+`grep -m1`; this service's `ExecStart` spans two lines via a trailing
+`\` continuation, so the flags (on line 2) were never seen. Fixed
+(commit `930fd3d`) by joining continuation lines before matching.
+Not a correctness problem for this specific run (the service had
+already been freshly restarted moments earlier while fixing the port/
+`-ngl` drift above), but would have silently kept skipping the safety
+net on every future `report.sh` run against this service without the
+fix.
+
+Re-running Phase 1 against the now-genuinely-bare SPEC files next.
