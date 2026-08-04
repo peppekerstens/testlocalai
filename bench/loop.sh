@@ -138,7 +138,7 @@ fi
 # response (including the schema-validated "structured_output" object)
 # to OUT_JSON_FILE. Caller extracts fields with python3 -c.
 # ---------------------------------------------------------------------
-ask_claude() {
+_ask_claude_once() {
   local prompt_file="$1" schema="$2" out_file="$3"
   local rc=0
   # Prompt goes in via stdin, never as a CLI argument - a large prompt
@@ -161,6 +161,40 @@ so = d.get('structured_output')
 sys.exit(1 if (d.get('is_error') or not isinstance(so, dict) or not so) else 0)
 " "$out_file"; then
     log "ERROR: claude call returned is_error or no usable structured_output (see $out_file)"
+    return 1
+  fi
+}
+
+# ask_claude PROMPT_FILE SCHEMA_JSON OUT_JSON_FILE [MAIN_FIELD MIN_LEN]
+# MAIN_FIELD/MIN_LEN are optional - when given, sanity-checks that
+# field's length and retries ONCE if it's suspiciously short. Real
+# case this catches: a reduce-step call once returned
+# is_error=false, terminal_reason=completed, and a syntactically
+# valid structured_output - but the "candidates" field was just "I'll
+# ground this in the repo's own conventions before drafting the
+# list." - a genuine degenerate single-draw response, not a crash.
+# Exit-code/is_error checks alone can't catch this; AGENTS.md's own
+# "never trust a single draw" lesson applies to these calls too.
+ask_claude() {
+  local prompt_file="$1" schema="$2" out_file="$3" main_field="${4:-}" min_len="${5:-40}"
+  if ! _ask_claude_once "$prompt_file" "$schema" "$out_file"; then
+    return 1
+  fi
+  if [ -z "$main_field" ]; then
+    return 0
+  fi
+  local len
+  len="$(extract_field "$out_file" "$main_field" | wc -c)"
+  if [ "$len" -ge "$min_len" ]; then
+    return 0
+  fi
+  log "WARNING: '$main_field' suspiciously short ($len chars, expected >=$min_len) - retrying once, single-draw degenerate response, not a crash"
+  if ! _ask_claude_once "$prompt_file" "$schema" "$out_file"; then
+    return 1
+  fi
+  len="$(extract_field "$out_file" "$main_field" | wc -c)"
+  if [ "$len" -lt "$min_len" ]; then
+    log "ERROR: '$main_field' still short after retry ($len chars) - giving up on this call"
     return 1
   fi
 }
@@ -242,7 +276,7 @@ complete_report_findings() {
 
   local schema='{"type":"object","properties":{"findings":{"type":"string"},"suggested_next_steps":{"type":"string"}},"required":["findings","suggested_next_steps"]}'
   local out_file="$CLAUDE_TMP/findings-result.json"
-  if ! ask_claude "$prompt_file" "$schema" "$out_file"; then
+  if ! ask_claude "$prompt_file" "$schema" "$out_file" findings 80; then
     log "WARNING: could not fill Findings for $(basename "$report_file") — left templated"
     return 1
   fi
@@ -364,7 +398,7 @@ cross_model_research() {
 
     schema='{"type":"object","properties":{"summary":{"type":"string"}},"required":["summary"]}'
     out_file="$CLAUDE_TMP/research-map-result-$om-$role.json"
-    if ask_claude "$prompt_file" "$schema" "$out_file"; then
+    if ask_claude "$prompt_file" "$schema" "$out_file" summary 40; then
       s="$(extract_field "$out_file" summary)"
       if [ -n "${s// /}" ]; then
         summaries="$summaries
@@ -399,7 +433,7 @@ $s"
 
   local reduce_schema='{"type":"object","properties":{"candidates":{"type":"string"}},"required":["candidates"]}'
   local reduce_out="$CLAUDE_TMP/research-result-$role.json"
-  if ! ask_claude "$reduce_prompt" "$reduce_schema" "$reduce_out"; then
+  if ! ask_claude "$reduce_prompt" "$reduce_schema" "$reduce_out" candidates 80; then
     log "WARNING: cross-model research reduce-call failed — steering proceeds without it"
     return 1
   fi
@@ -460,7 +494,7 @@ author_override() {
 
   local schema='{"type":"object","properties":{"override_content":{"type":"string"},"rationale":{"type":"string"}},"required":["override_content","rationale"]}'
   local out_file="$CLAUDE_TMP/override-result-$task.json"
-  if ! ask_claude "$prompt_file" "$schema" "$out_file"; then
+  if ! ask_claude "$prompt_file" "$schema" "$out_file" override_content 80; then
     log "WARNING: could not author override for $task — leaving bare"
     return 1
   fi
@@ -538,7 +572,7 @@ author_rules() {
 
   local schema='{"type":"object","properties":{"rules_content":{"type":"string"},"rationale":{"type":"string"}},"required":["rules_content","rationale"]}'
   local out_file="$CLAUDE_TMP/rules-result-$lang.json"
-  if ! ask_claude "$prompt_file" "$schema" "$out_file"; then
+  if ! ask_claude "$prompt_file" "$schema" "$out_file" rules_content 80; then
     log "WARNING: could not author $lang-rules.md — leaving as-is"
     return 1
   fi
