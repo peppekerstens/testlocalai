@@ -101,14 +101,12 @@ launched a follow-up dispatch immediately — the report sat templated
 the whole time, and the analysis existed only in conversation, at risk
 of being lost the same way an unpersisted result is.
 
-**Verification, mechanical then advisory:**
-- `bash bench/report-check.sh <report-file>` — hard gate, exit 1 if
-  Findings/Suggested-next-steps are still templated.
-- `bash bench/report-heuristics.sh <report-file>` — advisory only,
-  always exits 0. Flags a FAIL with no sample-size language nearby, a
-  banned vague phrase, or no task named in Suggested next steps.
-  Keyword presence/absence is not proof either way — read the report;
-  treat this as a nudge, not a verdict.
+**Verify with `bench/report-check.sh` (hard gate) then
+`bench/report-heuristics.sh` (advisory, always exits 0 — a keyword
+nudge, not a verdict)** — see
+[`docs/QUALITY-LOOP-WORKFLOW.md`](docs/QUALITY-LOOP-WORKFLOW.md)'s
+report-completion diagram for exact invocation and what each exit code
+means.
 
 ## Per-model doc-task steering: never edit tasks/<task>/SPEC.md
 
@@ -132,7 +130,9 @@ stable; other models' overrides never apply outside their own
 
 ## The quality loop — standard structure for a model+role optimization
 
-For "test and optimize `<model>` for `<role>`," follow this structure,
+For "test and optimize `<model>` for `<role>`," follow this structure
+(diagrammed in
+[`docs/QUALITY-LOOP-WORKFLOW.md`](docs/QUALITY-LOOP-WORKFLOW.md)),
 not ad hoc diagnosis. A "run" = one full role re-test
 (`bash bench/report.sh <model> <role>`), not a single task. Write
 Findings/Suggested-next-steps before the next run in the loop, every
@@ -191,9 +191,12 @@ similar tasks is fine to conserve budget — split into independent
 branches the moment the batch result is mixed.
 
 *Tier 2 gate — automatic, no question asked.* Once Tier 1 settles, run
-`bash bench/tier2-gate.sh <report-file>`. Exit 0 (≥60% specialist hit
-rate) → run Tier 2. Exit 1 (<60%) → skip straight to Confirm on the
-Tier 1 result. Quote the script's output line in the report.
+`bench/tier2-gate.sh` (see `docs/QUALITY-LOOP-WORKFLOW.md` for the
+exact invocation/exit codes) and quote its output line in the report.
+A 60%+ specialist hit rate is the signal a shared config has enough of
+a common target to be worth searching for; below it, Tier 1's own
+per-task results already answer the "is there a generalist" question
+before spending Tier 2's budget finding out the slow way.
 
 *Tier 2 — generalist search* (≤5 runs, gate must pass). Search for one
 shared config for an end user who doesn't know the task shape ahead of
@@ -226,10 +229,10 @@ don't resolve, not as a routine check-in.
 
 ## Confirm — check the optimization is real, not one lucky draw
 
-Once improvement stops, run `bash bench/confirm.sh <model> <role>`
-against the current state, unchanged — 3 more back-to-back runs,
-writes `confirm-<role>-<timestamp>.md` with a per-task consistency
-table and CONFIRMED/FLAKY verdict.
+Once improvement stops, run `bench/confirm.sh` against the current
+state, unchanged (see `docs/QUALITY-LOOP-WORKFLOW.md` for the exact
+invocation) — writes a per-task consistency table and a CONFIRMED/FLAKY
+verdict.
 
 - **CONFIRMED**: this is the loop's result.
 - **FLAKY**: revert to the last committed checkpoint before the change
@@ -263,10 +266,10 @@ README-shape requirements:
   reliability/latency). Qualitative judgment grounded in the loop's
   actual evidence, reasoning shown, not just asserted.
 
-**Checkpoint: run `bash bench/check-readme-shape.sh <model>`** before
-calling the Final report done. Diffs README headings against
-`templates/new-model/MODEL-README-SCAFFOLD.md` (exit 0 = all present,
-exit 1 lists what's missing). **Why a script, not a read-through:** a
+**Checkpoint: run `bench/check-readme-shape.sh`** (see
+`docs/QUALITY-LOOP-WORKFLOW.md` for the exact invocation/exit codes)
+before calling the Final report done. **Why a script, not a
+read-through:** a
 missing "How to optimize" section reads as nothing-wrong on a
 read-through — it only shows as a gap in a heading diff. All 4
 `qwen3.5-*` READMEs shipped without it despite the rule already
@@ -408,6 +411,9 @@ restart if either looks tight.
 
 - [`README.md`](README.md) — project purpose, layout, best-first
   presentation rule, how to add a new model or a new source project.
+- [`docs/QUALITY-LOOP-WORKFLOW.md`](docs/QUALITY-LOOP-WORKFLOW.md) —
+  visual (mermaid) guide to the quality loop above, plus a quick-
+  reference table for which script to run at each step.
 - `history.md` — project-level narrative (origin, cross-model
   findings, retired conventions).
 - `models/<model>/README.md` — per-model verdicts and bench-plan history.

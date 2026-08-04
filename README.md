@@ -57,6 +57,8 @@ failure modes, not a re-labeling of another role.
 | `docs/SETUP.md` | one-time environment/machine setup (WSL2, CUDA, llama.cpp, systemd) |
 | `docs/LOCAL-LLM-BEST-PRACTICES.md` | cross-model guidance — not a specific model's steering profile |
 | `docs/GRAMMAR-STEERING-PATTERNS.md` | when to reach for grammar-constrained decoding instead of prompt text, backend capability notes, and a starter library of structural grammar patterns |
+| `docs/QUALITY-LOOP-WORKFLOW.md` | visual (mermaid) guide to the quality loop + the scripted/rule-machine/template/judgment control mechanism — doubles as an AI agent's quick-reference for which script to run at each step |
+| `docs/REMOTE-WSL2-SETUP.md` | condensed findings from standing up a second, remote llama.cpp host over SSH |
 | `bench/` | generic runner: `dispatch.sh`, `bench.sh`, `pure-run.sh`, `report.sh` |
 | `tasks/<role>-<name>/` | flat task set: SPECs + test harnesses; each task's `rounds/` holds its prompt/output history |
 | `tasks/<project>/` | reference material for a specific source project, not tasks — optional pattern, retired 2026-08-03 (its one instance, `tasks/csharp/`, was folded into a real task, `tasks/code-csharp-mcpidentity/`, and model-specific onboarding evidence moved to `models/<model>/`; see `history.md`) |
