@@ -1,0 +1,20 @@
+# qwen3.5:9b — role orchestration order
+
+Sequential, not parallel: work ONE role at a time, in this order, only
+moving to the next once the current role is Closed (or explicitly
+judged not-worth-continuing, same as any AGENTS.md role verdict).
+
+1. reasoner    (~/claude-remote/roles/reasoner/)
+2. extract     (~/claude-remote/roles/extract/)
+3. tooluse     (~/claude-remote/roles/tooluse/)
+4. review      (~/claude-remote/roles/review/)
+5. codeemitter (~/claude-remote/roles/codeemitter/)
+
+Each role directory has its own inbox.md (role-specific instructions,
+checked first), roadmap.md (detailed progress + Status line), and
+status.md (per-run log). Documenter is already closed - not in this
+list, see models/qwen3.5-9b/README.md.
+
+To find the active role: read this file's order, then check each
+role's roadmap.md Status line in order - the active role is the first
+one whose Status is not "Closed".

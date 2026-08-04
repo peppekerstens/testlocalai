@@ -1,0 +1,6 @@
+[Unit]
+Description=Claude Code autonomous run (testlocalai remote worker)
+
+[Service]
+Type=oneshot
+ExecStart=%h/claude-remote/run.sh
