@@ -1,3 +1,4 @@
+```csharp
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,3 +48,4 @@ public sealed class BatchProcessor
         return await Task.WhenAll(tasks);
     }
 }
+```

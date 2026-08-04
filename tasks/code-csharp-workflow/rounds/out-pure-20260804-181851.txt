@@ -1,3 +1,4 @@
+```csharp
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -65,3 +66,4 @@ public sealed class TicketWorkflow
         ticket.Status = newStatus;
     }
 }
+```

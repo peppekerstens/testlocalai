@@ -1,3 +1,4 @@
+```csharp
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
 
@@ -49,3 +50,4 @@ public static class TicketServiceCollectionExtensions
         return services;
     }
 }
+```

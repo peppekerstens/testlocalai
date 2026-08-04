@@ -1,3 +1,4 @@
+```csharp
 namespace Bench.Task4;
 
 public sealed class AuthResolver
@@ -11,3 +12,4 @@ public sealed class AuthResolver
         return "anonymous";
     }
 }
+```

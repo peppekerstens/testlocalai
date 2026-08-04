@@ -1,3 +1,4 @@
+```csharp
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -66,3 +67,4 @@ public static class RepositoryFactory
 {
     public static IRepository<T> Create<T>() => new InMemoryRepository<T>();
 }
+```
