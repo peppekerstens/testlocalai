@@ -195,23 +195,11 @@ dispatch time, `SPEC.md` itself never touched) — code tasks already got
 this right; doc tasks didn't have an equivalent until this rule
 (2026-08-02).
 
-**Why:** an entire `lfm2.5-1.2b-thinking` quality loop (2 phases, 9 SPEC
-variants, multiple commits) was carried out by directly overwriting
-`tasks/<task>/SPEC.md` for 6 of the 9 docs tasks. When a `qwen3.5:0.8b`
-Phase 1 baseline was started afterward using the same shared files, it
-was silently dispatched against a mix of true-bare and
-leftover-lfm2.5-steered prompts — contaminating the very first data
-point for a brand new model, mischaracterized as "bare" in a report and
-committed before the mistake was caught. The steering itself wasn't
-lost (it was reconstructable from `models/lfm2.5-1.2b-thinking/rules/`
-+ each task's `history/SPEC-pre-<model>-steer.md` archive — those
-per-task archives were themselves a symptom of the same anti-pattern
-this rule ends, and were deleted 2026-08-03 once the underlying `SPEC.md`
-files were confirmed genuinely bare; the full narrative survives in
-`models/lfm2.5-1.2b-thinking/history.md`), but nothing
-stopped the next model's baseline from stepping on it, and would have
-kept happening for every subsequent model tested against `tasks/doc-*`
-without this fix.
+**Why:** `lfm2.5-1.2b-thinking`'s own quality loop once did exactly the
+"never" above — overwrote the shared `SPEC.md` directly for 6 tasks —
+and silently contaminated the *next* model's "bare" baseline with
+leftover steering, committed before anyone caught it. Full incident:
+`models/lfm2.5-1.2b-thinking/history.md`.
 
 **How to apply:** before writing task-specific doc steering, create the
 override under the *steering model's own* `task-overrides/` directory,
@@ -334,17 +322,17 @@ continuing to treat it as one lever.
 
 *Tier 2 gate — decide automatically, do not ask.* Once Tier 1 settles
 (every task either has a working specialist override or was gated out
-to bare), compute the specialist pass rate: tasks with a current PASS ÷
-total tasks in the role. **≥60% → run Tier 2. <60% → skip Tier 2
-entirely and go straight to Confirm on the Tier 1 result**, no
-exception, no question asked — a 60%+ specialist hit rate is the signal
-a shared config has enough of a common target to be worth searching for;
-below it, Tier 1's own per-task results (several tasks actively harmed
-by any steering at all, see Tier 1 above) already answer the "is there
-a generalist" question before spending Tier 2's budget finding out the
-slow way. State the computed rate and the resulting skip/proceed
-decision in the report — this is a report line, not a permission
-question.
+to bare), run `bash bench/tier2-gate.sh <report-file>` against the
+Tier-1-settled report. Exit 0 (GO, ≥60% specialist hit rate) → run
+Tier 2. Exit 1 (SKIP, <60%) → skip Tier 2 entirely and go straight to
+Confirm on the Tier 1 result. No exception, no question asked — a 60%+
+specialist hit rate is the signal a shared config has enough of a
+common target to be worth searching for; below it, Tier 1's own
+per-task results (several tasks actively harmed by any steering at
+all, see Tier 1 above) already answer the "is there a generalist"
+question before spending Tier 2's budget finding out the slow way.
+Quote the script's own output line in the report — this is a report
+line, not a permission question.
 
 *Tier 2 — Generalist search (max 5 runs, only when the gate above
 passes).* Search for a single shared config usable by an end user who
@@ -397,20 +385,21 @@ between-phases check-in.
 
 ## Confirm — check the optimization is real, not one lucky draw
 
-Once the quality loop's improvement phases stop producing gains:
+Once the quality loop's improvement phases stop producing gains, run
+`bash bench/confirm.sh <model> <role>` against the current best-known
+state, unchanged — it re-runs the full role test 3 more times back to
+back and writes `confirm-<role>-<timestamp>.md` with a per-task
+consistency table and a CONFIRMED/FLAKY verdict (every verdict up to
+this point in the loop was a single draw, per the sample-size rule
+above — this is where that gets checked, not skipped or re-derived by
+hand each time).
 
-1. Re-run the full role test **3 more times** against the current
-   best-known state, unchanged, back to back. Every verdict up to this
-   point in the loop was a single draw (n=1) per the sample-size rule
-   above — this is where that gets checked, not skipped.
-2. **If consistent** (same pass count, same per-task verdicts across all
-   3 runs): this is the loop's confirmed result.
-3. **If flaky** (pass count or any task's verdict varies across the 3
-   runs): revert to the previous checkpoint — the last committed state
-   before the change that introduced the flakiness — and run *that*
-   state's own 3-loop consistency check instead. Keep whichever
-   confirmed-stable state is best; don't ship a flaky "improvement" as
-   the loop's result just because one draw of it looked good.
+- **CONFIRMED**: this is the loop's result.
+- **FLAKY**: revert to the previous checkpoint — the last committed
+  state before the change that introduced the flakiness — and run
+  `confirm.sh` again against *that* state instead. Keep whichever
+  confirmed-stable state is best; don't ship a flaky "improvement" as
+  the loop's result just because one draw of it looked good.
 
 ## Performance run (max 5 full role re-test runs)
 
