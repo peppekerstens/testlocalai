@@ -1,5 +1,5 @@
+```csharp
 using System.Text.RegularExpressions;
-using System.Threading;
 
 namespace Bench.Task6;
 
@@ -27,11 +27,11 @@ public sealed class Redactor
             }
             catch (ArgumentException)
             {
-                // Skip bad regex rule
-                continue;
+                // Skip this rule if Regex.Replace throws ArgumentException
             }
         }
 
         return input;
     }
 }
+```

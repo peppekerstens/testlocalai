@@ -1,3 +1,4 @@
+```csharp
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,7 +24,7 @@ public sealed class InMemoryRepository<T> : IRepository<T>
             throw new ArgumentNullException(nameof(id));
 
         if (_items.ContainsKey(id))
-            throw new ArgumentException("Item with the same ID already exists.");
+            throw new ArgumentException("Item already exists", nameof(id));
 
         _items[id] = item;
     }
@@ -33,7 +34,7 @@ public sealed class InMemoryRepository<T> : IRepository<T>
         if (id == null)
             return default(T);
 
-        return _items.TryGetValue(id, out T? item) ? item : default(T);
+        return _items.TryGetValue(id, out T? result) ? result : default(T);
     }
 
     public bool Update(string id, T item)
@@ -53,7 +54,11 @@ public sealed class InMemoryRepository<T> : IRepository<T>
         if (id == null)
             return false;
 
-        return _items.Remove(id);
+        if (!_items.ContainsKey(id))
+            return false;
+
+        _items.Remove(id);
+        return true;
     }
 
     public IReadOnlyCollection<T> GetAll()
@@ -66,3 +71,4 @@ public static class RepositoryFactory
 {
     public static IRepository<T> Create<T>() => new InMemoryRepository<T>();
 }
+```

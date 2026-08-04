@@ -1,3 +1,4 @@
+```csharp
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -45,3 +46,4 @@ public sealed class KeyDeduplicator
         return new HashSet<CompositeKey>(keys);
     }
 }
+```

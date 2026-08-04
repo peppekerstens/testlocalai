@@ -1,0 +1,69 @@
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace Bench.Workflow;
+
+public enum TicketStatus
+{
+    New,
+    InProgress,
+    Waiting,
+    Resolved,
+    Closed,
+    Cancelled,
+}
+
+public sealed class Ticket
+{
+    public required string Id { get; set; }
+    public TicketStatus Status { get; set; }
+}
+
+public sealed class InvalidTransitionException : Exception
+{
+    public TicketStatus From { get; }
+    public TicketStatus To { get; }
+
+    public InvalidTransitionException(TicketStatus from, TicketStatus to)
+        : base($"Cannot transition from {from} to {to}.")
+    {
+        From = from;
+        To = to;
+    }
+}
+
+public sealed class TicketWorkflow
+{
+    private static readonly Dictionary<TicketStatus, HashSet<TicketStatus>> AllowedTransitions = new()
+    {
+        [TicketStatus.New] = new HashSet<TicketStatus> { TicketStatus.InProgress, TicketStatus.Cancelled },
+        [TicketStatus.InProgress] = new HashSet<TicketStatus> { TicketStatus.Waiting, TicketStatus.Resolved, TicketStatus.Cancelled },
+        [TicketStatus.Waiting] = new HashSet<TicketStatus> { TicketStatus.InProgress, TicketStatus.Cancelled },
+        [TicketStatus.Resolved] = new HashSet<TicketStatus> { TicketStatus.Closed, TicketStatus.InProgress },
+        [TicketStatus.Closed] = new HashSet<TicketStatus>(),
+        [TicketStatus.Cancelled] = new HashSet<TicketStatus>(),
+    };
+
+    public bool CanTransition(TicketStatus from, TicketStatus to)
+    {
+        return AllowedTransitions.ContainsKey(from) && AllowedTransitions[from].Contains(to);
+    }
+
+    public void Transition(Ticket ticket, TicketStatus newStatus)
+    {
+        if (ticket == null)
+        {
+            throw new ArgumentNullException(nameof(ticket));
+        }
+
+        if (!CanTransition(ticket.Status, newStatus))
+        {
+            throw new InvalidTransitionException(ticket.Status, newStatus);
+        }
+
+        ticket.Status = newStatus;
+    }
+}
+```

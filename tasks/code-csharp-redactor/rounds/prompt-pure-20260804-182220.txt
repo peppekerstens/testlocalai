@@ -1,0 +1,70 @@
+C# RULES. Apply ALL.
+
+1. EXACT SIGNATURE. Implement exactly types, methods, params, return types, namespaces given. No overloads, no extra params, no extra methods, classes, or files.
+2. EXACT CONTRACT. Implement contract verbatim. No invented behavior, headers, env vars, features.
+3. NULLABILITY. Honor `?`. `string?`/`JsonNode?` = null valid path. Never throw instead of null.
+4. THREAD SAFETY. Shared mutable state MUST use System.Collections.Concurrent and/or `lock(...)`. Never plain Dictionary/List without sync.
+5. ERRORS. Throw exact exception type task names. Never catch+swallow unless task says skip.
+6. ASYNC. async/await. Never `.Result`, `.Wait()`, `GetAwaiter().GetResult()`. Always pass CancellationToken.
+7. PRECISE TYPE. "returns JsonNode" = `JsonNode?`, not object/dynamic/string.
+8. DI. Service in constructor comes from injection. Never `new` a service; never `new` inside method when field exists.
+9. SIMPLICITY. Shortest correct impl. No refactor, no unused usings, no feature creep, no comments unless asked.
+10. NO EXTRA INPUTS. Signature has N params — read only those. No env vars, HttpContext, headers, globals.
+11. COMPLETE FILE. Output MUST contain EVERY type/class/method asked — including ones named in passing. Never truncate. Never close fenced block before every type present.
+12. IMPORT EVERYTHING. Every referenced BCL type needs its using: Regex -> System.Text.RegularExpressions; JsonException -> System.Text.Json; JsonNode -> System.Text.Json.Nodes. Only import a third-party namespace (e.g. YamlDotNet) if THIS task's SPEC already shows that package in use — never add one speculatively or by habit from another task. Missing usings = build error; a package this project doesn't reference = build error too.
+13. CANONICAL APIs. Exact real API names:
+   - ConcurrentDictionary remove: `TryRemove(key, out _)`.
+   - nullable null result: `Task.FromResult<string?>(null)`.
+   - `new HttpRequestException(message, innerException)` — 2nd arg MUST be Exception, never HttpResponseMessage.
+   - `HttpClient.GetAsync(path, cancellationToken)`.
+   In doubt, use API exactly as in task example.
+14. TRACE EVERY BRANCH. Walk code line by line against each contract bullet. Cover success (200/204/NoContent), empty/null/whitespace inputs, and every "otherwise" fallback. Uncovered bullet = missing branch.
+15. USING = NAMESPACE, never a type. CancellationToken's namespace is System.Threading — write `using System.Threading;` if the type is referenced and no broader using already covers it. Never `using System.Threading.CancellationToken;` (that names the type, not the namespace). Never `using CancellationToken;` alone either — a bare type name is not a namespace and will not compile.
+16. USING ONLY TASK NEEDS. Import ONLY namespaces THIS task uses. Importing a package this project lacks = build error.
+
+OUTPUT FORMAT exact: one fenced code block, nothing else.
+
+
+--- TASK BELOW ---
+
+TASK: text redactor applying regex rules.
+FILE: one file `Redactor.cs`. Namespace: `Bench.Task6`.
+
+File MUST contain ALL of these, exactly as specified.
+
+File MUST start with this EXACT using line as its first line:
+```csharp
+using System.Text.RegularExpressions;
+```
+
+```csharp
+namespace Bench.Task6;
+
+public sealed class PatternRule
+{
+    public string Name { get; set; } = "";
+    public string Regex { get; set; } = "";
+    public string Replacement { get; set; } = "";
+}
+
+public sealed class Redactor
+{
+    public string Redact(string input, IReadOnlyList<PatternRule> rules)
+    {
+        // implement per the behavior contract
+    }
+}
+```
+
+BEHAVIOR (must hold exactly):
+1. For each rule, replace every match of `rule.Regex` in current text with `rule.Replacement`, using `System.Text.RegularExpressions.Regex.Replace`. Apply rules IN ORDER, each rule working on the result of the previous.
+2. Invalid `rule.Regex` (Regex.Replace throws `ArgumentException`) -> SKIP that rule and continue with next. Never let a bad rule abort the operation.
+3. Empty input -> empty string. Empty rules list -> input unchanged.
+
+EXAMPLE (must reproduce): rules
+`email = @"\b[\w.+-]+@[\w-]+\.[\w.]+\b" -> "[EMAIL]"` and
+`phone = @"\b\d{3}-\d{3}-\d{4}\b" -> "[PHONE]"`,
+`Redact("Contact alice@example.com or 555-123-4567.", rules)`
+returns `"Contact [EMAIL] or [PHONE]."`.
+
+OUTPUT: ONLY complete `Redactor.cs` in one fenced ```csharp block. No explanations, no other text.

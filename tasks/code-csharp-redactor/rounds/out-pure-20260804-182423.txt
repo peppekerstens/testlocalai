@@ -1,3 +1,4 @@
+```csharp
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -27,7 +28,7 @@ public sealed class Redactor
             }
             catch (ArgumentException)
             {
-                // Skip bad regex rule
+                // Skip this rule and continue
                 continue;
             }
         }
@@ -35,3 +36,4 @@ public sealed class Redactor
         return input;
     }
 }
+```
