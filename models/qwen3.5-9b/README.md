@@ -12,7 +12,7 @@ this GPU (4GB VRAM) via an explicit partial `-ngl` offload, tuned to
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
 | Documenter | ⚠️ Mixed — quality loop closed 2026-08-03, 8 of 9 task shapes stable (3/3 Confirm), 1 unresolved | 5/9 bare → 8/9 stable (89%) | ~89% of an assumed frontier-model ceiling on this specific 9-task suite — see the Final report for reasoning | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-03) |
-| Reasoner | 🔬 In progress — Tier 1 steering (5 overrides) + Confirm done 2026-08-04, result is flaky (kept as best-known state), Tier 2 not started | 4-5/9 bare (2 draws) → 4-8/9 steered (3 Confirm draws, flaky) | Not assessed | [Reasoner role: current status](#reasoner-role-current-status-in-progress) |
+| Reasoner | 🔬 In progress — Tier 1 (5 overrides) + Confirm + Tier 2 gate (skipped, <60%) done 2026-08-04, 3 bare tasks still open | 4-5/9 bare (2 draws) → 4-8/9 steered (3 Confirm draws, flaky) | Not assessed | [Reasoner role: current status](#reasoner-role-current-status-in-progress) |
 
 ## Documenter role: final report (closed 2026-08-03)
 
@@ -256,10 +256,18 @@ extraneous input-schema field names into its own reasoning) and
 `reason-coverage` (drops one whole required checklist category rather
 than getting it wrong).
 
-**Not yet done, open for the next session**: Tier 2 generalist gate
-(autonomous per AGENTS.md, not started), a decision on whether to
-pursue the 3 remaining bare tasks' idioms with their own Tier 1
-overrides, and the role's Final report / Closed status.
+**Tier 2 gate: skipped (autonomous, 2026-08-04).** Specialist pass
+rate computed 3 ways (latest draw 44%, majority-vote 56%,
+strict-stable-only 33%) — all under the 60% threshold, so per
+AGENTS.md's rule Tier 2's generalist search is skipped, no exception.
+See `history.md` for the full calculation.
+
+**Not yet done, open for the next session**: a decision on whether to
+pursue the 3 remaining chronically-failing bare tasks
+(`reason-config-validity`, `reason-checklist`, `reason-coverage`, each
+majority-FAIL with an already-documented idiom) with their own Tier 1
+overrides, a Performance pass, and the role's Final report / Closed
+status.
 
 ## How to optimize (verify before trusting)
 

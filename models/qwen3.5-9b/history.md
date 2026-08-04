@@ -1067,4 +1067,33 @@ specific missing required token isn't fixed) are in
 
 **Next step**: `models/qwen3.5-9b/README.md`'s Reasoner section needs
 updating to reflect this honest range instead of a single pass count
-— not done yet as of this note.
+— done later the same run (see below and the README itself).
+
+## Tier 2 gate: skipped (autonomous)
+
+Computed the gate per `AGENTS.md`'s rule (tasks with a current PASS ÷
+9 total), three ways, all agreeing:
+- **Latest single draw** (`report-reason-20260804-160858.md`, 4/9):
+  `reason-diagnose`, `reason-consequence`, `reason-multihop`,
+  `reason-tradeoff` = 4/9 ≈ 44%.
+- **Majority vote across the 3 Confirm draws**: `reason-consequence`,
+  `reason-multihop`, `reason-tradeoff` (3/3), `reason-compare` (2/3),
+  `reason-diagnose` (2/3) = 5/9 ≈ 56%.
+- **Strict/stable-only** (3/3-equivalent, mirroring the Documenter
+  role's own stricter recount): `reason-consequence`, `reason-multihop`,
+  `reason-tradeoff` = 3/9 ≈ 33%.
+
+All three land under the 60% threshold. **Tier 2 generalist search
+skipped**, per `AGENTS.md`'s autonomous gate rule, no exception. This
+role's remaining open work is per-task, not a shared config: the 3
+chronically-failing bare tasks (`reason-config-validity`,
+`reason-checklist`, `reason-coverage`, each majority-FAIL across the 3
+Confirm draws with an already-documented idiom) are reasonable Tier 1
+candidates for a *next* session, same as `reason-checklist` was already
+flagged as "justified for its own attempt" in
+`report-reason-20260804-160605.md`. Not attempted this run — this
+session did pure analysis of already-collected data (no new
+dispatches), consistent with the Confirm-report/Tier2-gate writeup
+needing to happen before starting any new exploratory run, per
+`AGENTS.md`'s "write the Findings up before starting the next
+exploratory run" rule.
