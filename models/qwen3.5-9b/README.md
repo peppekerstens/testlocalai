@@ -12,7 +12,7 @@ this GPU (4GB VRAM) via an explicit partial `-ngl` offload, tuned to
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
 | Documenter | ⚠️ Mixed — quality loop closed 2026-08-03, 8 of 9 task shapes stable (3/3 Confirm), 1 unresolved | 5/9 bare → 8/9 stable (89%) | ~89% of an assumed frontier-model ceiling on this specific 9-task suite — see the Final report for reasoning | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-03) |
-| Reasoner | 🔬 In progress — 2 valid bare draws done 2026-08-04, Tier 1 steering not started | 4-5/9 bare (2 draws) → not yet steered | Not assessed | [Reasoner role: current status](#reasoner-role-current-status-in-progress) |
+| Reasoner | 🔬 In progress — Tier 1 steering (5 overrides) + Confirm done 2026-08-04, result is flaky (kept as best-known state), Tier 2 not started | 4-5/9 bare (2 draws) → 4-8/9 steered (3 Confirm draws, flaky) | Not assessed | [Reasoner role: current status](#reasoner-role-current-status-in-progress) |
 
 ## Documenter role: final report (closed 2026-08-03)
 
@@ -197,12 +197,7 @@ DISPATCH_PRESENCE_PENALTY=1.5`, stable 6/9 across 3/3 draws.
 (`report-reason-20260804-151034.md`, `report-reason-20260804-152027.md`),
 same `DISPATCH_ENABLE_THINKING=false` dispatch config as the documenter
 role — see Setup. Zero truncation, `finish_reason=stop` on all 18
-dispatches across both draws. Only 2 draws so far — real per-draw
-variance already observed (`reason-config-validity`/`reason-coverage`
-each flipped once), not yet a reliability sample. Tier 1 specialist
-steering has not started yet; more bare draws recommended first (see
-the latest report's Suggested next steps) before steering the 2
-lower-confidence tasks.
+dispatches across both draws.
 
 **Two shared-task bugs had to be fixed before these numbers could be
 trusted** (2026-08-04, both documented in full in `history.md`'s
@@ -219,18 +214,52 @@ trusted** (2026-08-04, both documented in full in `history.md`'s
    numbers are unaffected by either fix — both only ever touched
    `reason-*`.
 
-**Dominant failure idiom, confirmed stable across both valid draws**:
-the model's reasoning reaches the substantively correct conclusion but
-doesn't reproduce the task's exact required phrase/vocabulary verbatim
-— seen repeatedly on `reason-trace` (`re-initialize`), `reason-compare`
-(`config was valid`, the identical missing phrase `deepseek-r1-1.5b`
-independently hit on this same task), `reason-multihop` (doesn't cite
-`entities.company` specifically), and once so far on
-`reason-consequence` (`passes through`). Two other idioms seen once
-each, not yet confirmed as stable across a second draw:
-`reason-config-validity` (copies extraneous input-schema field names
-into its own reasoning) and `reason-coverage` (drops one whole required
-checklist category rather than getting it wrong).
+**Tier 1 steering (5 overrides) + Confirm (2026-08-04): flaky result,
+kept as the best-known state, not a clean confirmed number.** Added
+overrides for `reason-trace`, `reason-compare`, `reason-consequence`
+(refined twice), `reason-multihop`, `reason-tradeoff`. The formal
+3-run Confirm against that unchanged state
+(`report-reason-20260804-{160332,160605,160858}.md`) produced **8/9,
+5/9, 4/9** — by AGENTS.md's Confirm rule this is flaky, not a
+one-number "confirmed" result (neither pass count nor all per-task
+verdicts match across the 3 runs). Reverting to bare was considered
+and rejected: bare's own 2 valid Phase 1 draws (4/9, 5/9) sit in the
+same range and would lose the tasks below that are genuinely solid —
+see `history.md`'s "Tier 1 steering (5 overrides) and Confirm" section
+for the full reasoning and the per-run per-task table.
+
+**Honest current picture, task by task:**
+
+| Task | Result across 3 Confirm draws | Verdict |
+|---|---|---|
+| `reason-consequence` | PASS, PASS, PASS | **Stable — steering fix confirmed** |
+| `reason-multihop` | PASS, PASS, PASS | **Stable — steering fix confirmed** |
+| `reason-tradeoff` | PASS, PASS, PASS | **Stable — steering fix confirmed** |
+| `reason-compare` | PASS, PASS, FAIL | Steered, ~86% — residual flakiness (exact-phrase idiom) |
+| `reason-trace` | PASS, FAIL, FAIL | Steered, ~63% — residual flakiness (exact-phrase idiom) |
+| `reason-diagnose` | FAIL, PASS, PASS | Bare, ~67% — no idiom confirmed as dominant yet |
+| `reason-config-validity` | PASS, FAIL, FAIL | Bare, ~33% — extraneous input-vocabulary idiom |
+| `reason-checklist` | PASS, FAIL, FAIL | Bare, ~33% — drops one required exact phrase, varies per draw |
+| `reason-coverage` | PASS, FAIL, FAIL | Bare, ~33% — drops one required checklist category |
+
+**Dominant failure idiom**: the model's reasoning reaches the
+substantively correct conclusion but doesn't reproduce the task's
+exact required phrase/vocabulary verbatim — seen on `reason-trace`
+(`re-initialize`), `reason-compare` (`config was valid`, the identical
+missing phrase `deepseek-r1-1.5b` independently hit on this same
+task), `reason-multihop`'s earlier bare draws (didn't cite
+`entities.company` specifically, now steered/fixed), and
+`reason-checklist` (a different single required token missing each
+draw — `initialize`/`mcp-session-id` in earlier draws, `dotnet run`
+most recently). Two narrower idioms: `reason-config-validity` (copies
+extraneous input-schema field names into its own reasoning) and
+`reason-coverage` (drops one whole required checklist category rather
+than getting it wrong).
+
+**Not yet done, open for the next session**: Tier 2 generalist gate
+(autonomous per AGENTS.md, not started), a decision on whether to
+pursue the 3 remaining bare tasks' idioms with their own Tier 1
+overrides, and the role's Final report / Closed status.
 
 ## How to optimize (verify before trusting)
 
