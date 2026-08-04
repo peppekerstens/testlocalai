@@ -12,6 +12,7 @@ this GPU (4GB VRAM) via an explicit partial `-ngl` offload, tuned to
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
 | Documenter | ⚠️ Mixed — quality loop closed 2026-08-03, 8 of 9 task shapes stable (3/3 Confirm), 1 unresolved | 5/9 bare → 8/9 stable (89%) | ~89% of an assumed frontier-model ceiling on this specific 9-task suite — see the Final report for reasoning | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-03) |
+| Reasoner | 🔬 In progress — bare baseline done 2026-08-04, Tier 1 steering not started | 3/9 bare → not yet steered | Not assessed | [Reasoner role: current status](#reasoner-role-current-status-in-progress) |
 
 ## Documenter role: final report (closed 2026-08-03)
 
@@ -189,6 +190,34 @@ grammar approach and fixed via direct transfer (see its own README) —
 serving — see above): lfm2.5-derived discipline rules +
 `DISPATCH_TEMPERATURE=0.4 DISPATCH_TOP_P=0.9
 DISPATCH_PRESENCE_PENALTY=1.5`, stable 6/9 across 3/3 draws.
+
+## Reasoner role: current status (in progress)
+
+**Bare baseline (2026-08-04): 3/9 PASS** (`reason-checklist`,
+`reason-consequence`, `reason-tradeoff`), same `DISPATCH_ENABLE_THINKING=false`
+dispatch config as the documenter role — see Setup. Zero truncation,
+`finish_reason=stop` on all 9. Single draw, not yet a reliability
+sample. Tier 1 specialist steering has not started yet.
+
+**Before this number could be trusted, a shared-file contamination bug
+had to be fixed first** (2026-08-04): 7 of 9 `reason-*` SPEC.md files
+had `lfm2.5-1.2b-thinking`'s "OUTPUT DISCIPLINE" steering block baked
+directly into the shared canonical file (never reverted after that
+model's own session), inflating this model's first dispatch to an
+invalid 6/9. See `history.md`'s "Reasoner role: kickoff" section for
+the full story — this model's own docs-role numbers are unaffected,
+this only ever touched `reason-*`.
+
+**Failure idiom found in this baseline** (see
+`reports/report-reason-20260804-151034.md`'s Findings for full detail):
+4 of 6 failures (`reason-diagnose`, `reason-trace`, `reason-compare`,
+partially `reason-multihop`) share one shape — the model's reasoning
+reaches the substantively correct conclusion but doesn't reproduce the
+task's exact required phrase/vocabulary verbatim. The other 2
+(`reason-config-validity`: copies extraneous input-schema field names
+into its own reasoning; `reason-coverage`: drops one whole required
+checklist category rather than getting it wrong) are distinct idioms,
+not variants of the same one.
 
 ## How to optimize (verify before trusting)
 
