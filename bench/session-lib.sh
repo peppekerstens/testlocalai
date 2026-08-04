@@ -38,7 +38,15 @@ llama_unit_info() {
     active=1
   fi
   local execstart
-  execstart="$(systemctl --user cat "$unit" 2>/dev/null | grep -m1 '^ExecStart=' || true)"
+  execstart="$(systemctl --user cat "$unit" 2>/dev/null | awk '
+    /^ExecStart=/ { cap=1 }
+    cap {
+      line = line $0
+      if ($0 ~ /\\$/) { sub(/\\$/, "", line); line = line " "; next }
+      print line
+      exit
+    }
+  ' || true)"
   local alias port
   alias="$(echo "$execstart" | grep -oP -- '--alias\s+\S+' | awk '{print $2}' || true)"
   port="$(echo "$execstart" | grep -oP -- '--port\s+\S+' | awk '{print $2}' || true)"
