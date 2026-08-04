@@ -87,3 +87,30 @@ that isn't clearly marked as the sole surviving copy of something else
 you already deleted is a trap for the next session** — mark it loudly,
 or don't rely on deleting the original until the durable copy is
 confirmed genuinely redundant elsewhere too.
+
+## Retired: the flat `bench/reports/round-*` tree
+
+Deleted 2026-08-02 rather than migrated: ~50 directories, no
+consistent naming, shallow single-verdict content, plus two
+hand-written summary docs duplicating `docs/BENCHMARK-REPORT.md`. Raw
+evidence didn't reliably survive a migration (some predates
+`dispatch.sh`'s token-tracking entirely) and the real findings were
+already written up in each `models/<model>/README.md`, which remained
+the durable record. Reports are now model-scoped:
+`models/<model>/reports/`, never a shared directory — see `AGENTS.md`.
+
+## README-shape rule wasn't self-enforcing — needed a second fix
+
+The README-shape rule (current-state only, narrative deferred to
+`history.md`) existed specifically because
+`models/deepseek-r1-1.5b/README.md` had grown to 418 lines (~80%
+round-by-round narrative) before the rule was written. That alone
+didn't prevent a repeat: the same day, `models/lfm2.5-1.2b-thinking/
+README.md`'s "Current status" section grew to ~115 lines the same way
+— every quality-loop phase appended its own paragraph instead of
+replacing the section, even with the rule already in place and
+`history.md` holding the same material in parallel. Caught by the
+user, not self-caught. Fix: the Overview-table requirement plus an
+explicit "replace, don't append, every time" instruction — the failure
+mode was losing track of the rule mid-loop, not not knowing it. See
+`AGENTS.md`'s README-shape section for the current rule.
