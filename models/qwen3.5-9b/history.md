@@ -901,3 +901,65 @@ net on every future `report.sh` run against this service without the
 fix.
 
 Re-running Phase 1 against the now-genuinely-bare SPEC files next.
+
+## Reasoner role: genuine Phase 1 baseline (3/9) and Research phase
+
+Re-ran `bash bench/report.sh qwen3.5:9b reason` against the now-fixed
+SPEC files (`report-reason-20260804-151034.md`): **3/9 PASS**
+(`reason-checklist`, `reason-consequence`, `reason-tradeoff`), zero
+truncation. Down from the invalid 6/9 — the leftover lfm2.5 steering
+block had been accidentally helping this model too, not just lfm2.5.
+Full per-task idiom breakdown is in the report's Findings section (also
+summarized in the README's new Reasoner-role section) — headline: 4 of
+6 failures share one idiom (correct reasoning, doesn't reproduce the
+task's exact required phrase verbatim); the other 2 are distinct
+(extraneous copied-in input vocabulary on `reason-config-validity`; one
+whole missing checklist category on `reason-coverage`).
+
+**Research phase, cross-model idiom check.** No other model besides
+`lfm2.5-1.2b-thinking` and `deepseek-r1-1.5b` has tested `reason-*`.
+lfm2.5's own diagnosed reasoner idiom ("under-elaboration/dropped
+required facts... answers are on-topic but too compressed to include
+every explicitly required element", its README's Reasoner section) is
+a loose match for the "missing exact phrase" idiom above, but not a
+precise one — lfm2.5's failures were about missing entire required
+*facts*, this model's are about stating the right fact in different
+words. **A precise, genuine match**: `deepseek-r1-1.5b/history.md`
+diagnoses its own `reason-compare` failure as "right pick, wrong
+completeness... missing required tokens `try/catch`, `listen`, `config
+was valid`" — `config was valid` is the exact same missing token
+`qwen3.5:9b` hit on the same task. Two independently-tested models
+landing on the identical specific missing phrase on the identical task
+is a real signal that `reason-compare`'s exact-token requirement is a
+generically hard target for small/mid local models, not one model's
+idiosyncrasy — worth keeping in mind if a steering fix doesn't
+generalize (a very hard-to-hit exact phrase, not a soft target, may be
+the more useful diagnosis for `reason-compare` specifically).
+`deepseek-r1-1.5b` also found a technique that fixed its own
+`reason-config-validity` FAIL→PASS (step-by-step verification
+steering) — but its failure was a wrong *verdict* (missed a real
+referential-integrity violation), while `qwen3.5:9b`'s
+`reason-config-validity` failure is a right verdict with extraneous
+noise (copied-in `idField`/`tokenTemplate` field names) — different
+failure shape, so this specific technique is not expected to transfer
+as-is, though it's still worth trying since it's cheap and the
+Research phase found nothing more specific.
+
+**Research phase, external check.** Web search for Qwen3.5-specific
+prompting guidance on exact-phrase/precise-instruction-following
+returned only generic advice already covered by techniques this
+project has already validated elsewhere (clear delimiters, explicit
+step-by-step reasoning instructions) — no new lever found. No official
+Qwen3.5 prompting-guide finding specific to this idiom.
+
+**Both halves of the Research phase are done; Tier 1 specialist
+steering has not started.** Candidate first-probe levers per task,
+recorded in the report's Suggested next steps: (1) a shared "reuse the
+task's own named terms verbatim" reminder, tested first as one batched
+probe across `reason-diagnose`/`reason-trace`/`reason-compare`/
+`reason-multihop` (same idiom, per AGENTS.md's batched-first-probe
+guidance — split into independent per-task branches immediately if the
+result is mixed); (2) a distinct "don't restate the input schema's
+other field names" reminder for `reason-config-validity`; (3) a
+distinct "enumerate every requirement category before writing" reminder
+for `reason-coverage`. This is where the next session should resume.
