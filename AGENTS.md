@@ -186,6 +186,17 @@ report.sh's placeholder (exit 1). This only catches "still templated",
 not "filled in badly" — the checklist above is still what makes the
 content correct, this just makes forgetting it impossible to miss.
 
+Once that passes, `bash bench/report-heuristics.sh <report-file>` gives
+a second, weaker pass: it flags (as advisory warnings, never a fail —
+it always exits 0) a FAIL task with no sample-size-caveat language
+nearby, a banned vague phrase ("steer more"/"try again") in Suggested
+next steps, or no specific task named there at all. Keyword presence
+is not proof the checklist above was actually satisfied, and its
+absence is not proof it wasn't — treat its output as "worth a second
+look," not a verdict. This is the deliberate Tier-4 remainder: the
+parts of report-completion that genuinely need judgment, not more
+scripting.
+
 ## Per-model doc-task steering: never edit tasks/<task>/SPEC.md
 
 `tasks/<task>/SPEC.md` is the single, shared, model-agnostic task
