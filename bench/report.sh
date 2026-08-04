@@ -14,9 +14,13 @@
 #
 # Usage: bash bench/report.sh <model> <role> [backend] [port]
 #   model   : qwen2.5-coder:1.5b | deepseek-r1:1.5b | ... (required)
-#   role    : docs | reason | tool | extract | review (required — see
-#             pure-run.sh's --test for what each covers). Does NOT cover
-#             code-* tasks (different harness, see bench.sh instead).
+#   role    : docs | reason | tool | extract | review | code (required —
+#             see pure-run.sh's --test for what each covers). `code` runs
+#             all tasks/code-* via bench.sh's real compile+test harness,
+#             normalized into the same RESULT-line shape every other role
+#             produces (see pure-run.sh) - everything below this point
+#             (results table, diff, token counts) works identically
+#             regardless of which role produced the RESULT lines.
 #   backend : llamacpp (default) | ollama
 #   port    : LLAMACPP_PORT override (default 8080)
 set -euo pipefail
@@ -30,8 +34,8 @@ BACKEND="${3:-llamacpp}"
 PORT="${4:-8080}"
 
 case "$ROLE" in
-  docs|reason|tool|extract|review) ;;
-  *) echo "ERROR: unknown role '$ROLE' (expected: docs, reason, tool, extract, review)" >&2; exit 2 ;;
+  docs|reason|tool|extract|review|code) ;;
+  *) echo "ERROR: unknown role '$ROLE' (expected: docs, reason, tool, extract, review, code)" >&2; exit 2 ;;
 esac
 
 MODEL_DIR_NAME="$(echo "$MODEL" | tr ':' '-')"

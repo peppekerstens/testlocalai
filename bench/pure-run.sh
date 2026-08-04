@@ -35,16 +35,46 @@
 #               tool    - all tasks/tool-*    (MCP tool/argument selection)
 #               extract - all tasks/extract-* (structured extraction/classification)
 #               review  - all tasks/review-*  (C# code review/bug-finding)
+#               code    - all tasks/code-*    (compile+test harness — see below)
 #             e.g. --test docs runs ONLY the doc-* tasks, --test docs,reason
 #             runs both. Mutually exclusive with an explicit task list below —
-#             pass one or the other. Does NOT cover code-* tasks — those need
-#             an actual compile+test harness (see bench.sh), not just
-#             dispatch+verify.sh, so they aren't part of this runner.
+#             pass one or the other.
 #   tasks   : explicit task names, space-separated (only used when --test is
 #             not given). Default with neither --test nor tasks given:
 #             docs+reason only (18 tasks) — a real default kept for backward
 #             compatibility, NOT "every track available"; pass --test
 #             explicitly for tool/extract/review or any other combination.
+#
+# code-* tasks need an actual compile+test harness, not just
+# dispatch+verify.sh — that logic already exists in bench.sh (transcribe
+# fenced block, dotnet test/pytest, parse verdict), so --test code calls
+# bench.sh per task (one bench.sh call per task, round label
+# "pure-<this invocation's timestamp>" so repeat pure-run.sh calls never
+# overwrite each other's bench.sh reports) and normalizes its "## VERDICT:
+# PASS/BUILD FAIL/TEST FAIL/UNKNOWN" into the same "RESULT task=...
+# model_run=PASS|FAIL ..." line every other task kind emits below —
+# report.sh's parser only ever reads that line shape, so nothing
+# downstream (report.sh, report_parse.py, tier2-gate.sh, confirm.sh,
+# report-check.sh) needed to change. Steering for code tasks is per-
+# LANGUAGE (models/<model-dir>/rules/<lang>-rules.md, bench.sh's existing
+# --rules mechanism), not per-task like doc/reason overrides — a real,
+# intentional difference (see history.md's "specialists don't generalize"
+# finding: code steering already found two-recipes-per-language beats
+# one-file-per-task), not a gap.
+#
+# Per-task exclusion from a language's rules file: if
+# models/<model-dir>/rules/<lang>-rules-exclude.txt exists, any task name
+# listed there (one per line) dispatches bare even when <lang>-rules.md
+# exists. Real, not hypothetical: qwen2.5-coder-1.5b's own history.md
+# documents that its "extended" C# task family (code-csharp-stats,
+# -equality, -events, -repository, -batch, -workflow) build-fails under
+# --rules from hallucinated using-statements the rules file's canonical-
+# API examples trigger, while the "original" family needs --rules to
+# pass — two recipes for two families, exactly the kind of per-model
+# finding this file's own steering-difference note above already expects.
+# Found by this project's own loop.sh diagnosing a real dispatch bug via
+# its automated Findings-writing (2026-08-04) — the two-recipe split was
+# already documented in history.md but not enforced here until this fix.
 set -uo pipefail
 
 SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -59,6 +89,7 @@ REASON_TASKS="reason-config-validity reason-diagnose reason-checklist reason-tra
 TOOL_TASKS="tool-select tool-args tool-multi tool-none tool-error tool-policy"
 EXTRACT_TASKS="extract-basic extract-optional extract-multi extract-classify extract-ambiguous extract-nested"
 REVIEW_TASKS="review-null review-offbyone review-async review-concurrency review-logic review-clean"
+CODE_TASKS="$(cd "$SELF_DIR/../tasks" && ls -d code-*/ 2>/dev/null | sed 's#/$##' | xargs)"
 ALL_TASKS="$DOC_TASKS $REASON_TASKS"
 MODEL="${1:-deepseek-r1:1.5b}"
 shift || true
@@ -76,7 +107,8 @@ if [ "${1:-}" = "--test" ]; then
       tool) TASKS="$TASKS $TOOL_TASKS" ;;
       extract) TASKS="$TASKS $EXTRACT_TASKS" ;;
       review) TASKS="$TASKS $REVIEW_TASKS" ;;
-      *) echo "ERROR: unknown --test track '$track' (expected: docs, reason, tool, extract, review)" >&2; exit 2 ;;
+      code) TASKS="$TASKS $CODE_TASKS" ;;
+      *) echo "ERROR: unknown --test track '$track' (expected: docs, reason, tool, extract, review, code)" >&2; exit 2 ;;
     esac
   done
   TASKS="$(echo "$TASKS" | xargs)"
@@ -87,9 +119,51 @@ else
 fi
 
 MODEL_DIR_NAME="$(echo "$MODEL" | tr ':' '-')"
+RUN_TS="$(date -u +%Y%m%d-%H%M%S)"
 
 for t in $TASKS; do
   D="$SELF_DIR/../tasks/$t"
+
+  case "$t" in
+    code-*)
+      # Compile+test tasks: bench.sh already has the real logic
+      # (transcribe fenced block, dotnet test/pytest, parse verdict) -
+      # call it per task and normalize its report into the same RESULT
+      # line shape every other task kind emits below.
+      SRC_FILE="$(find "$D/harness/src" -maxdepth 1 -type f 2>/dev/null | head -1)"
+      SRC_NAME="$(basename "${SRC_FILE:-unknown}")"
+      RULES_LANG=""
+      if find "$D/harness" -maxdepth 1 -name '*.csproj' 2>/dev/null | grep -q .; then
+        RULES_LANG="csharp"
+      elif [ -f "$D/harness/requirements.txt" ]; then
+        RULES_LANG="python"
+      fi
+      MODE_ARG=""
+      EXCLUDE_FILE="$SELF_DIR/../models/$MODEL_DIR_NAME/rules/${RULES_LANG}-rules-exclude.txt"
+      if [ -n "$RULES_LANG" ] && [ -f "$SELF_DIR/../models/$MODEL_DIR_NAME/rules/${RULES_LANG}-rules.md" ] \
+         && ! { [ -f "$EXCLUDE_FILE" ] && grep -qxF "$t" "$EXCLUDE_FILE"; }; then
+        MODE_ARG="--rules"
+      fi
+      ROUND_LABEL="pure-$RUN_TS"
+      BENCH_MODEL="$MODEL" bash "$SELF_DIR/bench.sh" "$t" "$ROUND_LABEL" "$SRC_NAME" "$MODE_ARG" >/dev/null 2>&1
+      BENCH_RC=$?
+      CODE_REPORT="$SELF_DIR/../models/$MODEL_DIR_NAME/reports/round-$ROUND_LABEL-$(basename "$t").md"
+      if [ "$BENCH_RC" -ne 0 ] || [ ! -f "$CODE_REPORT" ]; then
+        echo "RESULT task=$t expected_ctrl=n/a empty_ctrl=n/a model_run=ERROR prompt_tok=? comp_tok=?"
+        continue
+      fi
+      if grep -q "^## VERDICT: PASS" "$CODE_REPORT"; then RUN=PASS; else RUN=FAIL; fi
+      PT="$(grep "^- Tokens:" "$CODE_REPORT" | grep -oE '[0-9]+ prompt' | grep -oE '[0-9]+' || echo '?')"
+      CT="$(grep "^- Tokens:" "$CODE_REPORT" | grep -oE '[0-9]+ completion' | grep -oE '[0-9]+' || echo '?')"
+      [ -z "$PT" ] && PT="?"
+      [ -z "$CT" ] && CT="?"
+      TRUNCATED=""
+      grep -q "TRUNCATED (finish_reason=length)" "$CODE_REPORT" && TRUNCATED=" TRUNCATED-BY-CONTEXT-LIMIT(not-a-content-failure)"
+      echo "RESULT task=$t expected_ctrl=n/a empty_ctrl=n/a model_run=$RUN prompt_tok=$PT comp_tok=$CT${TRUNCATED}"
+      continue
+      ;;
+  esac
+
   POS="?"; NEG="?"; RUN="?"
   PT="?"; CT="?"
 

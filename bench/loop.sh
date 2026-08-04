@@ -137,6 +137,13 @@ print(so.get(sys.argv[2], ''))
 commit_if_changed() {
   local message="$1"
   git add -- "models/$MODEL_DIR_NAME/" >/dev/null 2>&1
+  if [ "$ROLE" = "code" ]; then
+    # code-role runs also write real (tracked, not gitignored) evidence
+    # under each task's own dir via bench.sh - rounds/ (prompt+output
+    # history) and harness/src/ (the transcribed source each round
+    # overwrites) - both need staging too, not just models/.
+    git add -- tasks/code-*/rounds/ tasks/code-*/harness/src/ >/dev/null 2>&1
+  fi
   if ! git diff --cached --quiet; then
     git commit -q -m "$message"
     log "committed: $message"
@@ -167,13 +174,25 @@ complete_report_findings() {
     echo "=== Report so far (results + comparison tables) ==="
     sed '/^## Findings/,$d' "$report_file"
     echo
-    echo "=== Raw output for FAIL/changed tasks ==="
-    for f in "$TMP_DIR"/out-*.txt; do
-      [ -f "$f" ] || continue
-      echo "--- $(basename "$f") ---"
-      cat "$f"
-      echo
-    done
+    if [ "$ROLE" = "code" ]; then
+      echo "=== bench.sh round reports (compile/test verdict + error excerpt) for each task ==="
+      for d in "$ORCH_DIR"/tasks/code-*/; do
+        task="$(basename "$d")"
+        latest_cr="$(ls -t "$REPORTS_DIR"/round-pure-*-"$task".md 2>/dev/null | head -1)"
+        [ -f "$latest_cr" ] || continue
+        echo "--- $task ($(basename "$latest_cr")) ---"
+        cat "$latest_cr"
+        echo
+      done
+    else
+      echo "=== Raw output for FAIL/changed tasks ==="
+      for f in "$TMP_DIR"/out-*.txt; do
+        [ -f "$f" ] || continue
+        echo "--- $(basename "$f") ---"
+        cat "$f"
+        echo
+      done
+    fi
     echo "=== Model's existing history.md (for idiom classification) ==="
     [ -f "$MODEL_DIR/history.md" ] && cat "$MODEL_DIR/history.md"
     echo
@@ -269,6 +288,113 @@ author_override() {
 }
 
 # ---------------------------------------------------------------------
+# task_lang TASK — csharp or python, by harness marker. Empty if
+# unrecognized. Mirrors pure-run.sh's own detection.
+# ---------------------------------------------------------------------
+task_lang() {
+  local task="$1" d
+  d="$ORCH_DIR/tasks/$task"
+  if find "$d/harness" -maxdepth 1 -name '*.csproj' 2>/dev/null | grep -q .; then
+    echo "csharp"
+  elif [ -f "$d/harness/requirements.txt" ]; then
+    echo "python"
+  fi
+}
+
+# ---------------------------------------------------------------------
+# author_rules LANG FAILING_TASKS...
+# Bucket 3b for the code role: steering is per-LANGUAGE
+# (models/<model-dir>/rules/<lang>-rules.md, bench.sh's existing
+# --rules mechanism, shared across every task of that language), not
+# per-task like doc/reason overrides — see pure-run.sh's --test code
+# comment. Refines the existing file if one exists, rather than
+# starting fresh each round.
+# ---------------------------------------------------------------------
+author_rules() {
+  local lang="$1"; shift
+  local failing_tasks="$*"
+  log "authoring/refining $lang-rules.md — currently failing: $failing_tasks"
+
+  local rules_dir="$MODEL_DIR/rules"
+  mkdir -p "$rules_dir"
+  local rules_file="$rules_dir/$lang-rules.md"
+  local prompt_file="$CLAUDE_TMP/rules-prompt-$lang.txt"
+  {
+    echo "You are writing/refining a Tier 1 steering rules file for a small local LLM's $lang code-emission tasks. This file is prepended to EVERY $lang task's bare SPEC (shared across all $lang tasks, not per-task) — write general $lang-emission guidance that helps across tasks, not a fix targeted at one specific task's bug. A blanket rules block that isn't targeted has measurably HURT already-passing tasks elsewhere in this project — keep changes narrow and grounded in the actual errors below, not speculative best-practices."
+    echo
+    if [ -f "$rules_file" ]; then
+      echo "=== Current $lang-rules.md (refine this, don't discard unless the errors below show it's actively wrong) ==="
+      cat "$rules_file"
+      echo
+    fi
+    echo "=== Currently failing $lang tasks — bench.sh verdict (compile/test error excerpt) ==="
+    for t in $failing_tasks; do
+      local latest_cr
+      latest_cr="$(ls -t "$REPORTS_DIR"/round-pure-*-"$t".md 2>/dev/null | head -1)"
+      [ -f "$latest_cr" ] || continue
+      echo "--- $t ---"
+      cat "$latest_cr"
+      echo
+    done
+    echo "=== Model's history.md (check for an already-diagnosed idiom/fix pattern before inventing a new one) ==="
+    [ -f "$MODEL_DIR/history.md" ] && cat "$MODEL_DIR/history.md"
+    echo
+    echo "Return the complete $lang-rules.md content (what gets prepended to every $lang task's SPEC at dispatch time), and separately your rationale."
+  } > "$prompt_file"
+
+  local schema='{"type":"object","properties":{"rules_content":{"type":"string"},"rationale":{"type":"string"}},"required":["rules_content","rationale"]}'
+  local out_file="$CLAUDE_TMP/rules-result-$lang.json"
+  if ! ask_claude "$prompt_file" "$schema" "$out_file"; then
+    log "WARNING: could not author $lang-rules.md — leaving as-is"
+    return 1
+  fi
+
+  local content rationale
+  content="$(extract_field "$out_file" rules_content)"
+  rationale="$(extract_field "$out_file" rationale)"
+  if [ -z "${content// /}" ]; then
+    log "WARNING: claude returned empty rules_content for $lang — leaving as-is, not writing blank rules"
+    return 1
+  fi
+  printf '%s\n' "$content" > "$rules_file"
+  log "$lang-rules.md written — rationale: $rationale"
+}
+
+# ---------------------------------------------------------------------
+# gate_decision_lang LANG BEFORE_REPORT AFTER_REPORT
+# Bucket 2 for the code role: gates the shared $lang-rules.md (not a
+# single task), matching author_rules' granularity.
+# ---------------------------------------------------------------------
+gate_decision_lang() {
+  local lang="$1" before="$2" after="$3"
+  local prompt_file="$CLAUDE_TMP/gate-lang-prompt-$lang.txt"
+  {
+    echo "AGENTS.md's Tier 1 'gate on run 2' rule, applied at the language level (the lever here is the shared $lang-rules.md, not a per-task override): after the first real steering attempt, only keep investing (up to the 4-run cap) if $lang tasks overall show SOME real partial improvement. Flat or regressed overall gets gated out — revert $lang-rules.md, stop."
+    echo
+    echo "=== $lang task rows — before this round's rules change ==="
+    grep -E "^\| \`code-$lang" "$before" 2>/dev/null
+    echo
+    echo "=== $lang task rows — after this round's rules change ==="
+    grep -E "^\| \`code-$lang" "$after" 2>/dev/null
+    echo
+    echo "Did $lang tasks overall show real partial improvement, or are they flat/regressed? Answer CONTINUE or GATE_OUT."
+  } > "$prompt_file"
+
+  local schema='{"type":"object","properties":{"decision":{"type":"string","enum":["CONTINUE","GATE_OUT"]},"reason":{"type":"string"}},"required":["decision","reason"]}'
+  local out_file="$CLAUDE_TMP/gate-lang-result-$lang.json"
+  if ! ask_claude "$prompt_file" "$schema" "$out_file"; then
+    log "WARNING: gate decision call failed for $lang — defaulting to CONTINUE (fail open, budget cap still applies)"
+    echo "CONTINUE"
+    return
+  fi
+  local decision reason
+  decision="$(extract_field "$out_file" decision)"
+  reason="$(extract_field "$out_file" reason)"
+  log "gate decision for $lang: $decision — $reason"
+  echo "$decision"
+}
+
+# ---------------------------------------------------------------------
 # gate_decision TASK BEFORE_REPORT AFTER_REPORT
 # Bucket 2. Prints CONTINUE or GATE_OUT to stdout.
 # ---------------------------------------------------------------------
@@ -361,10 +487,22 @@ else
     fi
     log "=== round $round/$MAX_ROUNDS — active: $(echo "$ACTIVE" | tr '\n' ' ') ==="
 
-    while read -r t; do
-      [ -z "$t" ] && continue
-      [ -f "$OVERRIDES_DIR/$t.md" ] || author_override "$t"
-    done <<< "$ACTIVE"
+    if [ "$ROLE" = "code" ]; then
+      # Steering granularity for code is per-LANGUAGE (shared
+      # rules file), not per-task — group active tasks and author/
+      # refine one rules file per language present in this round.
+      LANGS="$(for t in $ACTIVE; do task_lang "$t"; done | sort -u)"
+      for lang in $LANGS; do
+        [ -n "$lang" ] || continue
+        LANG_TASKS="$(for t in $ACTIVE; do [ "$(task_lang "$t")" = "$lang" ] && echo "$t"; done)"
+        author_rules "$lang" $LANG_TASKS
+      done
+    else
+      while read -r t; do
+        [ -z "$t" ] && continue
+        [ -f "$OVERRIDES_DIR/$t.md" ] || author_override "$t"
+      done <<< "$ACTIVE"
+    fi
 
     PREV="$LATEST"
     LATEST="$(run_report)"
@@ -373,20 +511,39 @@ else
 
     if [ "$round" -eq 2 ]; then
       # One-time checkpoint (AGENTS.md: "gate on run 2"), not a
-      # per-round re-evaluation - tasks that pass this once continue
-      # automatically through their remaining budget.
+      # per-round re-evaluation - tasks/languages that pass this once
+      # continue automatically through their remaining budget.
       STILL_FAILING="$(fail_tasks "$LATEST")"
-      while read -r t; do
-        [ -z "$t" ] && continue
-        echo "$ACTIVE" | grep -qxF "$t" || continue
-        echo "$STILL_FAILING" | grep -qxF "$t" || continue
-        DECISION="$(gate_decision "$t" "$PREV" "$LATEST" | tail -1)"
-        if [ "$DECISION" = "GATE_OUT" ]; then
-          rm -f "$OVERRIDES_DIR/$t.md"
-          echo "$t" >> "$GATED_FILE"
-          log "$t gated out — reverted to bare"
-        fi
-      done <<< "$STILL_FAILING"
+      if [ "$ROLE" = "code" ]; then
+        LANGS="$(for t in $ACTIVE; do task_lang "$t"; done | sort -u)"
+        for lang in $LANGS; do
+          [ -n "$lang" ] || continue
+          STILL_FAILING_LANG=0
+          for t in $STILL_FAILING; do [ "$(task_lang "$t")" = "$lang" ] && STILL_FAILING_LANG=1; done
+          [ "$STILL_FAILING_LANG" -eq 0 ] && continue
+          DECISION="$(gate_decision_lang "$lang" "$PREV" "$LATEST" | tail -1)"
+          if [ "$DECISION" = "GATE_OUT" ]; then
+            rm -f "$MODEL_DIR/rules/$lang-rules.md"
+            for d in "$ORCH_DIR"/tasks/code-*/; do
+              bn="$(basename "$d")"
+              [ "$(task_lang "$bn")" = "$lang" ] && echo "$bn" >> "$GATED_FILE"
+            done
+            log "$lang gated out — $lang-rules.md reverted to bare"
+          fi
+        done
+      else
+        while read -r t; do
+          [ -z "$t" ] && continue
+          echo "$ACTIVE" | grep -qxF "$t" || continue
+          echo "$STILL_FAILING" | grep -qxF "$t" || continue
+          DECISION="$(gate_decision "$t" "$PREV" "$LATEST" | tail -1)"
+          if [ "$DECISION" = "GATE_OUT" ]; then
+            rm -f "$OVERRIDES_DIR/$t.md"
+            echo "$t" >> "$GATED_FILE"
+            log "$t gated out — reverted to bare"
+          fi
+        done <<< "$STILL_FAILING"
+      fi
       commit_if_changed "$MODEL role=$ROLE: loop.sh round $round gate decisions"
     fi
   done
@@ -403,6 +560,7 @@ fi
 
 log "=== Confirm ==="
 bash "$SELF_DIR/confirm.sh" "$MODEL" "$ROLE" "$BACKEND" "$PORT"
+commit_if_changed "$MODEL role=$ROLE: loop.sh Confirm (3 draws)"
 
 log "=== loop.sh done ==="
 log "Automated: Phase 1/resume, Tier 1 steering rounds (up to $MAX_ROUNDS), gate-on-run-2 decisions, Tier 2 gate, Confirm."
