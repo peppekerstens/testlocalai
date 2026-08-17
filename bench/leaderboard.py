@@ -373,8 +373,15 @@ def main():
         "</div>"
     )
 
-    html = f"""<title>testlocalai — steering leaderboard</title>
+    html = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>testlocalai — steering leaderboard</title>
 <style>{CSS}</style>
+</head>
+<body>
 <div class="wrap">
   <header class="top">
     <div>
@@ -415,6 +422,8 @@ def main():
   </footer>
 </div>
 <script>{JS}</script>
+</body>
+</html>
 """
     OUT_PATH.write_text(html)
     print(f"wrote {OUT_PATH} ({len(results)} results, {len(model_slugs)} models)")
