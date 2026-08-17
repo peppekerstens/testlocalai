@@ -28,6 +28,10 @@ bench/logs/*
 bench/.session-state.json
 bench/.session-state.json.last
 
+# local-only connection specifics (host/port/key) for the remote worker
+# machine — see bench/remote-worker/.env.example for the tracked template
+bench/remote-worker/.env
+
 # OS cruft
 .DS_Store
 Thumbs.db

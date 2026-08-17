@@ -39,6 +39,37 @@ also works but needed one extra fix — see "WSL2 idle-shutdown" below.
   plain rootfs tarball (Canonical publishes these) instead of
   `wsl --install -d <distro>`, which hits the same Store dependency.
 
+## Pubkey auth setup (vs. the account's existing password login)
+- A target account that already accepts an interactive password/
+  keyboard-interactive login may have **no `authorized_keys` file at
+  all** — `Permission denied (publickey,password)` on every attempt
+  looks like a wrong-key problem but can just mean no key was ever
+  authorized. Check first with `cat ~/.ssh/authorized_keys` on the
+  target before assuming a key mismatch.
+- Generate a key dedicated to this specific access path rather than
+  reusing a personal key or another service's key (e.g. a repo's
+  GitHub deploy key) — keeps revocation and blast radius scoped to
+  this one use.
+- **Windows OpenSSH has two separate `authorized_keys` locations**
+  depending on account type: a standard account uses the per-user
+  `%USERPROFILE%\.ssh\authorized_keys`; an **administrator** account is
+  routed instead to the machine-wide
+  `C:\ProgramData\ssh\administrators_authorized_keys`, and the key is
+  silently ignored unless that file's ACL is locked to `SYSTEM` +
+  `Administrators` only (`icacls <file> /inheritance:r` then explicit
+  `/grant SYSTEM:F` and `/grant *S-1-5-32-544:F`). Check group
+  membership first (`whoami /groups | findstr /i "S-1-5-32-544"`)
+  rather than guessing which file applies.
+- A passphrase-protected private key can only be unlocked into an
+  agent from a session with a real TTY — a non-interactive, piped, or
+  otherwise relayed command channel (a scripting/automation harness's
+  shell-exec tool, a CI step) hits
+  `ssh_askpass: exec(...): No such file or directory` since there's no
+  display to prompt on. The passphrase-entry step has to happen in an
+  actual interactive terminal; only the resulting agent socket (once
+  `ssh-add` has loaded the key into it) can be reused non-interactively
+  afterward.
+
 ## WSL2 idle-shutdown (the real root cause behind a lot of flakiness)
 WSL2 tears the **entire VM** down shortly after the last attached
 `wsl.exe` client disconnects — killing every process inside it,
