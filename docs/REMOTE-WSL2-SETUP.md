@@ -18,12 +18,36 @@ also works but needed one extra fix — see "WSL2 idle-shutdown" below.
 - **IPv6 was broken on the target network** — every HTTP client
   (`curl.exe`, `Invoke-WebRequest`) tried IPv6 first and hung until
   timeout before ever trying IPv4. Force IPv4 explicitly (`curl -4`).
-- **`cmd.exe` (the default SSH shell) does not understand single-quote
-  grouping** — nested quoting through it breaks silently and
-  unpredictably. Use PowerShell `-EncodedCommand` (base64 UTF-16LE) for
-  PowerShell, and stdin-piped heredocs
-  (`ssh host "wsl -d distro -- bash -s" <<'EOF' ... EOF`) for bash —
-  both sidestep the quoting problem entirely rather than fighting it.
+- **`cmd.exe` (the default SSH shell out of the box) does not
+  understand single-quote grouping** — nested quoting through it
+  breaks silently and unpredictably. Two fixes, not mutually
+  exclusive: for one-off commands, PowerShell `-EncodedCommand` (base64
+  UTF-16LE) or stdin-piped heredocs
+  (`ssh host "wsl -d distro -- bash -s" <<'EOF' ... EOF` for bash)
+  sidestep the quoting problem entirely rather than fighting it. For
+  the real fix, **change the SSH default shell itself** (as
+  Administrator, on the target):
+  ```powershell
+  New-ItemProperty -Path "HKLM:\SOFTWARE\OpenSSH" -Name DefaultShell -Value "C:\Program Files\PowerShell\7\pwsh.exe" -PropertyType String -Force
+  Restart-Service sshd
+  ```
+  (needs PowerShell 7 installed first — install the MSI directly from
+  `github.com/PowerShell/PowerShell/releases`, not `winget`, which has
+  been observed to hang mid-install on at least one machine, leaving an
+  orphaned `winget.exe` process needing a manual `taskkill` — verify
+  the downloaded MSI's SHA256 against the release page before running
+  it, since you're bypassing winget's own verification.) Once switched,
+  plain quoted commands with nested quotes work directly — no more
+  `-EncodedCommand` needed for PowerShell one-liners. **The real cost:
+  every command sent over that connection must now be PowerShell
+  syntax, not `cmd.exe` syntax** — `$env:VAR` not `%VAR%`, `;` not `&`
+  to chain statements (a bare `&` before a command name is PowerShell's
+  call operator and can silently spawn a background job instead of
+  sequencing — caught this immediately: an old cmd.exe-style cleanup
+  one-liner did exactly that), `2>$null` not `2>nul`, `Remove-Item` not
+  `del`. The bash-via-heredoc pattern for the WSL2 side is unaffected
+  either way — it goes through stdin, independent of which shell fronts
+  the outer SSH session.
 - **Detached/background processes launched over an SSH session do not
   reliably survive that session disconnecting**, even via
   `Start-Process`. Long downloads/builds need one continuously-held-open
@@ -69,6 +93,20 @@ also works but needed one extra fix — see "WSL2 idle-shutdown" below.
   actual interactive terminal; only the resulting agent socket (once
   `ssh-add` has loaded the key into it) can be reused non-interactively
   afterward.
+
+## WSL2-KeepAlive scheduled task disabled 2026-08-17
+
+The `WSL2-KeepAlive` task described below (`wsl.exe -d <distro> -- sleep
+infinity` via a Windows Scheduled Task) exists on the remote worker but
+is currently **disabled** — not deleted, just not running. Reason: its
+whole purpose was keeping a GPU-serving `llama-server` alive 24/7
+inside WSL2, and WSL2 GPU compute turned out to be non-functional on
+this machine's AMD card (see `gpu-backend-bench/README.md` for the
+full investigation) — GPU-accelerated serving moved to native Windows
+instead, so there's currently nothing inside WSL2 that needs
+persistent uptime. Re-enable (`Enable-ScheduledTask -TaskName
+"WSL2-KeepAlive"`) if that changes — e.g. the autonomous quality-loop
+timer needs WSL2 reliably up between firings again.
 
 ## WSL2 idle-shutdown (the real root cause behind a lot of flakiness)
 WSL2 tears the **entire VM** down shortly after the last attached
