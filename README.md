@@ -56,6 +56,13 @@ loop for how that search is actually run, and
 `docs/GRAMMAR-STEERING-PATTERNS.md` for when prompting alone stops
 being enough.
 
+This isn't a rebrand of an existing eval harness or leaderboard
+(llama-bench, PinchBench, lm-evaluation-harness, promptfoo, etc.) —
+those score or rank models; this project's deliverable is a *fix*, a
+reusable steering recipe for a specific model+task, which none of them
+produce. See `docs/LANDSCAPE-COMPARISON.md` for the full comparison and
+why building this stays worthwhile instead of adopting one of them.
+
 ## Roles
 
 Grounded in real usage-pattern research (see `bench/README.md` for
