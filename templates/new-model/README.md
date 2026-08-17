@@ -57,7 +57,12 @@ the recipe below surfaces them cheaply.
 6. **Learn from history.** The previous model's steering is your
    baseline; check its `history.md` for what carried over and what
    didn't, and add the new model to `models/README.md`'s index once it
-   has a real result to report.
+   has a real result to report — and mirror that same result into
+   `data/leaderboard.json` (see `bench/leaderboard.py`'s docstring for
+   the fields), then `python3 bench/leaderboard.py` to regenerate
+   `docs/leaderboard.html`. The README index and the leaderboard are two
+   separate files that must both be updated by hand; neither is
+   generated from the other.
 
 ## Backends
 

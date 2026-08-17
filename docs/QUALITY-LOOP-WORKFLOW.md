@@ -30,6 +30,7 @@ flowchart TD
         A3["bench/check-readme-shape.sh<br/>README heading diff"]
         A4["bench/report-check.sh<br/>placeholder-still-present gate"]
         A5["bench/lib/report_parse.py<br/>shared verdict parser"]
+        A6["bench/leaderboard-check.sh<br/>data/leaderboard.json row-exists gate"]
     end
     subgraph T2["Tier 2 — Rule machine (fixed thresholds/decisions)"]
         B1["60% specialist hit rate → run Tier 2, else skip"]
@@ -99,12 +100,15 @@ flowchart TD
     FINAL["Final report — replaces README.md's<br/>per-role section"] --> SHAPE
     SHAPE{"bash bench/check-readme-shape.sh &lt;model&gt;"}
     SHAPE -- "exit 1" --> FINAL
-    SHAPE -- "exit 0" --> DONE(["Commit + push. Done."])
+    SHAPE -- "exit 0" --> LB
+    LB{"bash bench/leaderboard-check.sh &lt;model&gt;"}
+    LB -- "exit 1" --> FINAL
+    LB -- "exit 0" --> DONE(["Commit + push. Done."])
 
     classDef auto fill:#1a5c2e,stroke:#2ecc71,color:#fff
     classDef manual fill:#7a3b0e,stroke:#e67e22,color:#fff
     class Start,Prior,Resume,P1,RES1,T1,GATE,CONFIRM,V auto
-    class P0,RES2,T2,REVERT,PERF,FINAL,SHAPE,DONE manual
+    class P0,RES2,T2,REVERT,PERF,FINAL,SHAPE,LB,DONE manual
 ```
 
 `bench/loop.sh` stops right after Confirm and prints what's left
@@ -135,7 +139,7 @@ flowchart LR
     GATE -- "exit 1: still templated" --> FILL
     GATE -- "exit 0: filled in" --> ADV["bash bench/report-heuristics.sh &lt;file&gt;<br/>advisory only — always exits 0"]
     ADV --> READ["Read its WARNING lines, if any —<br/>keyword nudge, not a verdict"]
-    READ --> DONE["Report complete. Update README.md's<br/>current-state summary. Commit."]
+    READ --> DONE["Report complete. Update README.md's<br/>current-state summary + mirror the row into<br/>data/leaderboard.json. Commit."]
 ```
 
 ## Quick reference for an agent
@@ -153,6 +157,8 @@ same rule, just indexed by "what am I looking at right now."
 | Improvement has plateaued, outside `loop.sh` | `bash bench/confirm.sh <model> <role>` | writes CONFIRMED (ship it) or FLAKY (revert, re-confirm) | "Confirm" |
 | About to call the Final report done | `bash bench/check-readme-shape.sh <model>` | exit 0 = headings match scaffold, exit 1 = lists what's missing | "Final report" |
 | Any dispatch-level tweak used (env var, `-ngl`, `--reasoning-budget`, ...) | — | must be written into `models/<model>/README.md`'s Setup section before the run counts as reported | "Every dispatch-level tweak must be documented" |
+| A test run changed a model+role's status/pass-rate | edit `data/leaderboard.json`, then `python3 bench/leaderboard.py` | regenerates `docs/leaderboard.html`; verify with `bash bench/leaderboard-check.sh <model>` | "After a test run, persist it" |
+| About to call the Final report done (leaderboard half) | `bash bench/leaderboard-check.sh <model>` | exit 0 = every Overview-table role has a `data/leaderboard.json` entry, exit 1 = lists which are missing; n/a for `claude-sonnet-5`/`lfm2.5-vl-450m` | "Final report" |
 
 ## See also
 

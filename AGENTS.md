@@ -269,9 +269,12 @@ README-shape requirements:
   reliability/latency). Qualitative judgment grounded in the loop's
   actual evidence, reasoning shown, not just asserted.
 
-**Checkpoint: run `bench/check-readme-shape.sh`** (exact
-invocation/exit codes: `docs/QUALITY-LOOP-WORKFLOW.md`) before calling
-the Final report done. **Why a script, not a read-through:** a missing
+**Checkpoint: run `bench/check-readme-shape.sh`, then
+`bench/leaderboard-check.sh`** (exact invocation/exit codes:
+`docs/QUALITY-LOOP-WORKFLOW.md`) before calling the Final report done —
+the first checks README structure, the second checks the
+`data/leaderboard.json` mirror actually happened (see "After a test
+run, persist it" above); neither substitutes for the other. **Why a script, not a read-through:** a missing
 "How to optimize" section reads as nothing-wrong on a read-through — it
 only shows as a gap in a heading diff. All 4 `qwen3.5-*` READMEs
 shipped without it despite the rule already existing as a manual
@@ -295,7 +298,11 @@ conversation:
    the leaderboard dashboard renders from this file only, never from
    README prose, so a row updated in the README but not here is
    invisible to it even though the README itself is correct.
-   Regenerate with `python3 bench/leaderboard.py`.
+   Regenerate with `python3 bench/leaderboard.py`. Verify with
+   `bash bench/leaderboard-check.sh <model>` (exit 0 = every
+   Overview-table role has a matching entry, exit 1 = lists which are
+   missing) — doesn't apply to `claude-sonnet-5` or `lfm2.5-vl-450m`,
+   see that script's header comment.
 4. New idiom/regression/finding → also add to `models/<model>/
    history.md` — README stays current-state-only.
 

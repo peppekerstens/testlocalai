@@ -6,6 +6,14 @@ only cover one or two roles, so a full model×role matrix would be mostly
 empty cells. See `../README.md`'s "Roles" table for what each role tests
 in general; this table is model-specific results.
 
+A visual rendering of this same information (bare vs. steered pass rate
+per row) is `../docs/leaderboard.html`, generated from
+`../data/leaderboard.json` — that file is a hand-maintained mirror of
+this table's rows, not derived from it automatically. Adding/updating a
+row here means also updating `data/leaderboard.json` and re-running
+`python3 bench/leaderboard.py` (see `AGENTS.md`'s "After a test run,
+persist it" rule) — this index alone does not update the dashboard.
+
 | Model | Role | Status | Evidence |
 |---|---|---|---|
 | [`qwen2.5-coder-1.5b`](qwen2.5-coder-1.5b/) | code-emitter | ✅ Established — two validated recipes (original 6 / new 6 task families) | `qwen2.5-coder-1.5b/README.md` |
