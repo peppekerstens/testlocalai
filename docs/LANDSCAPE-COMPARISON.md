@@ -13,7 +13,7 @@ spectrum" section.
 |---|---|---|---|---|
 | **llama-bench** (llama.cpp built-in) | Pure throughput: tok/s for prompt-eval and generation, at different context/batch/GPU-layer configs | Yes — it *is* the llama.cpp perf tool | N/A — no correctness dimension at all | No |
 | **llama-benchy** | Same idea as llama-bench, generalized to vLLM/SGLang/llama.cpp | Yes | N/A — still pure speed | No |
-| **PinchBench** (Kilo.ai) | Agent task success (scheduling, coding, research, file mgmt) for "OpenClaw" coding-agent models | Unclear/secondary — leaderboard is built around Anthropic/OpenAI/Google models; can run locally per its own docs | Automated + LLM-judge, public leaderboard (success rate, speed, cost) | No — it's a comparative leaderboard, not a fix-this-model tool |
+| **PinchBench** (Kilo.ai) | Agent task success (53 tasks / 8 categories: productivity, research, writing, coding, analysis, email, memory, skills) for a model acting as "the brain of an OpenClaw agent" | Indirect only — requires a running OpenClaw instance as a hard dependency; OpenClaw itself supports llama.cpp/Ollama, but PinchBench's own docs never mention pointing at a local endpoint directly | Automated + LLM-judge (mix undocumented per-task), public leaderboard (success rate, speed, cost) | No — it's a comparative leaderboard, not a fix-this-model tool |
 | **Harness-Bench** (neuralnoise.com, WIP) | 17 quantized local LLMs × 5 coding-agent harnesses (Aider, Claude Code, OpenCode, Qwen CLI, Pi) on 16 real SWE tasks, hidden `test.sh` grading in a sandboxed workspace | Yes — this is its whole point | Hidden-test pass/fail, matrix + Pareto speed/accuracy frontier | **Explicitly the opposite** — it standardizes flags identically across every model precisely to keep comparisons fair; no per-model prompt tuning allowed |
 | **lm-evaluation-harness** (EleutherAI) | Standard academic benchmarks — MMLU, HellaSwag, BIG-bench, etc. — via few-shot log-likelihood scoring | Yes, any HF/local backend | Fixed-dataset accuracy | No — raw knowledge/reasoning capability, not real-world task correctness |
 | **promptfoo** | General config-driven eval framework: providers (Ollama, llama.cpp, APIs), assertions, LLM-graded checks, sandboxed code eval | Yes, well-supported (dedicated Ollama/llama.cpp provider docs) | Assertion-based, pass/fail + score | No — it's plumbing you *could* build a steering workflow on top of, but ships none itself |
@@ -25,6 +25,68 @@ tooling against a curated evals-tools list came back empty — the only
 internal model activations at inference time, a research technique),
 which is unrelated to the prompt/decoding-config steering this project
 does.
+
+## PinchBench deep-dive — is it expandable to this project's use case?
+
+Revisited 2026-08-17 after a closer look, since of everything surveyed
+it looked the most mature (1.3k stars, 383 commits, real automated
+grading, `--suite`-based extensibility for adding new tasks). The
+actual runner lives in `pinchbench/skill` (Python, `uv`-managed), not
+the `leaderboard`/`api` repos, which are just the pinchbench.com
+frontend.
+
+**The blocker: OpenClaw is a mandatory intermediary, not an optional
+provider.** PinchBench's own Requirements list "a running OpenClaw
+instance" — every task runs the model *through* OpenClaw's agent loop
+(its own system prompts, tool definitions, memory/skills system), not
+as a direct prompt-in/text-out call PinchBench controls. OpenClaw
+itself does support local backends (llama.cpp, Ollama, LM Studio, vLLM
+providers, per its own docs) so a local model could theoretically sit
+underneath — but PinchBench never documents that path, and more
+importantly it wouldn't matter: this project's entire method is
+precise control over prompt content, sampling params, and decoding
+constraints, which is exactly what routing through someone else's
+agent scaffolding takes away. You'd be steering OpenClaw's prompt, not
+the model's.
+
+**Task-domain overlap is thin.** PinchBench's 8 categories are
+personal-assistant-shaped (calendar, email triage, daily summaries,
+stock/market research, memory retrieval) versus this project's
+dev-tool-shaped roles (compile-and-test C# code, edit real project docs
+verbatim, pick the right MCP tool call, find a seeded bug without
+rewriting). Only "coding" and parts of "analysis"/"research" brush up
+against Code-emitter/Reasoner/Extract — Documenter, Review, and
+Tool-use (in the "match this repo's real `TOOL_CONTRACTS.md`" sense)
+have no equivalent. Adopting PinchBench's schema would mean authoring
+nearly the entire task suite fresh anyway, in a schema built for a
+different kind of task.
+
+**Grading rigor is a step down, not up, for this project's standard.**
+"Evidence over assumption" here means a real build+test or exact-diff
+result backs every claim. PinchBench mixes in LLM-judge grading for
+much of its 53 tasks (the docs don't specify the split), which is
+inherently softer than this project's C#-compiles-and-passes-tests or
+doc-verbatim-diff verdicts.
+
+**No steering loop exists there either.** Same conclusion as the rest
+of the landscape (see "What's actually different here" below) — even
+in the best case, the Tier 1/Tier 2/Confirm search process would need
+to be built from scratch on top of it.
+
+**Net: expandable in principle, not worth it in practice.** Getting
+PinchBench to test a local quantized model would require (a) wiring
+OpenClaw itself to a local backend, (b) accepting that the model is
+being tested with OpenClaw's scaffolding wrapped around it rather than
+this project's own controlled prompt, (c) authoring an almost entirely
+new task suite in PinchBench's schema to cover the dev-tool roles this
+project actually cares about, and (d) building the steering loop from
+scratch anyway on top of two new heavyweight dependencies (PinchBench's
+Python/`uv` stack, plus OpenClaw's own Node-based agent framework and
+plugin/gateway system). That's a rewrite that trades away the one
+thing (direct, minimal-surface control over the model) this project
+depends on, in exchange for a nicer leaderboard UI it doesn't need.
+Confirms the user's own instinct going in: this would be a project of
+its own, not an incremental adoption.
 
 ## Similarities to this project
 
@@ -96,7 +158,11 @@ pivot, just reducing hand-rolled plumbing, and neither is urgent:
 ## Sources
 
 - [PinchBench leaderboard](https://github.com/pinchbench/leaderboard)
+- [PinchBench skill (benchmark runner)](https://github.com/pinchbench/skill)
 - [PinchBench site](https://aitoolly.com/product/pinchbench)
+- [OpenClaw local models](https://docs.openclaw.ai/gateway/local-models)
+- [OpenClaw llama.cpp provider](https://docs.openclaw.ai/plugins/llama-cpp)
+- [OpenClaw Ollama provider](https://docs.openclaw.ai/providers/ollama)
 - [llama-bench README](https://github.com/ggml-org/llama.cpp/blob/master/tools/llama-bench/README.md)
 - [llama-benchy](https://github.com/eugr/llama-benchy)
 - [Harness-Bench write-up](https://neuralnoise.com/2026/harness-bench-wip/)
