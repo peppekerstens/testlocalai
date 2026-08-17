@@ -1,0 +1,193 @@
+<title>testlocalai — steering leaderboard</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page:       #f6f5f1;
+    --surface:    #fcfcfa;
+    --surface-2:  #f2f0e9;
+    --ink:        #14120d;
+    --ink-2:      #55524a;
+    --ink-muted:  #8c887d;
+    --hairline:   #e4e1d8;
+    --border:     rgba(20,18,13,0.10);
+    --accent:     #B96A17;
+    --accent-tint:#f1e2c9;
+    --good:       #0ca30c;
+    --good-tint:  #dff2df;
+    --warning:    #b8790a;
+    --warning-tint: #fcecc9;
+    --serious:    #c14f27;
+    --serious-tint: #fbe1d5;
+    --critical:   #d03b3b;
+    --critical-tint: #fbdede;
+    --radius: 10px;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", "Consolas", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page:       #0d0c0a;
+      --surface:    #17150f;
+      --surface-2:  #1e1c14;
+      --ink:        #faf8f3;
+      --ink-2:      #c7c2b3;
+      --ink-muted:  #928d7d;
+      --hairline:   #2b2820;
+      --border:     rgba(255,255,255,0.10);
+      --accent:     #F0A93E;
+      --accent-tint:#3a2c14;
+      --good:       #38c93d;
+      --good-tint:  #17301a;
+      --warning:    #fab219;
+      --warning-tint: #3a2c0d;
+      --serious:    #ec835a;
+      --serious-tint: #3a2113;
+      --critical:   #e66767;
+      --critical-tint: #3a1414;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0c0a; --surface: #17150f; --surface-2: #1e1c14;
+    --ink: #faf8f3; --ink-2: #c7c2b3; --ink-muted: #928d7d;
+    --hairline: #2b2820; --border: rgba(255,255,255,0.10);
+    --accent: #F0A93E; --accent-tint: #3a2c14;
+    --good: #38c93d; --good-tint: #17301a;
+    --warning: #fab219; --warning-tint: #3a2c0d;
+    --serious: #ec835a; --serious-tint: #3a2113;
+    --critical: #e66767; --critical-tint: #3a1414;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --page: #f6f5f1; --surface: #fcfcfa; --surface-2: #f2f0e9;
+    --ink: #14120d; --ink-2: #55524a; --ink-muted: #8c887d;
+    --hairline: #e4e1d8; --border: rgba(20,18,13,0.10);
+    --accent: #B96A17; --accent-tint: #f1e2c9;
+    --good: #0ca30c; --good-tint: #dff2df;
+    --warning: #b8790a; --warning-tint: #fcecc9;
+    --serious: #c14f27; --serious-tint: #fbe1d5;
+    --critical: #d03b3b; --critical-tint: #fbdede;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--sans); line-height: 1.5; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 24px 80px; }
+  header.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 24px; padding-bottom: 28px; border-bottom: 1px solid var(--hairline); margin-bottom: 28px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
+  h1 { font-size: clamp(28px, 4vw, 38px); margin: 0 0 10px; text-wrap: balance; letter-spacing: -0.01em; }
+  .thesis { max-width: 62ch; color: var(--ink-2); margin: 0; font-size: 15px; }
+  .stat-row { display: flex; gap: 28px; flex-wrap: wrap; }
+  .stat { text-align: right; }
+  .stat .n { font-family: var(--mono); font-size: 26px; font-variant-numeric: tabular-nums; color: var(--ink); display: block; }
+  .stat .l { font-size: 11px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .chip { font-family: var(--mono); font-size: 12.5px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-2); padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+  .chip:hover { border-color: var(--accent); color: var(--ink); }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #1a1206; font-weight: 600; }
+  .chip .ct { color: inherit; opacity: .65; margin-left: 4px; }
+  .role-group { margin-bottom: 36px; }
+  .role-group.is-hidden { display: none; }
+  .role-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+  .role-head h2 { font-size: 17px; margin: 0; }
+  .role-head .tests { font-family: var(--mono); font-size: 12px; color: var(--ink-muted); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .card.is-empty { background: transparent; border-style: dashed; }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .model-name { font-family: var(--mono); font-size: 14.5px; font-weight: 600; word-break: break-word; }
+  .model-tag { display: block; font-family: var(--sans); font-size: 11.5px; color: var(--ink-muted); font-weight: 400; margin-top: 2px; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+  .pill.good { background: var(--good-tint); color: var(--good); }
+  .pill.good .dot { background: var(--good); }
+  .pill.warning { background: var(--warning-tint); color: var(--warning); }
+  .pill.warning .dot { background: var(--warning); }
+  .pill.serious { background: var(--serious-tint); color: var(--serious); }
+  .pill.serious .dot { background: var(--serious); }
+  .pill.critical { background: var(--critical-tint); color: var(--critical); }
+  .pill.critical .dot { background: var(--critical); }
+  .pill.neutral { background: var(--surface-2); color: var(--ink-muted); }
+  .pill.neutral .dot { background: var(--ink-muted); }
+  .bar-block { display: flex; flex-direction: column; gap: 5px; }
+  .bar-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11.5px; color: var(--ink-muted); }
+  .bar-labels b { color: var(--ink); font-weight: 600; }
+  .bar-track { position: relative; height: 10px; background: var(--surface-2); border-radius: 5px; overflow: visible; }
+  .bar-fill { position: absolute; inset: 0 auto 0 0; height: 100%; border-radius: 5px; background: var(--accent); }
+  .bar-fill.flat { background: var(--ink-muted); opacity: .55; }
+  .bar-fill.range { background: repeating-linear-gradient(135deg, var(--accent), var(--accent) 4px, transparent 4px, transparent 8px); opacity: .8; }
+  .bar-tick { position: absolute; top: -3px; width: 2px; height: 16px; background: var(--ink); opacity: .55; }
+  .bar-note { font-size: 11px; color: var(--ink-muted); }
+  .finding { font-size: 13px; color: var(--ink-2); margin: 0; }
+  .finding b { color: var(--ink); }
+  details.more { font-size: 12.5px; }
+  details.more > summary { cursor: pointer; color: var(--accent); font-family: var(--mono); font-size: 11.5px; list-style: none; user-select: none; }
+  details.more > summary::-webkit-details-marker { display: none; }
+  details.more > summary::before { content: "\25B8 "; }
+  details.more[open] > summary::before { content: "\25BE "; }
+  .detail-table { margin-top: 8px; border-top: 1px solid var(--hairline); padding-top: 8px; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: 12px; }
+  .detail-table dt { font-family: var(--mono); color: var(--ink-2); white-space: nowrap; }
+  .detail-table dd { margin: 0; color: var(--ink-muted); }
+  .empty-copy { color: var(--ink-muted); font-size: 13px; margin: auto 0; }
+  .callout { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; display: flex; gap: 14px; align-items: flex-start; margin-bottom: 36px; font-size: 13.5px; color: var(--ink-2); }
+  .callout .model-name { flex: none; }
+  footer { border-top: 1px solid var(--hairline); padding-top: 20px; margin-top: 20px; font-size: 12.5px; color: var(--ink-muted); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
+  footer code { font-family: var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .chip, .card { transition: transform .15s ease, background .15s ease, border-color .15s ease; }
+    .card:hover { transform: translateY(-1px); border-color: var(--border); }
+  }
+</style>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">testlocalai · not a scoreboard</p>
+      <h1>Steering leaderboard</h1>
+      <p class="thesis">
+        Every row here is a model + role tested against this project's own task
+        suite. The number that matters isn't who's on top — it's the gap
+        between the <b style="color:var(--ink)">bare</b> tick and the
+        <b style="color:var(--ink)">steered</b> fill: how much a documented
+        prompt/decoding recipe actually moved a specific model. No fix
+        found is reported as plainly as a fix that worked.
+      </p>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><span class="n">9</span><span class="l">models profiled</span></div>
+      <div class="stat"><span class="n">11</span><span class="l">model×role results</span></div>
+      <div class="stat"><span class="n">3&nbsp;/&nbsp;7</span><span class="l">roles with evidence</span></div>
+    </div>
+  </header>
+
+  <nav class="filters" id="filters" aria-label="Filter by role">
+    <button class="chip" data-filter="all" aria-pressed="true">All roles</button><button class="chip" data-filter="code-emitter">Code-emitter <span class="ct">1</span></button><button class="chip" data-filter="documenter">Documenter <span class="ct">7</span></button><button class="chip" data-filter="reasoner">Reasoner <span class="ct">3</span></button><button class="chip" data-filter="tool-use">Tool-use <span class="ct">0</span></button><button class="chip" data-filter="extract">Extract <span class="ct">0</span></button><button class="chip" data-filter="review">Review <span class="ct">0</span></button><button class="chip" data-filter="visual">Visual <span class="ct">0</span></button>
+  </nav>
+
+  <section class="role-group" data-role="code-emitter"><div class="role-head"><h2>Code-emitter</h2><span class="tests">Generate correct, compiling code from a spec (C# established; Python added)</span></div><div class="grid"><article class="card"><div class="card-top"><div><span class="model-name">qwen2.5-coder:1.5b</span><span class="model-tag">code-emitter</span></div><span class="pill good"><span class="dot"></span>Established</span></div><p class="finding">Two validated recipes across 12 C# tasks, not one number — the 6 original tasks use a compressed rules file (equal quality, lower token cost); the 6 newer tasks are hurt by that same rules file and run best bare. Both recipes verified at equal-quality outcomes.</p><details class="more"><summary>Why two recipes</summary><dl class="detail-table"><dt>Original 6</dt><dd>--rules csharp — compressed prompt, canonical API snippets</dd><dt>New 6</dt><dd>bare SPEC.md — the rules file's vivid examples get reproduced regardless of relevance</dd><dt>Lesson</dt><dd>a shared rules file does not automatically generalize to a new task in the same language</dd></dl></details></article></div></section><section class="role-group" data-role="documenter"><div class="role-head"><h2>Documenter</h2><span class="tests">Edit / reproduce / adapt real project docs exactly</span></div><div class="grid"><article class="card"><div class="card-top"><div><span class="model-name">qwen3.5:9b</span><span class="model-tag">documenter</span></div><span class="pill good"><span class="dot"></span>Mixed — strong</span></div><div class="bar-block"><div class="bar-labels"><span>bare 5/9 (56%)</span><b>current 8/9 (89%)</b></div><div class="bar-track"><div class="bar-fill " style="width:89%"></div><div class="bar-tick" style="left:56%"></div></div><span class="bar-note">largest steering lift recorded in this project — 3/3 Confirm-stable on 8 of 9 task shapes</span></div><p class="finding">doc-surgical remains genuinely unresolved after 5 distinct legitimate steering attempts — a structural limit, not a phrasing problem. A grammar that appeared to fix it was later found to be a tautology and discarded.</p><details class="more"><summary>Tier 2 generalist result</summary><dl class="detail-table"><dt>Specialist</dt><dd>8/9 — 2 GBNF grammars, 2 named-token overrides, 5 bare</dd><dt>Generalist</dt><dd>6/9 stable (3/3) — cross-model rule transfer at temp 0.4</dd><dt>Verdict</dt><dd>generalist replaces ~1 of 8 levers; specialist configs stay the record</dd></dl></details></article><article class="card"><div class="card-top"><div><span class="model-name">qwen3.5:4b</span><span class="model-tag">documenter</span></div><span class="pill warning"><span class="dot"></span>Mixed</span></div><div class="bar-block"><div class="bar-labels"><span>bare 44% of bare draws returned empty output — see report</span><b>current ~65%*</b></div><div class="bar-track"><div class="bar-fill " style="width:65%"></div><div class="bar-tick" style="left:56%"></div></div><span class="bar-note">*blended figure — mixes 4 stable-PASS shapes with 4 coin-flip ones; the model's own README flags this single number as misleading</span></div><p class="finding">4 task shapes reliable (2 via grammar transferred from qwen3.5:9b), 4 unstable, 1 unsuitable.</p></article><article class="card"><div class="card-top"><div><span class="model-name">qwen3.5:2b</span><span class="model-tag">documenter</span></div><span class="pill warning"><span class="dot"></span>Mixed — narrow</span></div><div class="bar-block"><div class="bar-labels"><span>bare 2/9 (22%)</span><b>1 task 100% + 1 partial</b></div><div class="bar-track"><div class="bar-fill flat" style="width:22%"></div><div class="bar-tick" style="left:22%"></div></div><span class="bar-note">no single current number — the model's own README declines to collapse this to one figure</span></div><p class="finding">doc-crossref fully reliable (3/3, strongest qwen3.5 result at this size); the rest unchanged.</p></article><article class="card"><div class="card-top"><div><span class="model-name">qwen3.5:0.8b</span><span class="model-tag">documenter</span></div><span class="pill critical"><span class="dot"></span>Mixed — weak</span></div><div class="bar-block"><div class="bar-labels"><span>bare 1/9 (11%)</span><b>current ~2/9 (~22%)</b></div><div class="bar-track"><div class="bar-fill " style="width:22%"></div><div class="bar-tick" style="left:11%"></div></div></div><p class="finding">2 of 9 task shapes usable with per-task steering, confirmed ~67% reliable specialist configs.</p></article><article class="card"><div class="card-top"><div><span class="model-name">qwen3.5:0.8b-bf16</span><span class="model-tag">documenter</span></div><span class="pill critical"><span class="dot"></span>Mixed — weak</span></div><div class="bar-block"><div class="bar-labels"><span>bare 1/9 (11%)</span><b>current ~2/9 (~22%)</b></div><div class="bar-track"><div class="bar-fill " style="width:22%"></div><div class="bar-tick" style="left:11%"></div></div></div><p class="finding">Same 2 of 9 shapes as the Q4_K_M build — the extra precision doesn't earn its size here.</p></article><article class="card"><div class="card-top"><div><span class="model-name">deepseek-r1:1.5b</span><span class="model-tag">documenter</span></div><span class="pill warning"><span class="dot"></span>Mixed — category-dependent</span></div><p class="finding">Not suitable general-purpose. Of 4 documenter task categories: 1 suitable bare (structural transform), 1 suitable with real steering investment (cross-doc synthesis), 1 provisional (thin evidence), 1 not suitable (byte-exact/surgical editing — a structural ceiling, not a prompting problem).</p><details class="more"><summary>Per-category verdict</summary><dl class="detail-table"><dt>doc-restructure</dt><dd>suitable — passed bare, zero steering needed</dd><dt>doc-crossref</dt><dd>suitable with steering — 4/5 with STE+thinking</dd><dt>doc-summarize</dt><dd>provisional — fixed, only 1 draw verified</dd><dt>byte-exact group</dt><dd>not suitable — fails consistently across 3 historical rounds</dd></dl></details></article><article class="card"><div class="card-top"><div><span class="model-name">lfm2.5:1.2b-thinking</span><span class="model-tag">documenter</span></div><span class="pill critical"><span class="dot"></span>Not suitable — closed</span></div><div class="bar-block"><div class="bar-labels"><span>bare 1/9 (11%)</span><b>current 1/9 (11%)</b></div><div class="bar-track"><div class="bar-fill flat" style="width:11%"></div><div class="bar-tick" style="left:11%"></div></div><span class="bar-note">zero lift — steering did not move this model at all</span></div><p class="finding">Closed 2026-08-02. A frontier small model is expected near 9/9 zero-shot on this suite for comparison.</p></article></div></section><section class="role-group" data-role="reasoner"><div class="role-head"><h2>Reasoner</h2><span class="tests">Root cause, tradeoffs, coverage over docs/config/behavior</span></div><div class="grid"><article class="card"><div class="card-top"><div><span class="model-name">qwen3.5:9b</span><span class="model-tag">reasoner</span></div><span class="pill neutral"><span class="dot"></span>In progress</span></div><div class="bar-block"><div class="bar-labels"><span>bare 4-5/9 across 2 draws</span><b>steered 4-8/9 (flaky)</b></div><div class="bar-track"><div class="bar-fill range" style="width:89%"></div><div class="bar-tick" style="left:44%"></div></div><span class="bar-note">hatched = not yet Confirm-stable; Tier 2 gate skipped (56% &lt; 60%), 3 open bare tasks remain</span></div><p class="finding">Tier 1 (5 overrides) + Confirm done 2026-08-04 — wide draw-to-draw variance, not yet settled.</p></article><article class="card"><div class="card-top"><div><span class="model-name">deepseek-r1:1.5b</span><span class="model-tag">reasoner</span></div><span class="pill warning"><span class="dot"></span>Mixed</span></div><p class="finding">1 of 3 task types solid; the rest need steering or sit past this model's ceiling. Verification-shaped tasks respond to step-by-step steering; multi-part questions need an explicit per-part instruction or R1 drops all but the first.</p><details class="more"><summary>Per-category verdict</summary><dl class="detail-table"><dt>reason-diagnose</dt><dd>not suitable — stable misattribution prior, 3/3 across attempts</dd><dt>reason-coverage</dt><dd>provisional — thin evidence, 1-2 draws post-fix</dd><dt>reason-tradeoff</dt><dd>not reliable — ~50-60% across two steering approaches</dd><dt>reason-multihop</dt><dd>unresolved — failed bare, never steered</dd></dl></details></article><article class="card"><div class="card-top"><div><span class="model-name">lfm2.5:1.2b-thinking</span><span class="model-tag">reasoner</span></div><span class="pill neutral"><span class="dot"></span>Preliminary — paused</span></div><div class="bar-block"><div class="bar-labels"><span>bare 2/9 (22%)</span><b>current 2/9 (22%)</b></div><div class="bar-track"><div class="bar-fill flat" style="width:22%"></div><div class="bar-tick" style="left:22%"></div></div><span class="bar-note">one bare baseline + one steering pass only — not re-verified since, work paused mid-iteration</span></div><p class="finding">Preliminary only, not part of the closed documenter-role loop.</p></article></div></section><section class="role-group" data-role="tool-use"><div class="role-head"><h2>Tool-use</h2><span class="tests">Pick the right MCP tool + exact arguments from docs/TOOL_CONTRACTS.md</span></div><div class="grid"><article class="card is-empty"><p class="empty-copy">Task suite built and blind-subagent-validated against the reference baseline — no real small-model run logged yet.</p></article></div></section><section class="role-group" data-role="extract"><div class="role-head"><h2>Extract</h2><span class="tests">Structured field extraction / classification from free text</span></div><div class="grid"><article class="card is-empty"><p class="empty-copy">Task suite built and blind-subagent-validated against the reference baseline — no real small-model run logged yet.</p></article></div></section><section class="role-group" data-role="review"><div class="role-head"><h2>Review</h2><span class="tests">Find real seeded bugs in C# without rewriting the code</span></div><div class="grid"><article class="card is-empty"><p class="empty-copy">Task suite built and blind-subagent-validated against the reference baseline — no real small-model run logged yet.</p></article></div></section><section class="role-group" data-role="visual"><div class="role-head"><h2>Visual</h2><span class="tests">Image / screenshot / diagram understanding</span></div><div class="grid"><article class="card is-empty"><p class="empty-copy">Scaffold only. Model not downloaded, role not wired up yet.</p></article></div></section>
+
+  <div class="callout"><span class="model-name">claude-sonnet-5</span><span>Reference baseline, not a steering target. Used only to validate that every task suite is actually achievable before any small local model is tested against it — isolated subagent, zero tool calls, verify.sh as sole judge, never shown ground truth. Its own README is a validation ledger, not a profile.</span></div>
+
+  <footer>
+    <span>
+      Snapshot generated 2026-08-17 from <code>data/leaderboard.json</code>
+      (regenerate with <code>python3 bench/leaderboard.py</code>) — not a live
+      feed. "bare" = zero-shot under this project's harness; "current" = after
+      the quality loop's steering search (see <code>AGENTS.md</code>).
+    </span>
+    <span>How this differs from a leaderboard like PinchBench: <code>docs/LANDSCAPE-COMPARISON.md</code></span>
+  </footer>
+</div>
+<script>
+  const chips = document.querySelectorAll('.chip');
+  const groups = document.querySelectorAll('.role-group');
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => c.setAttribute('aria-pressed', 'false'));
+      chip.setAttribute('aria-pressed', 'true');
+      const role = chip.dataset.filter;
+      groups.forEach(g => {
+        g.classList.toggle('is-hidden', role !== 'all' && g.dataset.role !== role);
+      });
+    });
+  });
+</script>

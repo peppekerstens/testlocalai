@@ -1,0 +1,197 @@
+{
+  "$schema_note": "Source of truth for bench/leaderboard.py (see its docstring for field meanings and how to add/update an entry). Mirrors each model's models/<model>/README.md Overview-table row -- AGENTS.md's 'After a test run, persist it' rule requires updating this alongside that row, not instead of it.",
+  "generated": "2026-08-17",
+  "roles": [
+    { "id": "code-emitter", "name": "Code-emitter", "tests": "Generate correct, compiling code from a spec (C# established; Python added)", "state": "active" },
+    { "id": "documenter", "name": "Documenter", "tests": "Edit / reproduce / adapt real project docs exactly", "state": "active" },
+    { "id": "reasoner", "name": "Reasoner", "tests": "Root cause, tradeoffs, coverage over docs/config/behavior", "state": "active" },
+    { "id": "tool-use", "name": "Tool-use", "tests": "Pick the right MCP tool + exact arguments from docs/TOOL_CONTRACTS.md", "state": "task-suite-only" },
+    { "id": "extract", "name": "Extract", "tests": "Structured field extraction / classification from free text", "state": "task-suite-only" },
+    { "id": "review", "name": "Review", "tests": "Find real seeded bugs in C# without rewriting the code", "state": "task-suite-only" },
+    { "id": "visual", "name": "Visual", "tests": "Image / screenshot / diagram understanding", "state": "scaffold" }
+  ],
+  "results": [
+    {
+      "model": "qwen2.5-coder:1.5b",
+      "modelSlug": "qwen2.5-coder-1.5b",
+      "role": "code-emitter",
+      "status": "good",
+      "statusLabel": "Established",
+      "bare": null,
+      "current": null,
+      "currentNote": "Two validated recipes, not one number",
+      "finding": "Two validated recipes across 12 C# tasks, not one number — the 6 original tasks use a compressed rules file (equal quality, lower token cost); the 6 newer tasks are hurt by that same rules file and run best bare. Both recipes verified at equal-quality outcomes.",
+      "detail": {
+        "summary": "Why two recipes",
+        "rows": [
+          { "term": "Original 6", "def": "--rules csharp — compressed prompt, canonical API snippets" },
+          { "term": "New 6", "def": "bare SPEC.md — the rules file's vivid examples get reproduced regardless of relevance" },
+          { "term": "Lesson", "def": "a shared rules file does not automatically generalize to a new task in the same language" }
+        ]
+      },
+      "evidence": "models/qwen2.5-coder-1.5b/README.md"
+    },
+    {
+      "model": "qwen3.5:9b",
+      "modelSlug": "qwen3.5-9b",
+      "role": "documenter",
+      "status": "good",
+      "statusLabel": "Mixed — strong",
+      "bare": { "pass": 5, "total": 9 },
+      "current": { "pass": 8, "total": 9, "confirmed": true },
+      "barNote": "largest steering lift recorded in this project — 3/3 Confirm-stable on 8 of 9 task shapes",
+      "closed": "2026-08-03",
+      "finding": "doc-surgical remains genuinely unresolved after 5 distinct legitimate steering attempts — a structural limit, not a phrasing problem. A grammar that appeared to fix it was later found to be a tautology and discarded.",
+      "detail": {
+        "summary": "Tier 2 generalist result",
+        "rows": [
+          { "term": "Specialist", "def": "8/9 — 2 GBNF grammars, 2 named-token overrides, 5 bare" },
+          { "term": "Generalist", "def": "6/9 stable (3/3) — cross-model rule transfer at temp 0.4" },
+          { "term": "Verdict", "def": "generalist replaces ~1 of 8 levers; specialist configs stay the record" }
+        ]
+      },
+      "evidence": "models/qwen3.5-9b/README.md"
+    },
+    {
+      "model": "qwen3.5:9b",
+      "modelSlug": "qwen3.5-9b",
+      "role": "reasoner",
+      "status": "neutral",
+      "statusLabel": "In progress",
+      "bare": { "pass": 4, "total": 9, "note": "4-5/9 across 2 draws" },
+      "current": { "min": 4, "max": 8, "total": 9, "confirmed": false },
+      "barNote": "hatched = not yet Confirm-stable; Tier 2 gate skipped (56% < 60%), 3 open bare tasks remain",
+      "finding": "Tier 1 (5 overrides) + Confirm done 2026-08-04 — wide draw-to-draw variance, not yet settled.",
+      "evidence": "models/qwen3.5-9b/README.md"
+    },
+    {
+      "model": "qwen3.5:4b",
+      "modelSlug": "qwen3.5-4b",
+      "role": "documenter",
+      "status": "warning",
+      "statusLabel": "Mixed",
+      "bare": { "pass": 5, "total": 9, "note": "44% of bare draws returned empty output — see report" },
+      "current": { "pass": null, "total": 9, "percent": 65, "confirmed": true, "note": "blended figure, see caveat" },
+      "barNote": "*blended figure — mixes 4 stable-PASS shapes with 4 coin-flip ones; the model's own README flags this single number as misleading",
+      "closed": "2026-08-03",
+      "finding": "4 task shapes reliable (2 via grammar transferred from qwen3.5:9b), 4 unstable, 1 unsuitable.",
+      "evidence": "models/qwen3.5-4b/README.md"
+    },
+    {
+      "model": "qwen3.5:2b",
+      "modelSlug": "qwen3.5-2b",
+      "role": "documenter",
+      "status": "warning",
+      "statusLabel": "Mixed — narrow",
+      "bare": { "pass": 2, "total": 9 },
+      "current": null,
+      "currentNote": "1 task 100% + 1 partial",
+      "barNote": "no single current number — the model's own README declines to collapse this to one figure",
+      "closed": "2026-08-02",
+      "finding": "doc-crossref fully reliable (3/3, strongest qwen3.5 result at this size); the rest unchanged.",
+      "evidence": "models/qwen3.5-2b/README.md"
+    },
+    {
+      "model": "qwen3.5:0.8b",
+      "modelSlug": "qwen3.5-0.8b",
+      "role": "documenter",
+      "status": "critical",
+      "statusLabel": "Mixed — weak",
+      "bare": { "pass": 1, "total": 9 },
+      "current": { "pass": 2, "total": 9, "approx": true, "confirmed": true },
+      "closed": "2026-08-02",
+      "finding": "2 of 9 task shapes usable with per-task steering, confirmed ~67% reliable specialist configs.",
+      "evidence": "models/qwen3.5-0.8b/README.md"
+    },
+    {
+      "model": "qwen3.5:0.8b-bf16",
+      "modelSlug": "qwen3.5-0.8b-bf16",
+      "role": "documenter",
+      "status": "critical",
+      "statusLabel": "Mixed — weak",
+      "bare": { "pass": 1, "total": 9 },
+      "current": { "pass": 2, "total": 9, "approx": true, "confirmed": true },
+      "closed": "2026-08-02",
+      "finding": "Same 2 of 9 shapes as the Q4_K_M build — the extra precision doesn't earn its size here.",
+      "evidence": "models/qwen3.5-0.8b-bf16/README.md"
+    },
+    {
+      "model": "deepseek-r1:1.5b",
+      "modelSlug": "deepseek-r1-1.5b",
+      "role": "documenter",
+      "status": "warning",
+      "statusLabel": "Mixed — category-dependent",
+      "bare": null,
+      "current": null,
+      "finding": "Not suitable general-purpose. Of 4 documenter task categories: 1 suitable bare (structural transform), 1 suitable with real steering investment (cross-doc synthesis), 1 provisional (thin evidence), 1 not suitable (byte-exact/surgical editing — a structural ceiling, not a prompting problem).",
+      "detail": {
+        "summary": "Per-category verdict",
+        "rows": [
+          { "term": "doc-restructure", "def": "suitable — passed bare, zero steering needed" },
+          { "term": "doc-crossref", "def": "suitable with steering — 4/5 with STE+thinking" },
+          { "term": "doc-summarize", "def": "provisional — fixed, only 1 draw verified" },
+          { "term": "byte-exact group", "def": "not suitable — fails consistently across 3 historical rounds" }
+        ]
+      },
+      "evidence": "models/deepseek-r1-1.5b/README.md"
+    },
+    {
+      "model": "deepseek-r1:1.5b",
+      "modelSlug": "deepseek-r1-1.5b",
+      "role": "reasoner",
+      "status": "warning",
+      "statusLabel": "Mixed",
+      "bare": null,
+      "current": null,
+      "finding": "1 of 3 task types solid; the rest need steering or sit past this model's ceiling. Verification-shaped tasks respond to step-by-step steering; multi-part questions need an explicit per-part instruction or R1 drops all but the first.",
+      "detail": {
+        "summary": "Per-category verdict",
+        "rows": [
+          { "term": "reason-diagnose", "def": "not suitable — stable misattribution prior, 3/3 across attempts" },
+          { "term": "reason-coverage", "def": "provisional — thin evidence, 1-2 draws post-fix" },
+          { "term": "reason-tradeoff", "def": "not reliable — ~50-60% across two steering approaches" },
+          { "term": "reason-multihop", "def": "unresolved — failed bare, never steered" }
+        ]
+      },
+      "evidence": "models/deepseek-r1-1.5b/README.md"
+    },
+    {
+      "model": "lfm2.5:1.2b-thinking",
+      "modelSlug": "lfm2.5-1.2b-thinking",
+      "role": "documenter",
+      "status": "critical",
+      "statusLabel": "Not suitable — closed",
+      "bare": { "pass": 1, "total": 9 },
+      "current": { "pass": 1, "total": 9, "confirmed": true },
+      "barNote": "zero lift — steering did not move this model at all",
+      "closed": "2026-08-02",
+      "finding": "Closed 2026-08-02. A frontier small model is expected near 9/9 zero-shot on this suite for comparison.",
+      "evidence": "models/lfm2.5-1.2b-thinking/README.md"
+    },
+    {
+      "model": "lfm2.5:1.2b-thinking",
+      "modelSlug": "lfm2.5-1.2b-thinking",
+      "role": "reasoner",
+      "status": "neutral",
+      "statusLabel": "Preliminary — paused",
+      "bare": { "pass": 2, "total": 9 },
+      "current": { "pass": 2, "total": 9, "confirmed": false },
+      "barNote": "one bare baseline + one steering pass only — not re-verified since, work paused mid-iteration",
+      "finding": "Preliminary only, not part of the closed documenter-role loop.",
+      "evidence": "models/lfm2.5-1.2b-thinking/README.md"
+    }
+  ],
+  "referenceBaseline": {
+    "model": "claude-sonnet-5",
+    "note": "Reference baseline, not a steering target. Used only to validate that every task suite is actually achievable before any small local model is tested against it — isolated subagent, zero tool calls, verify.sh as sole judge, never shown ground truth. Its own README is a validation ledger, not a profile.",
+    "evidence": "models/claude-sonnet-5/README.md"
+  },
+  "scaffold": [
+    {
+      "model": "lfm2.5-vl-450m",
+      "role": "visual",
+      "note": "Scaffold only. Model not downloaded, role not wired up yet.",
+      "evidence": "models/lfm2.5-vl-450m/README.md"
+    }
+  ]
+}

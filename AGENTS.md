@@ -290,7 +290,13 @@ conversation:
 1. Generate a report (`report.sh` for a role-track run; `bench.sh`
    writes its own per-call).
 2. Update `models/<model>/README.md`'s current-state summary.
-3. New idiom/regression/finding → also add to `models/<model>/
+3. Mirror that Overview-table row into `data/leaderboard.json` (see
+   `bench/leaderboard.py`'s docstring for the exact fields) —
+   the leaderboard dashboard renders from this file only, never from
+   README prose, so a row updated in the README but not here is
+   invisible to it even though the README itself is correct.
+   Regenerate with `python3 bench/leaderboard.py`.
+4. New idiom/regression/finding → also add to `models/<model>/
    history.md` — README stays current-state-only.
 
 **Why:** `lfm2.5-1.2b-thinking` had a real baseline and steering pass
@@ -417,3 +423,6 @@ manually (`nvidia-smi --query-gpu=memory.free --format=csv`, `free
 - `models/<model>/README.md` — per-model verdicts and bench-plan history.
 - `models/<model>/rules/` — per-model steering blocks (what actually
   helps *that* model succeed — never assumed to transfer to another).
+- `data/leaderboard.json` + `bench/leaderboard.py` — the cross-model
+  steering dashboard's structured source data and its generator; see
+  the script's docstring for the schema before adding a row.

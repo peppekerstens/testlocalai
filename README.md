@@ -88,7 +88,9 @@ failure modes, not a re-labeling of another role.
 | `docs/GRAMMAR-STEERING-PATTERNS.md` | when to reach for grammar-constrained decoding instead of prompt text, backend capability notes, and a starter library of structural grammar patterns |
 | `docs/QUALITY-LOOP-WORKFLOW.md` | visual (mermaid) guide to the quality loop + the scripted/rule-machine/template/judgment control mechanism — doubles as an AI agent's quick-reference for which script to run at each step |
 | `docs/REMOTE-WSL2-SETUP.md` | condensed findings from standing up a second, remote llama.cpp host over SSH |
-| `bench/` | generic runner: `dispatch.sh`, `bench.sh`, `pure-run.sh`, `report.sh` |
+| `docs/LANDSCAPE-COMPARISON.md` | how this project compares to other LLM eval/benchmark tooling (PinchBench, llama-bench, etc.) and why it stays its own thing |
+| `docs/leaderboard.html` | generated steering-lift dashboard (bare vs. current, per model+role) — regenerate with `python3 bench/leaderboard.py`, never hand-edit; source data is `data/leaderboard.json` |
+| `bench/` | generic runner: `dispatch.sh`, `bench.sh`, `pure-run.sh`, `report.sh`, `leaderboard.py` |
 | `tasks/<role>-<name>/` | flat task set: SPECs + test harnesses; each task's `rounds/` holds its prompt/output history |
 | `tasks/<project>/` | reference material for a specific source project, not tasks — optional pattern, retired 2026-08-03 (its one instance, `tasks/csharp/`, was folded into a real task, `tasks/code-csharp-mcpidentity/`, and model-specific onboarding evidence moved to `models/<model>/`; see `history.md`) |
 | `models/README.md` | index: which model has been tested against which role, with a status indicator |
