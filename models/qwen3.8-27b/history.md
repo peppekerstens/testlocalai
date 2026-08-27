@@ -93,3 +93,25 @@ confirmed-stable.
    cheapest way to find out if they're real ceiling or single-draw noise.
 3. Code-emitter role, once the harness question is resolved.
 4. `data/leaderboard.json` + regenerate `docs/leaderboard.html`.
+
+## Real coding-delegation evidence, 2026-08-28 (not via this repo's own dispatch path)
+
+Separate from the Phase 1 baseline above: this exact model, reached through
+the same `local-first` router but via `opencode run` (not `dispatch.sh` —
+still no `openai` backend, see follow-up #1), was delegated 8 real files
+while scaffolding the `matrix-selfhost` repo — shell-script template
+adaptation and a Docker Compose file, not the doc/tool/review/reason
+suite above. Real evidence, not synthetic: 6 of 8 good (2 needed fixes
+that were arguably spec gaps more than model failures — see the
+`local-llm-first` skill's delegate table for the full writeup, not
+duplicated here), plus 2 genuine hangs on scripts whose *content*
+described SSH/remote-exec commands (a harness-level tool-permission
+stall, not a model-quality issue — confirmed via direct router pings
+showing the backend was idle both times).
+
+This prompted `tasks/adapt-bash-simple/`, `adapt-bash-complex/`, and
+`adapt-bash-remote-content/` (see `docs/adapt-role-proposal.md`) — real
+tasks grounded in this incident, not yet dispatched against this or any
+other model. A real Phase 1 run against those three, through a proper
+`dispatch.sh` `openai` backend once built, would be the natural way to
+turn this anecdotal evidence into a real baseline number.
