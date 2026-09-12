@@ -113,9 +113,10 @@ for line in results_text.splitlines():
     run = fields.get("model_run", "?")
     pt = fields.get("prompt_tok", "?")
     ct = fields.get("comp_tok", "?")
+    tps = fields.get("tok_s", "?")
     truncated = "TRUNCATED-BY-CONTEXT-LIMIT" in line
     finish = "length (TRUNCATED)" if truncated else "stop"
-    rows.append({"task": task, "verdict": run, "prompt_tok": pt, "comp_tok": ct, "finish": finish})
+    rows.append({"task": task, "verdict": run, "prompt_tok": pt, "comp_tok": ct, "tok_s": tps, "finish": finish})
 
 passed = sum(1 for r in rows if r["verdict"] == "PASS")
 total = len(rows)
@@ -159,10 +160,10 @@ lines.append(f"- **Result: {passed}/{total} PASS**")
 lines.append("")
 lines.append("## Results")
 lines.append("")
-lines.append("| Task | Verdict | Prompt tok | Completion tok | Finish reason |")
-lines.append("|---|---|---|---|---|")
+lines.append("| Task | Verdict | Prompt tok | Completion tok | tok/s | Finish reason |")
+lines.append("|---|---|---|---|---|---|")
 for r in rows:
-    lines.append(f"| `{r['task']}` | {r['verdict']} | {r['prompt_tok']} | {r['comp_tok']} | {r['finish']} |")
+    lines.append(f"| `{r['task']}` | {r['verdict']} | {r['prompt_tok']} | {r['comp_tok']} | {r['tok_s']} | {r['finish']} |")
 lines.append("")
 
 lines.append("## Comparison vs previous report")

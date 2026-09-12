@@ -149,7 +149,7 @@ for t in $TASKS; do
       BENCH_RC=$?
       CODE_REPORT="$SELF_DIR/../models/$MODEL_DIR_NAME/reports/round-$ROUND_LABEL-$(basename "$t").md"
       if [ "$BENCH_RC" -ne 0 ] || [ ! -f "$CODE_REPORT" ]; then
-        echo "RESULT task=$t expected_ctrl=n/a empty_ctrl=n/a model_run=ERROR prompt_tok=? comp_tok=?"
+        echo "RESULT task=$t expected_ctrl=n/a empty_ctrl=n/a model_run=ERROR prompt_tok=? comp_tok=? tok_s=?"
         continue
       fi
       if grep -q "^## VERDICT: PASS" "$CODE_REPORT"; then RUN=PASS; else RUN=FAIL; fi
@@ -159,13 +159,13 @@ for t in $TASKS; do
       [ -z "$CT" ] && CT="?"
       TRUNCATED=""
       grep -q "TRUNCATED (finish_reason=length)" "$CODE_REPORT" && TRUNCATED=" TRUNCATED-BY-CONTEXT-LIMIT(not-a-content-failure)"
-      echo "RESULT task=$t expected_ctrl=n/a empty_ctrl=n/a model_run=$RUN prompt_tok=$PT comp_tok=$CT${TRUNCATED}"
+      echo "RESULT task=$t expected_ctrl=n/a empty_ctrl=n/a model_run=$RUN prompt_tok=$PT comp_tok=$CT tok_s=? (bench.sh does not capture speed yet)${TRUNCATED}"
       continue
       ;;
   esac
 
   POS="?"; NEG="?"; RUN="?"
-  PT="?"; CT="?"
+  PT="?"; CT="?"; TPS="?"
 
   # control 1: expected.md must pass
   if (cd "$D" && bash verify.sh expected.md >/dev/null 2>&1); then POS=PASS; else POS=FAIL; fi
@@ -193,6 +193,7 @@ for t in $TASKS; do
       PT="$(python3 -c "import json;d=json.load(open('$OUT.tokens.json'));print(d.get('prompt_tokens','?'))" 2>/dev/null || echo '?')"
       CT="$(python3 -c "import json;d=json.load(open('$OUT.tokens.json'));print(d.get('completion_tokens','?'))" 2>/dev/null || echo '?')"
       FR="$(python3 -c "import json;d=json.load(open('$OUT.tokens.json'));print(d.get('finish_reason','?'))" 2>/dev/null || echo '?')"
+      TPS="$(python3 -c "import json;d=json.load(open('$OUT.tokens.json'));v=d.get('predicted_tokens_per_second');print(round(v,1) if v is not None else '?')" 2>/dev/null || echo '?')"
       [ "$FR" = "length" ] && TRUNCATED=" TRUNCATED-BY-CONTEXT-LIMIT(not-a-content-failure)"
     fi
     if (cd "$D" && bash verify.sh "$OUT" >/dev/null 2>&1); then RUN=PASS; else RUN=FAIL; fi
@@ -200,5 +201,5 @@ for t in $TASKS; do
     RUN=ERROR
   fi
 
-  echo "RESULT task=$t expected_ctrl=$POS empty_ctrl=$NEG model_run=$RUN prompt_tok=$PT comp_tok=$CT${TRUNCATED}"
+  echo "RESULT task=$t expected_ctrl=$POS empty_ctrl=$NEG model_run=$RUN prompt_tok=$PT comp_tok=$CT tok_s=${TPS:-?}${TRUNCATED}"
 done

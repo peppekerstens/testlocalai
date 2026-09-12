@@ -149,7 +149,19 @@ def check_loaded_model():
         with urllib.request.urlopen(check_url, timeout=5) as resp:
             data = json.load(resp)
         if backend == "llamacpp":
-            ids = [m.get("id") for m in data.get("data", [])]
+            # llama-server can serve one model under several --alias names.
+            # /v1/models reports one of them as "id" and the rest under
+            # "aliases" — which one lands in "id" is not the first alias
+            # argument, confirmed live 2026-09-12 (order-independent, this
+            # server's own choice). Checking "id" alone false-failed every
+            # dispatch to a model whose id happened to differ from the tag
+            # passed here, even though the server was serving that exact
+            # tag correctly under an alias. Check both.
+            ids = []
+            for m in data.get("data", []):
+                if m.get("id"):
+                    ids.append(m.get("id"))
+                ids.extend(m.get("aliases") or [])
         else:
             ids = [m.get("name") or m.get("model") for m in data.get("models", [])]
     except Exception as e:
@@ -267,11 +279,19 @@ reasoning_content = (message or {}).get("reasoning_content") if backend == "llam
 finish_reason = choice.get("finish_reason") if choice else None
 
 if backend == "llamacpp":
+    # llama-server includes a "timings" object on every non-streamed
+    # response by default (no extra request flag needed) — real
+    # generation speed, not estimated from wall-clock time here (which
+    # would also count network/queue time). Added 2026-09-12: this data
+    # existed in every response all along but was previously discarded.
+    timings = data.get("timings") or {}
     tokens = {
         "prompt_tokens": data.get("usage", {}).get("prompt_tokens"),
         "completion_tokens": data.get("usage", {}).get("completion_tokens"),
         "finish_reason": finish_reason,
         "reasoning_content_chars": len(reasoning_content) if reasoning_content else 0,
+        "prompt_tokens_per_second": timings.get("prompt_per_second"),
+        "predicted_tokens_per_second": timings.get("predicted_per_second"),
     }
     with open(out_file + ".tokens.json", "w", encoding="utf-8") as f:
         json.dump(tokens, f)
