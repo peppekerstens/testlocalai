@@ -383,13 +383,20 @@ recurring property of the task+model pair, not one-off noise.
 `ai-stack/litellm-router` production backend for this model** (see
 `ai-stack/legion-t5-llamacpp/README.md`). Used for the tool/extract/
 review roles above and the reasoner-role continuation, since the two
-hosts below are not reachable from this session. `--ctx-size 262144`,
-`--no-kv-offload`, 8 GiB RTX 3060 Ti — see that repo for the full
-config. **`DISPATCH_CHECK_MODEL=0` is required on this host**: this
-build of `llama-server` always reports `id: "qwen3.5-9b"` from
-`/v1/models`, never the `qwen3.5:9b` alias, regardless of `--alias`
-argument order, so `dispatch.sh`'s model-loaded check fails every time
-otherwise — confirmed live, not a model problem.
+hosts below are not reachable from this session. Config at the time of
+the tests above: `--ctx-size 262144`, `--no-kv-offload`, 8 GiB RTX 3060
+Ti. **Changed since, 2026-09-12**: production now runs `--ctx-size
+65536`, no offload — `262144` cost real speed (~28-29 tok/s) for
+context this host rarely needs that much of; `65536` fits fully on GPU
+alongside `embed-local` and roughly doubles speed (~61 tok/s), checked
+live. See `ai-stack/legion-t5-llamacpp/README.md` for the full trade-off
+record and the sizes tried in between. Any new dispatch against this
+host should set `DISPATCH_HW_LABEL` to the current config, not the one
+above. `DISPATCH_CHECK_MODEL=0` is **no longer needed**: `dispatch.sh`'s
+model-loaded check was fixed the same day to also match the `aliases`
+list, not just `id` — this `llama-server` build reports `id:
+"qwen3.5-9b"` regardless of `--alias` order, which is what caused the
+original false failures.
 
 **⚠️ This section describes the PRIMARY host's deployment specifically
 (GTX 1650, 4GB VRAM) — as of 2026-08-04, qwen3.5:9b also runs on a
