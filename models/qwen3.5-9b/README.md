@@ -352,6 +352,16 @@ Genuinely unstable at this model's required `temperature=1.0` sampling
 profile, same category as `doc-surgical` in the documenter role above —
 not closed, needs a different lever than a prompt reminder.
 
+**Cross-session corroboration, found while writing this up**: this
+exact task was already flagged flaky for this exact model on
+2026-08-05 (`reports/confirm-extract-20260805-151138.md`, a 3-draw
+Confirm that came back FAIL/FAIL/PASS on `extract-optional`
+specifically, under whatever config was live then — that report's own
+Findings were left templated, so the root cause from that pass was
+never recorded). Two independent sessions, a month apart, on
+different hosts, both find this same task unstable — this is a real,
+recurring property of the task+model pair, not one-off noise.
+
 ## Review role
 
 4/6 PASS bare. Both failures got a targeted reminder and came back

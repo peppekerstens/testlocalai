@@ -1,7 +1,8 @@
 # qwen3.5:4b — steering profile
 
-**Role: documenter** (docs role, `tasks/doc-*`). Not yet tested against
-any other role. Larger sibling of
+**2026-09-12: reasoner, tool-use, extract, and review roles added**, on
+`legion-t5` (`192.168.2.133`) — see the new sections below and Setup's
+new host note. Larger sibling of
 [`qwen3.5-2b`](../qwen3.5-2b/)/[`qwen3.5-0.8b`](../qwen3.5-0.8b/) in the
 same model family — a separate model directory, steering not assumed
 to transfer untested.
@@ -11,6 +12,10 @@ to transfer untested.
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
 | Documenter | ⚠️ Mixed — quality loop closed 2026-08-03, 4 reliable task shapes (up from 3, best among the smaller siblings — still behind `qwen3.5-9b`'s cleaner 8/9), 4 genuinely unstable (coin-flip reliability), 1 unsuitable | 5/9 bare-on-paper (44% empty output) → 4/9 stable, ~65% blended average (see caveat in Final report — this number is not the real picture) | ~65% of an assumed frontier ceiling, but this blends 4 solid tasks with 4 coin-flip ones — see Final report for why a single number misleads here | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-03) |
+| Reasoner | ⚠️ Mixed, 2026-09-12 | 3/9 bare → 7/9 steered (small samples) | Not assessed | [Reasoner role](#reasoner-role) |
+| Tool-use | ✅ Closed 6/6, 2026-09-12 | 4/6 bare → 6/6 steered | Matches `qwen3.8-27b`'s bare 6/6 once steered | [Tool-use role](#tool-use-role) |
+| Extract | ✅ Closed 6/6, 2026-09-12 | 4/6 bare → 6/6 steered | Not assessed | [Extract role](#extract-role) |
+| Review | ✅ Closed 6/6, 2026-09-12 | 4/6 bare → 6/6 steered | Not assessed | [Review role](#review-role) |
 
 ## Documenter role: final report (closed 2026-08-03)
 
@@ -171,6 +176,66 @@ re-tested):
   went from 3/3 stable to 0/2 over the course of this project without
   any change to its own config. Periodic re-confirmation matters, not
   just a one-time Confirm.
+
+## Reasoner role
+
+3/9 bare (`reason-trace`, `reason-tradeoff`, `reason-coverage` PASS).
+6 failures, all the same idiom: right conclusion, missing the exact
+required phrase/token/name `verify.sh` checks for (`reason-diagnose`,
+`reason-checklist`, `reason-consequence`, `reason-compare`,
+`reason-multihop`), plus `reason-config-validity`'s already-documented
+extraneous-token idiom (same as `qwen3.5-9b`). One `task-overrides/`
+reminder per task, 3 draws each:
+
+| Task | Result | Verdict |
+|---|---|---|
+| `reason-diagnose` | 3/3 | Fixed |
+| `reason-checklist` | 3/3 | Fixed |
+| `reason-compare` | 3/3 | Fixed |
+| `reason-multihop` | 3/3 | Fixed |
+| `reason-consequence` | 1/3 | Unstable — needs more work |
+| `reason-config-validity` | 1/3 | Unstable — needs more work |
+
+7/9 now clear the 60% gate. `reason-consequence` and
+`reason-config-validity` stay genuinely unresolved this pass.
+
+## Tool-use role
+
+4/6 bare (`tool-select`, `tool-args`, `tool-multi`, `tool-error` PASS).
+Both failures (`tool-none`, `tool-policy`) shared the reasoner role's
+same idiom: the right conclusion, without the exact required
+plain-language phrasing (`verify.sh` wants an explicit statement, not
+just a description of the available tools' scope). One reminder each,
+**3/3 PASS both** — role closed 6/6.
+
+## Extract role
+
+4/6 bare (`extract-multi`, `extract-classify`, `extract-ambiguous`,
+`extract-nested` PASS). `extract-basic` and `extract-optional` both kept
+a stray quote mark from the source text inside the JSON value — a
+distinct idiom from `qwen3.5-9b`'s fencing miss on the same tasks. One
+reminder each (strip source quote marks, and a sentence describing an
+absent field is not a value for that field), **3/3 PASS both** — role
+closed 6/6, notably more stable here than on `qwen3.5-9b`'s sibling
+result for the same two tasks.
+
+## Review role
+
+4/6 bare (`review-offbyone`, `review-async`, `review-logic`,
+`review-clean` PASS). `review-null` (a real bug found but not tied to
+the specific `DefaultContact.Name` access) and `review-concurrency`
+(same missing-specific-type idiom as `qwen3.5-9b` and `minicpm5-2b` on
+this identical task) both re-tested with a targeted reminder:
+`review-null` 2/3, `review-concurrency` 3/3 — both clear the gate, role
+closed 6/6.
+
+**Host for all four roles above**: `legion-t5` (`192.168.2.133`), not the
+primary/remote hosts in Setup below (unreachable from this session).
+Same required dispatch overrides as `qwen3.5:9b` (`DISPATCH_ENABLE_
+THINKING=false DISPATCH_TEMPERATURE=1.0 DISPATCH_TOP_P=1.0
+DISPATCH_TOP_K=20 DISPATCH_PRESENCE_PENALTY=2.0`), plus
+`DISPATCH_CHECK_MODEL=0` (same `llama-server` alias/id quirk documented
+in `qwen3.5-9b/README.md`'s Setup section).
 
 ## Setup
 
