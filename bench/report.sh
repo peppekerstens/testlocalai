@@ -78,7 +78,17 @@ fi
 
 FREE_VRAM_MB="$(nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits 2>/dev/null | head -1 || echo unknown)"
 FREE_RAM_MB="$(free -m 2>/dev/null | awk '/^Mem:/{print $NF}' || echo unknown)"
+# DISPATCH_HW_LABEL: required for a remote backend (port forwarded over
+# SSH, real model host is not this machine) — the VRAM/RAM figures above
+# are THIS machine's, meaningless for a remote target. No default beyond
+# "local (this machine)" is assumed automatically; the caller must state
+# it whenever port !=8080-on-the-real-host. Added 2026-09-12 after
+# reports for legion-t5-hosted models carried "unknown MB"/this laptop's
+# own RAM with no hardware note at all — real conditions were only ever
+# in chat history, not in the report file itself.
+HW_LABEL="${DISPATCH_HW_LABEL:-local (this machine) — set DISPATCH_HW_LABEL for a remote host}"
 echo "==> pre-run free VRAM: ${FREE_VRAM_MB} MB, free RAM (available): ${FREE_RAM_MB} MB" >&2
+echo "==> hardware: ${HW_LABEL}" >&2
 
 echo "==> running pure-run.sh: model=$MODEL role=$ROLE backend=$BACKEND port=$PORT" >&2
 RESULTS="$(DISPATCH_BACKEND="$BACKEND" LLAMACPP_PORT="$PORT" bash "$SELF_DIR/pure-run.sh" "$MODEL" --test "$ROLE" 2>&1 | grep '^RESULT ')"
@@ -96,10 +106,10 @@ RESULTS_FILE="$SELF_DIR/tmp/.report-results-$TIMESTAMP.txt"
 mkdir -p "$SELF_DIR/tmp"
 printf '%s\n' "$RESULTS" > "$RESULTS_FILE"
 
-python3 - "$REPORT_FILE" "$MODEL" "$ROLE" "$BACKEND" "$PORT" "$TIMESTAMP" "${PREV_REPORT:-}" "$RESULTS_FILE" "$FREE_VRAM_MB" "$FREE_RAM_MB" <<'PY'
+python3 - "$REPORT_FILE" "$MODEL" "$ROLE" "$BACKEND" "$PORT" "$TIMESTAMP" "${PREV_REPORT:-}" "$RESULTS_FILE" "$FREE_VRAM_MB" "$FREE_RAM_MB" "$HW_LABEL" <<'PY'
 import re, sys, datetime
 
-report_file, model, role, backend, port, timestamp, prev_report, results_file, free_vram_mb, free_ram_mb = sys.argv[1:11]
+report_file, model, role, backend, port, timestamp, prev_report, results_file, free_vram_mb, free_ram_mb, hw_label = sys.argv[1:12]
 with open(results_file, encoding="utf-8") as f:
     results_text = f.read()
 
@@ -152,6 +162,7 @@ lines.append("")
 lines.append(f"- Model: `{model}`")
 lines.append(f"- Role: {role}")
 lines.append(f"- Backend: {backend} (port {port})")
+lines.append(f"- **Hardware: {hw_label}**")
 lines.append(f"- Generated: {timestamp} UTC")
 lines.append(f"- Pre-run free VRAM: {free_vram_mb} MB, free RAM: {free_ram_mb} MB "
              f"(service restarted immediately before this run — see AGENTS.md's "

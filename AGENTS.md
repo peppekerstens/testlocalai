@@ -364,6 +364,28 @@ a different, probably worse, result. **How to apply:** add/update
 Setup alongside the report/history entry that used it — literal
 reproducible values, not "some tuning was needed."
 
+## Record the real hardware, and never compare speed across different hardware
+
+Every `report.sh` run now records a **Hardware** line in the report
+header (`DISPATCH_HW_LABEL` env var — host name, GPU, and the serving
+config that affects speed: `--ctx-size`, `--no-kv-offload`, `-ngl`, and
+so on). Set it explicitly for a remote backend — the script's own
+`nvidia-smi`/`free` numbers describe whatever machine `report.sh` runs
+on, not the actual inference host, and are meaningless when they differ
+(found 2026-09-12: several reports for a remote host carried this
+machine's own RAM figure and "unknown MB" VRAM, with the real hardware
+only ever in chat history, not in the report file).
+
+**tok/s and token-count comparisons across models are valid only when
+every compared report ran on identical hardware and serving config.**
+Different GPUs, different `-ngl`, or `--no-kv-offload` vs. not are each,
+independently, enough to invalidate a speed comparison — correctness
+(PASS/FAIL) still compares fine across hosts, since it does not depend
+on hardware, but speed does. Before citing a tok/s difference between
+two models as meaningful, check both reports' Hardware lines match. If
+they do not, say so plainly instead of implying a lower number means a
+slower model.
+
 ## Don't assume the visual role is wired up
 
 `README.md`'s Roles table lists **visual** as scaffold-only:
