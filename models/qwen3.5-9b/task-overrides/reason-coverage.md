@@ -1,29 +1,3 @@
-EXACT-PHRASE REMINDER — read before answering:
-
-This checklist is graded against 5 SEPARATE categories, checked
-independently by scanning for different tokens. Missing even ONE whole
-category fails the check, even if the other 4 are done perfectly — this
-model has repeatedly dropped exactly one category per draw (a different
-one each time), so treat this as the primary risk, not a formality.
-Before writing your numbered list, silently confirm you have one item for
-EACH of these 5, then write the list:
-
-1. An optional nested object (company/contact/owner) entirely absent from
-   a ticket — name which object and that its two fields (e.g. `owner.id`
-   and `owner.name`) are both absent.
-2. An obfuscated field verified as actually transformed — name one of
-   `company.name`, `contact.name`, or `owner.name`.
-3. A lookup-value field verified as the string name, not a raw code — name
-   one of `status`, `priority`, `type`, or `board`.
-4. An excluded field that must be absent from the output entirely — name
-   one of `dateResolved`, `severity`, `slaStatus`, or `estimatedTimeCost`.
-5. An empty result — a company with zero tickets must map to an empty
-   JSON array `[]`, not `null` and not an error.
-
-Category 5 (the empty-array case) and category 1 (an absent nested object)
-are the two most often silently skipped — double-check both are present
-as their own separate numbered items before finishing.
-
 ROLE: You are a reasoning subagent (reasoner role). Below is a real tool's
 output field contract. List the edge cases a C# port's test suite MUST
 cover for this mapping — not a generic "test all the fields" statement,
@@ -90,5 +64,12 @@ absent from the output"):
 - one category about an empty result — a company with zero tickets must
   map to an empty JSON array, not `null` and not an error.
 
+REMINDER: before you answer, count your numbered items against the five
+categories above, one by one. Your final list needs one item per
+category, five items minimum, each naming a real field from the table.
+If you can only find four categories covered, write the fifth before
+answering — do not submit a short list.
+
 OUTPUT: the numbered list only, nothing else — no restatement of these
 category descriptions.
+</content>

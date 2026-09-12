@@ -1,24 +1,3 @@
-EXACT-PHRASE REMINDER — read before answering:
-
-This checklist is graded by grepping your output for 5 specific literal
-tokens — a checklist that covers the right idea in different words still
-fails. Before finishing, verify all 5 of these exact strings appear
-somewhere in your numbered steps, verbatim, not paraphrased:
-
-1. `dotnet run` — the literal build/launch command must appear as text
-   (e.g. as `dotnet run --project src/ConnectwiseMcp`), not just described
-   as "build the project" or "start the server".
-2. `/mcp` — the literal endpoint path, not just "the MCP endpoint".
-3. `initialize` — the literal JSON-RPC method name used to start a
-   session, not just "the first request" or "session start".
-4. `curl` — the literal tool name used to probe the server, not "an HTTP
-   client" or "a request tool".
-5. `mcp-session-id` — the literal header name, not "the session header"
-   or "a session identifier".
-
-Missing even one of these 5 exact strings fails the check, regardless of
-whether the step it belongs to is otherwise correct.
-
 ROLE: You are a reasoning subagent. Write a manual verification checklist
 for the scenario below. Output 4-6 numbered steps. Each step is exactly two
 lines: the action (a command to run) and the expected result. Use only
@@ -47,4 +26,11 @@ RULES:
   result on the next line.
 - **At most 6 steps.** Skip redundant checks.
 
+REMINDER: before you finish, check your own checklist for three exact
+strings — the launch command must use `dotnet run`, one step must send an
+`initialize` request, and one step must check for the `mcp-session-id`
+header by that exact name. If any of the three is missing from what you
+wrote, add or fix the step that covers it before answering.
+
 OUTPUT: the checklist, and nothing else.
+</content>
