@@ -52,10 +52,29 @@
 #   DISPATCH_TOP_P / _TOP_K / _MIN_P / _PRESENCE_PENALTY=<value>  added to
 #     the request body only if set
 #   DISPATCH_ENABLE_THINKING=true|false  sends chat_template_kwargs:
-#     {"enable_thinking": <bool>} — the only supported thinking-mode
-#     control for model families with no in-prompt /think //no_think
-#     switch (e.g. qwen3.5); confirmed working via a direct smoke test
+#     {"enable_thinking": <bool>} — the on/off-only thinking-mode control
+#     for model families with no in-prompt /think //no_think switch and
+#     no graded control (e.g. qwen3.5 and earlier, up to but not
+#     including qwen3.8); confirmed working via a direct smoke test
 #     before being wired in here, see models/README.md's qwen3.5 section.
+#   DISPATCH_REASONING_EFFORT=none|low|medium|high  sends a top-level
+#     "reasoning_effort" body field instead — the graded control qwen3.8
+#     and later support natively (llama-server accepts this field
+#     directly on /v1/chat/completions, same field litellm-router's own
+#     config.yaml sets per tier, e.g. qwen3.8-27b-local: low,
+#     qwen3.5-9b-local: none — see that file's comments). Works on both
+#     backend=llamacpp (straight to llama-server) and backend=litellm
+#     (passed through, since every tier's allowed_openai_params includes
+#     "reasoning_effort" — this can override the router's own tier
+#     default for one call, on purpose, to test a different level through
+#     the same routed path). "none" fully disables reasoning; this is a
+#     different mechanism from DISPATCH_ENABLE_THINKING's chat_template_
+#     kwargs.enable_thinking, so the two are mutually exclusive — set the
+#     one your model actually supports (models/README.md documents which
+#     models on this project use which). Added 2026-09-13 after the
+#     qwen3.5-4b-gsq direct-host test used neither and lost 16,384 tokens
+#     per task to unwanted default-on thinking; see that model's README
+#     for the real number.
 #   DISPATCH_GRAMMAR_FILE=<path>  reads a GBNF grammar file and sends it as
 #     "grammar" in the request body (backend=llamacpp only) — llama-server
 #     masks the next-token distribution at every step to keep output valid
@@ -179,14 +198,29 @@ TOP_K="${DISPATCH_TOP_K:-}"
 MIN_P="${DISPATCH_MIN_P:-}"
 PRESENCE_PENALTY="${DISPATCH_PRESENCE_PENALTY:-}"
 ENABLE_THINKING="${DISPATCH_ENABLE_THINKING:-}"
+REASONING_EFFORT="${DISPATCH_REASONING_EFFORT:-}"
 GRAMMAR_FILE="${DISPATCH_GRAMMAR_FILE:-}"
 
-python3 - "$MODEL" "$PROMPT_FILE" "$MODE" "$URL" "$BACKEND" "$OUT_FILE" "$CHECK_MODEL" "$NOTHINK" "$TEMPERATURE" "$TOP_P" "$TOP_K" "$MIN_P" "$PRESENCE_PENALTY" "$ENABLE_THINKING" "$GRAMMAR_FILE" "$LITELLM_MASTER_KEY" <<'PY' > "$OUT_FILE"
+if [ -n "$ENABLE_THINKING" ] && [ -n "$REASONING_EFFORT" ]; then
+  echo "ERROR: DISPATCH_ENABLE_THINKING and DISPATCH_REASONING_EFFORT are two different controls for two different model generations — set only the one your model supports, never both at once." >&2
+  exit 7
+fi
+if [ -n "$REASONING_EFFORT" ]; then
+  case "$REASONING_EFFORT" in
+    none|low|medium|high) ;;
+    *)
+      echo "ERROR: DISPATCH_REASONING_EFFORT must be one of: none low medium high (got '$REASONING_EFFORT')." >&2
+      exit 7
+      ;;
+  esac
+fi
+
+python3 - "$MODEL" "$PROMPT_FILE" "$MODE" "$URL" "$BACKEND" "$OUT_FILE" "$CHECK_MODEL" "$NOTHINK" "$TEMPERATURE" "$TOP_P" "$TOP_K" "$MIN_P" "$PRESENCE_PENALTY" "$ENABLE_THINKING" "$GRAMMAR_FILE" "$LITELLM_MASTER_KEY" "$REASONING_EFFORT" <<'PY' > "$OUT_FILE"
 import json, re, sys, urllib.request
 
 (model, prompt_file, mode, url, backend, out_file, check_model, nothink,
  temperature, top_p, top_k, min_p, presence_penalty, enable_thinking,
- grammar_file, litellm_master_key) = sys.argv[1:17]
+ grammar_file, litellm_master_key, reasoning_effort) = sys.argv[1:18]
 # litellm's response shape mirrors llama-server's own OpenAI-compatible
 # shape exactly (choices[0].message, timings, usage) - checked live
 # 2026-09-13, litellm passes the backend's own "timings" object through
@@ -310,6 +344,11 @@ if openai_shaped:
         body_dict["presence_penalty"] = float(presence_penalty)
     if enable_thinking:
         body_dict["chat_template_kwargs"] = {"enable_thinking": enable_thinking == "true"}
+    if reasoning_effort:
+        # Top-level field, not chat_template_kwargs — the graded control
+        # qwen3.8+ and llama-server itself understand directly (see the
+        # DISPATCH_REASONING_EFFORT comment at the top of this file).
+        body_dict["reasoning_effort"] = reasoning_effort
     if grammar:
         body_dict["grammar"] = grammar
     if backend == "litellm":

@@ -13,6 +13,11 @@ untested.
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
 | Documenter | ⚠️ Mixed — quality loop closed 2026-09-13, 7 of 9 task shapes stable, 2 flaky (both pre-existing model idioms, not steering regressions) | 4/9 bare → 7/9 stable (Confirm ran FLAKY at 8/6/8, not clean, see caveat) | Not assessed | [Documenter role: final report](#documenter-role-final-report-closed-2026-09-13) |
+| Reasoner | 🔬 Preliminary — 5 real failures, 2026-09-13 | 4/9 bare | Not assessed | [Reasoner role](#reasoner-role) |
+| Tool-use | 🔬 Preliminary — clean bare pass, 2026-09-13 | 6/6 bare | Not assessed | [Tool-use role](#tool-use-role) |
+| Extract | 🔬 Preliminary — clean bare pass, 2026-09-13 | 6/6 bare | Not assessed | [Extract role](#extract-role) |
+| Review | 🔬 Preliminary — 2 real failures, 2026-09-13 | 4/6 bare | Not assessed | [Review role](#review-role) |
+| Code-emitter | 🔬 Preliminary — clean bare pass, 2026-09-13 | 14/14 bare | Not assessed | [Code-emitter role](#code-emitter-role) |
 
 ## Documenter role: final report (closed 2026-09-13)
 
@@ -63,8 +68,42 @@ is inherently task-specific. No single shared prompt block can carry it. Full re
 105 tok/s depending on load, and no failure in this role traces to output
 length or verbosity — see `history.md`.
 
+## Reasoner role
+
+4/9 PASS, bare, single draw, `DISPATCH_REASONING_EFFORT=none`, direct
+legion-t5 dispatch, 2026-09-13. Real failures: `reason-diagnose`,
+`reason-trace`, `reason-consequence`, `reason-compare`,
+`reason-multihop`. No idiom classification exists yet for these
+failures — this is a raw pass/fail count only, not steered.
+`reports/report-reason-20260913-185856.md`.
+
+## Tool-use role
+
+6/6 PASS, bare, single draw. No failures at n=1.
+`reports/report-tool-20260913-185926.md`.
+
+## Extract role
+
+6/6 PASS, bare, single draw. No failures at n=1.
+`reports/report-extract-20260913-185937.md`.
+
+## Review role
+
+4/6 PASS, bare, single draw. Real failures: `review-null`,
+`review-logic`. Idiom classification not done yet.
+`reports/report-review-20260913-185948.md`.
+
+## Code-emitter role
+
+14/14 PASS, bare, single draw (13 C# + 1 Python task), real
+compile+test via `bench.sh`. `reports/report-code-20260913-190003.md`.
+
 ## How to optimize (verify before trusting)
 
+- Reasoner, tool-use, extract, review, code-emitter: nothing steered
+  yet — every number above is a bare, single-draw baseline. No idioms
+  confirmed. Before trusting any of these as stable, run at least a
+  3-draw Confirm on each role, per the methodology in `AGENTS.md`.
 - `DISPATCH_ENABLE_THINKING=false` first, before any other steering.
   Carried over from the qwen3.5 family default, see Setup.
 - For a `doc-verbatim`/`doc-repair`/`doc-summarize`/`doc-script`-shaped
@@ -89,10 +128,20 @@ length or verbosity — see `history.md`.
 
 ## Setup
 
-- Served by `llama-chat-4b-gsq.service` on `legion-t5` (`192.168.2.133:11436`),
-  reached from this workstation over an SSH port forward
-  (`ssh -N -L 8090:localhost:11436 peppe@192.168.2.133`) — run bench with
-  `LLAMACPP_PORT=8090`.
+- Served by `llama-chat.service` on `legion-t5` (`192.168.2.133:11434`),
+  the same service and port previously used for `qwen3.5:9b` — swapped in
+  place 2026-09-13. Reachable two ways, confirmed live the same day:
+  - **Direct**: `DISPATCH_HOST=192.168.2.133 LLAMACPP_PORT=11434` (the
+    `DISPATCH_HOST` override, no SSH tunnel needed). This replaces the
+    earlier `llama-chat-4b-gsq.service` / port `11436` / tunnel setup
+    below, now stale. No entry needed in `ALLOWED_MODELS` beyond the
+    existing `qwen3.5-4b-gsq` whitelist line.
+  - **Via `ai-stack/litellm-router`**, model_name `qwen3.5-9b-local` — a
+    real naming catch, same pattern as `qwen3.8-27b-gsq-rco` and
+    `qwen3.8-27b-local`: the router never learned the real name of this
+    model, only the tier name it swapped into. `DISPATCH_BACKEND=litellm
+    bash bench/report.sh qwen3.5-9b-local <role>` reaches this exact
+    model; `qwen3.5-4b-gsq` does not.
 - `--ctx-size 245760 --parallel 2 --kv-unified --flash-attn on
   --cache-type-k q8_0 --cache-type-v q8_0 -ngl 99`. Real, tested max for this
   model on this 8 GiB RTX 3060 Ti, two slots, one shared KV pool — see
@@ -101,20 +150,36 @@ length or verbosity — see `history.md`.
   `embed-local` holds zero VRAM, which is not this box's normal running
   state — its CPU-mode residual footprint, about 158 MiB, is enough to push
   262144 into a real, confirmed CUDA out-of-memory).
-- Whitelisted in `bench/dispatch.sh` as `qwen3.5-4b-gsq`.
+- Whitelisted in `bench/dispatch.sh` as `qwen3.5-4b-gsq` for direct
+  backends. `DISPATCH_BACKEND=litellm` skips that gate — the real gate
+  for that path is the `config.yaml` file in `ai-stack/litellm-router`.
 - **Required dispatch overrides — mandatory, not optional, per `AGENTS.md`'s
   "every dispatch-level tweak must be documented" rule:**
-  - `DISPATCH_ENABLE_THINKING=false` — same qwen3.5-family reasoning-off
-    convention as every other model in this directory. Not yet independently
-    re-verified as mandatory for this checkpoint, see Phase 0 below. Carried
-    over from the family default until Phase 1 says otherwise.
+  - `DISPATCH_REASONING_EFFORT=none` — confirmed live 2026-09-13 as
+    mandatory for a direct dispatch: this model defaults to thinking on,
+    and a first full-test run without this set lost 16,384 tokens per
+    task to `reasoning_content` before any real answer, on every task
+    (docs role alone came back 4/9, unusable). Same field
+    `litellm-router/config.yaml` already bakes into the `qwen3.5-9b-local`
+    tier, so a litellm-routed call needs no override — a direct call
+    does. `DISPATCH_ENABLE_THINKING=false` (the older boolean control)
+    also works but is redundant with this; set only one, never both —
+    `bench/dispatch.sh` errors if both are set.
   - `DISPATCH_HW_LABEL="legion-t5, RTX 3060 Ti 8GB, ctx=245760 parallel=2 kv-unified"`.
     Set this on every dispatch against this host. Do not compare its tok/s
-    against any other model's report unless the Hardware line matches.
-- Full reproducible invocation for a docs-role test:
+    against a report for a different model unless the Hardware line
+    matches.
+- Full reproducible invocation for a full 6-role test (2026-09-13, real,
+  used to produce the numbers above for every non-Documenter role):
   ```
-  DISPATCH_BACKEND=llamacpp LLAMACPP_PORT=8090 \
-    DISPATCH_ENABLE_THINKING=false \
+  DISPATCH_TEMPERATURE=0.2 DISPATCH_REASONING_EFFORT=none \
+    bash bench/full-test.sh qwen3.5-4b-gsq llamacpp 11434 192.168.2.133
+  ```
+  A single-role invocation follows the same pattern via `bench/report.sh`,
+  e.g.:
+  ```
+  DISPATCH_HOST=192.168.2.133 LLAMACPP_PORT=11434 \
+    DISPATCH_REASONING_EFFORT=none \
     DISPATCH_HW_LABEL="legion-t5, RTX 3060 Ti 8GB, ctx=245760 parallel=2 kv-unified" \
     bash bench/report.sh qwen3.5-4b-gsq docs
   ```

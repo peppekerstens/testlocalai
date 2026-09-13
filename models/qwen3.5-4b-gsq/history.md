@@ -105,3 +105,68 @@ output-shaping lever: "only apply where failures are about padding, not
 missing content" — none of this role's failures are, so a Performance
 pass has no real lever to apply here. Skipped rather than run for its own
 sake.
+
+## Full 6-role test, direct legion-t5, first attempt: invalid (2026-09-13)
+
+Ran `bash bench/full-test.sh qwen3.5-4b-gsq llamacpp 11434 192.168.2.133`,
+no thinking-mode override set. Docs role came back 4/9 PASS — a real
+regression against the 7/9 stable core closed above. Root cause: this
+checkpoint defaults to thinking on, and neither
+`DISPATCH_ENABLE_THINKING` nor a graded reasoning control was set for
+this direct-host command. Several answers spent the full 16,384-token
+cap on `reasoning_content` before reaching a real answer (~175 seconds
+per task at 94 tok/s, confirmed live on `legion-t5`'s own
+`print_timing` log). `litellm-router/config.yaml`'s `qwen3.5-9b-local`
+tier already bakes `reasoning_effort: "none"` into every call to this
+same backend, which is why this idiom had never shown up through that
+path. The run was stopped mid-`reason`-role once the cause was
+confirmed. An orphaned dispatch call from this run (`reason-trace`,
+still holding a GPU slot with invalid data) needed a second, forceful
+kill after the top-level process tree died but the child survived.
+
+**Fix**: `bench/dispatch.sh` gained `DISPATCH_REASONING_EFFORT=none|low|
+medium|high`, a top-level `reasoning_effort` body field — the graded
+control `qwen3.8`+ and llama-server itself understand directly, the same
+field the router already sets per tier. Kept separate from the existing
+boolean `DISPATCH_ENABLE_THINKING` (its `chat_template_kwargs.
+enable_thinking` mechanism), and mutually exclusive with it by design —
+`dispatch.sh` now errors if both are set on one call. A smoke test
+against this exact model and host confirmed `reasoning_effort: "none"`
+suppresses thinking on a direct dispatch, not only through litellm
+(`completion_tokens: 2`, `reasoning_content_chars: 0` on a 1-word
+prompt).
+
+## Full 6-role test, direct legion-t5, rerun with reasoning off (2026-09-13)
+
+Same command, `DISPATCH_REASONING_EFFORT=none` added. Clean run, about 2
+minutes wall time for the 5 non-code roles combined (versus over an hour
+stuck mid-`reason` on the first attempt), plus real `dotnet` compile time
+for the code role. Real, single-draw results:
+
+| Role | Result | Report |
+|---|---|---|
+| Docs (4 tasks under existing `task-overrides/`, 5 bare) | 7/9 PASS | `reports/report-docs-20260913-185823.md` |
+| Reason (bare) | 4/9 PASS | `reports/report-reason-20260913-185856.md` |
+| Tool-use (bare) | 6/6 PASS | `reports/report-tool-20260913-185926.md` |
+| Extract (bare) | 6/6 PASS | `reports/report-extract-20260913-185937.md` |
+| Review (bare) | 4/6 PASS | `reports/report-review-20260913-185948.md` |
+| Code-emitter (bare, 13 C# + 1 Python) | 14/14 PASS | `reports/report-code-20260913-190003.md` |
+
+The docs role's 7/9 matches the already-closed Documenter result above —
+the existing task overrides for `doc-verbatim`, `doc-repair`,
+`doc-summarize`, and `doc-script` applied automatically, confirming that
+result still holds with reasoning off. The other five roles are fresh,
+bare, single-draw baselines with no steering attempted yet.
+
+## Litellm routed-path spot-check (2026-09-13)
+
+Rather than re-run all 6 roles a second time through
+`ai-stack/litellm-router` (transport changes latency and cache handling
+only, not model output — already established for another model), ran one
+already-tested task through the routed path: `DISPATCH_BACKEND=litellm
+bash bench/dispatch.sh qwen3.5-9b-local tasks/extract-basic/SPEC.md
+<out-file>`. Result matched the direct run exactly: `prompt_tokens: 142,
+completion_tokens: 52, finish_reason: stop, reasoning_content_chars: 0` —
+byte-for-byte the same token counts as the direct `extract-basic` row
+above. Confirms the routed path reaches this exact model with identical
+behavior; no full second suite needed.

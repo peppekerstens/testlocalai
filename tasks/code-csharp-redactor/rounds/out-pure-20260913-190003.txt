@@ -1,3 +1,4 @@
+```csharp
 using System.Text.RegularExpressions;
 
 namespace Bench.Task6;
@@ -36,3 +37,4 @@ public sealed class Redactor
         return currentText;
     }
 }
+```

@@ -214,20 +214,21 @@
       "model": "qwen3.5-4b-gsq",
       "modelSlug": "qwen3.5-4b-gsq",
       "role": "documenter",
-      "status": "critical",
-      "statusLabel": "FLAKY",
+      "status": "warning",
+      "statusLabel": "7/9 PASS stable across Tier 1 steering",
       "bare": {
         "pass": 4,
-        "total": 9
+        "total": 9,
+        "confirmed": false
       },
       "current": {
-        "pass": 0,
+        "pass": 7,
         "total": 9,
-        "percent": "0%"
+        "confirmed": true
       },
-      "currentNote": "Confirm verdict FLAKY, not CONFIRMED — 0/9 passes on 3 draws",
-      "finding": "0/9 PASS — confirmed FLAKY. No steering improvement.",
-      "evidence": "models/qwen3.5-4b-gsq/README.md"
+      "finding": "The model achieved a 7/9 stable result with 2 flaky tasks (doc-restructure, doc-surgical) that are not steering regressions, while doc-adapt remains a consistent FAIL, and performance runs at 103 to 105 tok/s without failures.",
+      "evidence": "models/qwen3.5-4b-gsq/README.md#documenter-role-final-report-closed-2026-09-13",
+      "closed": "2026-09-13"
     },
     {
       "model": "qwen3.5:9b",
@@ -618,6 +619,86 @@
       },
       "finding": "The model achieved a perfect 14/14 pass rate across all tasks, marking the first real result for this role on this machine after fixing the dotnet environment, with 13 improvements over the previous report and only one unchanged Python task.",
       "evidence": "models/qwen3.8-27b-gsq-rco/README.md#code-emitter-role",
+      "closed": "2026-09-13"
+    },
+    {
+      "model": "qwen3.5-4b-gsq",
+      "modelSlug": "qwen3.5-4b-gsq",
+      "role": "reasoner",
+      "status": "neutral",
+      "statusLabel": "4/9 PASS, bare, single draw",
+      "bare": null,
+      "current": {
+        "pass": 4,
+        "total": 9,
+        "confirmed": false
+      },
+      "finding": "The model achieved a 4/9 pass rate across nine reasoning tasks, with failures in diagnose, trace, consequence, compare, and multihop, while passing config, checklist, tradeoff, and coverage.",
+      "evidence": "models/qwen3.5-4b-gsq/README.md#reasoner-role",
+      "closed": "2026-09-13"
+    },
+    {
+      "model": "qwen3.5-4b-gsq",
+      "modelSlug": "qwen3.5-4b-gsq",
+      "role": "tool-use",
+      "status": "neutral",
+      "statusLabel": "6/6 PASS, bare, single draw",
+      "bare": null,
+      "current": {
+        "pass": 6,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The model achieved a perfect 6/6 pass rate across all six tool-use tasks with zero failures at n=1, demonstrating consistent performance across the tool-select, tool-args, tool-multi, tool-none, tool-error, and tool-policy benchmarks.",
+      "evidence": "models/qwen3.5-4b-gsq/README.md#tool-use-role",
+      "closed": "2026-09-13"
+    },
+    {
+      "model": "qwen3.5-4b-gsq",
+      "modelSlug": "qwen3.5-4b-gsq",
+      "role": "extract",
+      "status": "neutral",
+      "statusLabel": "6/6 PASS, bare, single draw",
+      "bare": null,
+      "current": {
+        "pass": 6,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The model achieved a perfect 6/6 pass rate across all six extract tasks without any failures at n=1, demonstrating consistent performance across basic, optional, multi, classify, ambiguous, and nested scenarios with token counts ranging from 14 to 223 and completion times between 92 and 142.",
+      "evidence": "models/qwen3.5-4b-gsq/README.md#extract-role",
+      "closed": "2026-09-13"
+    },
+    {
+      "model": "qwen3.5-4b-gsq",
+      "modelSlug": "qwen3.5-4b-gsq",
+      "role": "review",
+      "status": "neutral",
+      "statusLabel": "4/6 PASS, bare, single draw",
+      "bare": null,
+      "current": {
+        "pass": 4,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The model failed on `review-null` and `review-logic` while passing five other tasks, indicating incomplete idiom classification and logic handling.",
+      "evidence": "models/qwen3.5-4b-gsq/README.md#review-role",
+      "closed": "2026-09-13"
+    },
+    {
+      "model": "qwen3.5-4b-gsq",
+      "modelSlug": "qwen3.5-4b-gsq",
+      "role": "code-emitter",
+      "status": "neutral",
+      "statusLabel": "14/14 PASS, bare, single draw",
+      "bare": null,
+      "current": {
+        "pass": 14,
+        "total": 14,
+        "confirmed": false
+      },
+      "finding": "The model achieved a perfect 14/14 pass rate across all C# and Python tasks, with a total of 208 tokens spent on the first task and 21188 MB of free RAM available before the run.",
+      "evidence": "models/qwen3.5-4b-gsq/README.md#code-emitter-role",
       "closed": "2026-09-13"
     }
   ],

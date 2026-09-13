@@ -1,3 +1,4 @@
+```csharp
 using System.Net;
 using System.Net.Http;
 using System.Text.Json.Nodes;
@@ -28,3 +29,4 @@ public sealed class CwClient
         return JsonNode.Parse(body);
     }
 }
+```
