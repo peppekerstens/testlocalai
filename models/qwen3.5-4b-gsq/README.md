@@ -12,13 +12,80 @@ untested.
 
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
-| Documenter | 🔬 Quality loop in progress, started 2026-09-13 | not yet reported | Not assessed | [Documenter role](#documenter-role) |
+| Documenter | ⚠️ Mixed — quality loop closed 2026-09-13, 7 of 9 task shapes stable, 2 flaky (both pre-existing model idioms, not steering regressions) | 4/9 bare → 7/9 stable (Confirm ran FLAKY at 8/6/8, not clean, see caveat) | Not assessed | [Documenter role: final report](#documenter-role-final-report-closed-2026-09-13) |
 
-## Documenter role
+## Documenter role: final report (closed 2026-09-13)
 
-Quality loop started 2026-09-13 via `bash bench/loop.sh qwen3.5-4b-gsq docs`.
-This section replaces once the loop reaches Confirm or closes early — see
-`history.md` for the running narrative and `reports/` for each raw run.
+**Usability without optimizations**: 4/9 (44%) PASS bare, `enable_thinking=false`
+set from the start (family default, not yet independently re-verified for
+this exact checkpoint).
+
+**Usability with optimizations**: 7/9 stable across Tier 1 steering,
+confirmed as the honest core result after a FLAKY Confirm verdict (8, 6, 8
+across 3 draws). The 2 flaky tasks, `doc-restructure` and `doc-surgical`,
+are not steering regressions — full reasoning in Confirm's own Findings,
+`reports/confirm-docs-20260913-110428.md`, and the round-by-round narrative
+in `history.md`. `doc-adapt` is the one task that stayed a consistent,
+confirmed FAIL, no partial improvement found in one real attempt.
+
+**Comparison against a mainstream frontier LLM**: not assessed for this
+role on this checkpoint. `qwen3.5-9b`, the closest sibling with a real
+comparison in this project, lands at roughly 89% of an assumed frontier
+ceiling on the same 9-task set with a cleaner 8/9 stable result — this
+checkpoint's 7/9 (78%), with 2 tasks genuinely flaky rather than cleanly
+stable, sits below that. Caveats: smaller model (4B against 9B), a
+materially different quantization (2-bit gradient search against
+Q4_K_M/Q4_K_M-class formats used elsewhere in this project), and no direct
+frontier-model run against this exact 9-task set to anchor the comparison
+numerically rather than by analogy to a sibling's own number.
+
+Per-task table:
+
+| Task | Specialist result | Specialist config | Generalist result |
+|---|---|---|---|
+| `doc-verbatim` | ✅ Fixed, round 1 | `task-overrides/doc-verbatim.md` | no generalist — n/a |
+| `doc-repair` | ✅ Fixed, round 1 | `task-overrides/doc-repair.md` | no generalist — n/a |
+| `doc-summarize` | ✅ Fixed, round 1 | `task-overrides/doc-summarize.md` | no generalist — n/a |
+| `doc-script` | ✅ Fixed, round 2 | `task-overrides/doc-script.md` | no generalist — n/a |
+| `doc-surgical` | ⚠️ Gated out, reverted to bare, still flaky at Confirm | bare | no generalist — n/a |
+| `doc-adapt` | ❌ Gated out, reverted to bare, consistent FAIL | bare | no generalist — n/a |
+| `doc-crossref` | ✅ Stable bare, never needed steering | bare | no generalist — n/a |
+| `doc-synthesize` | ✅ Stable bare, never needed steering | bare | no generalist — n/a |
+| `doc-restructure` | ✅ Stable bare in Tier 1, flaky at Confirm (known family idiom) | bare | no generalist — n/a |
+
+**Tier 2 generalist search**: no generalist config found, and none
+searched by dispatch — reasoned directly from this run's own Tier 1
+evidence instead. Every one of the 4 working overrides needed a quote of
+that exact task's own wrong output next to the correct one. That content
+is inherently task-specific. No single shared prompt block can carry it. Full reasoning in `history.md`.
+
+**Performance run**: skipped, with reason. Real speed already runs 85 to
+105 tok/s depending on load, and no failure in this role traces to output
+length or verbosity — see `history.md`.
+
+## How to optimize (verify before trusting)
+
+- `DISPATCH_ENABLE_THINKING=false` first, before any other steering.
+  Carried over from the qwen3.5 family default, see Setup.
+- For a `doc-verbatim`/`doc-repair`/`doc-summarize`/`doc-script`-shaped
+  fix: quote the model's own actual wrong output next to the correct one,
+  then add one self-check tied to the exact failure mode. This pattern
+  fixed all 4 in one attempt each — see `task-overrides/` for each real
+  config used.
+- For `doc-surgical`-shaped tasks (a single backtick sliding one position
+  in a short exact-quote edit): steering did not stick. One attempt,
+  gated out. The bare model still gets this right most draws, wrong on
+  some — real per-draw instability on one specific idiom, not a fix
+  worth chasing further without a new idea.
+- For `doc-restructure`-shaped tasks (a valid but non-literal markdown
+  table separator, `:---` instead of `---`): never needed steering to
+  pass once, but the bare model does not always avoid this idiom. Same
+  idiom is documented across `qwen3.5-0.8b`, `qwen3.5-4b`, `qwen3.5-9b`,
+  and `lfm2.5-1.2b-thinking` — check a grammar-constrained fix from a
+  sibling model's `grammars/` before inventing a new lever.
+- `doc-adapt` (a splice-boundary error, deleting untouched text adjacent
+  to an edit): unresolved. One real attempt, no partial improvement,
+  gated out per `AGENTS.md`'s rule.
 
 ## Setup
 
@@ -52,7 +119,7 @@ This section replaces once the loop reaches Confirm or closes early — see
     bash bench/report.sh qwen3.5-4b-gsq docs
   ```
 
-## See also
+## Further reading
 
 - `history.md` — running narrative for this model's testing.
 - `reports/` — raw per-run reports.
