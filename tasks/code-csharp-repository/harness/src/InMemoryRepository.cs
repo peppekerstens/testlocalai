@@ -19,40 +19,27 @@ public sealed class InMemoryRepository<T> : IRepository<T>
 
     public void Add(string id, T item)
     {
-        if (id == null)
-            throw new ArgumentNullException(nameof(id));
-
-        if (_items.ContainsKey(id))
-            throw new ArgumentException("Item with the same ID already exists.");
-
-        _items[id] = item;
+        if (id == null) throw new ArgumentNullException(nameof(id));
+        _items.Add(id, item);
     }
 
     public T? Get(string id)
     {
-        if (id == null)
-            return default(T);
-
-        return _items.TryGetValue(id, out T? item) ? item : default(T);
+        return _items.TryGetValue(id, out var value) ? value : default(T);
     }
 
     public bool Update(string id, T item)
     {
-        if (id == null)
-            return false;
-
-        if (!_items.ContainsKey(id))
-            return false;
-
-        _items[id] = item;
-        return true;
+        if (_items.ContainsKey(id))
+        {
+            _items[id] = item;
+            return true;
+        }
+        return false;
     }
 
     public bool Remove(string id)
     {
-        if (id == null)
-            return false;
-
         return _items.Remove(id);
     }
 

@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using System.Threading;
 
 namespace Bench.Task6;
 
@@ -14,24 +13,26 @@ public sealed class Redactor
 {
     public string Redact(string input, IReadOnlyList<PatternRule> rules)
     {
-        if (string.IsNullOrEmpty(input) || rules == null || rules.Count == 0)
-        {
+        if (string.IsNullOrEmpty(input))
+            return "";
+
+        if (rules == null || rules.Count == 0)
             return input;
-        }
+
+        string result = input;
 
         foreach (var rule in rules)
         {
             try
             {
-                input = Regex.Replace(input, rule.Regex, rule.Replacement);
+                result = Regex.Replace(result, rule.Regex, rule.Replacement);
             }
             catch (ArgumentException)
             {
-                // Skip bad regex rule
-                continue;
+                // Skip invalid regex rule
             }
         }
 
-        return input;
+        return result;
     }
 }

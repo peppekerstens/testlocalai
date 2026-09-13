@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using System.Threading.Tasks;
 
 namespace Bench.Task5;
 
@@ -12,14 +11,13 @@ public sealed class InMemoryTicketStore : ITicketStore
 {
     public Task<string?> GetTicketAsync(int id)
     {
-        // id 1 -> "Ticket 1"; id 2 -> "Ticket 2"; any other id -> null
         if (id == 1) return Task.FromResult("Ticket 1");
         if (id == 2) return Task.FromResult("Ticket 2");
         return Task.FromResult<string?>(null);
     }
 }
 
-public class TicketTool
+public sealed class TicketTool
 {
     private readonly ITicketStore _store;
 

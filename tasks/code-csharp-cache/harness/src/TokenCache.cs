@@ -17,14 +17,7 @@ public sealed class TokenCache
     }
 
     public bool TryGet(string userId, out string? token)
-    {
-        lock (_lock)
-        {
-            if (_data.TryGetValue(userId, out token))
-                return true;
-            return false;
-        }
-    }
+        => _data.TryGetValue(userId, out token);
 
     public void Set(string userId, string token)
     {
@@ -34,7 +27,7 @@ public sealed class TokenCache
             {
                 var oldest = _order[0];
                 _order.RemoveAt(0);
-                _data.TryRemove(oldest, out _);   // NOT _data.Remove(oldest)
+                _data.TryRemove(oldest, out _);
             }
             _data[userId] = token;
             if (!_order.Contains(userId)) _order.Add(userId);

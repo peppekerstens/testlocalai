@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace Bench.Workflow;
 
@@ -47,20 +46,16 @@ public sealed class TicketWorkflow
 
     public bool CanTransition(TicketStatus from, TicketStatus to)
     {
-        return AllowedTransitions.ContainsKey(from) && AllowedTransitions[from].Contains(to);
+        return AllowedTransitions[from].Contains(to);
     }
 
     public void Transition(Ticket ticket, TicketStatus newStatus)
     {
         if (ticket == null)
-        {
             throw new ArgumentNullException(nameof(ticket));
-        }
 
         if (!CanTransition(ticket.Status, newStatus))
-        {
             throw new InvalidTransitionException(ticket.Status, newStatus);
-        }
 
         ticket.Status = newStatus;
     }

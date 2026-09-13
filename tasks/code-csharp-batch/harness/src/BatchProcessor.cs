@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Text.RegularExpressions;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace Bench.Batch;
 
@@ -33,17 +30,24 @@ public sealed class BatchProcessor
         Func<TItem, CancellationToken, Task<TResult>> operation,
         CancellationToken cancellationToken = default)
     {
-        if (items == null || operation == null)
-        {
-            throw new ArgumentNullException(nameof(items) + " or " + nameof(operation));
-        }
+        if (items == null) throw new ArgumentNullException(nameof(items));
+        if (operation == null) throw new ArgumentNullException(nameof(operation));
 
         var itemList = items.ToList();
+
         var tasks = itemList.Select(async item =>
         {
-            try { return BatchResult<TResult>.Success(await operation(item, cancellationToken)); }
-            catch (Exception ex) { return BatchResult<TResult>.Failure(ex); }
+            try
+            {
+                var result = await operation(item, cancellationToken);
+                return BatchResult<TResult>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return BatchResult<TResult>.Failure(ex);
+            }
         }).ToList();
+
         return await Task.WhenAll(tasks);
     }
 }

@@ -15,7 +15,7 @@ public sealed class CwClient
         _http = httpClient;
     }
 
-    public async Task<System.Text.Json.Nodes.JsonNode?> GetAsync(
+    public async Task<JsonNode?> GetAsync(
         string path, CancellationToken cancellationToken = default)
     {
         using var response = await _http.GetAsync(path, cancellationToken);

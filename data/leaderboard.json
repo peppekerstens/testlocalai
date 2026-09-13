@@ -523,6 +523,102 @@
       "finding": "The model achieved 5/6 passes, with only the concurrency task failing due to length truncation, while the previous report's clean failure was resolved; however, the concurrency verdict remains unchanged because verify.sh did not name the specific unsafe Dictionary type.",
       "evidence": "models/minicpm5-2b/README.md#review-role",
       "closed": "2026-09-12"
+    },
+    {
+      "model": "qwen3.8-27b-gsq-rco",
+      "modelSlug": "qwen3.8-27b-gsq-rco",
+      "role": "documenter",
+      "status": "neutral",
+      "statusLabel": "9/9 PASS, bare, single draw",
+      "bare": null,
+      "current": {
+        "pass": 9,
+        "total": 9,
+        "confirmed": false
+      },
+      "finding": "The model achieved perfect results across all nine document tasks with no failures at n=1, requiring no steering or additional draws.",
+      "evidence": "models/qwen3.8-27b-gsq-rco/README.md#documenter-role",
+      "closed": "2026-09-13"
+    },
+    {
+      "model": "qwen3.8-27b-gsq-rco",
+      "modelSlug": "qwen3.8-27b-gsq-rco",
+      "role": "reasoner",
+      "status": "neutral",
+      "statusLabel": "6/9 PASS, bare, single draw",
+      "bare": null,
+      "current": {
+        "pass": 6,
+        "total": 9,
+        "confirmed": false
+      },
+      "finding": "The model failed three specific reason tasks (reason-config-validity, reason-multihop, reason-tradeoff) while passing six others, yielding a 6/9 pass rate with a single draw. This raw pass/fail count indicates bare performance without idiom classification against task-specific failure idioms.",
+      "evidence": "models/qwen3.8-27b-gsq-rco/README.md#reasoner-role",
+      "closed": "2026-09-13"
+    },
+    {
+      "model": "qwen3.8-27b-gsq-rco",
+      "modelSlug": "qwen3.8-27b-gsq-rco",
+      "role": "tool-use",
+      "status": "neutral",
+      "statusLabel": "6/6 PASS, bare, single draw",
+      "bare": null,
+      "current": {
+        "pass": 6,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The model achieved a perfect 6/6 pass rate with no failures at n=1, demonstrating reliable tool-use capabilities across all six tasks.",
+      "evidence": "models/qwen3.8-27b-gsq-rco/README.md#tool-use-role",
+      "closed": "2026-09-13"
+    },
+    {
+      "model": "qwen3.8-27b-gsq-rco",
+      "modelSlug": "qwen3.8-27b-gsq-rco",
+      "role": "extract",
+      "status": "neutral",
+      "statusLabel": "6/6 PASS, bare, single draw",
+      "bare": null,
+      "current": {
+        "pass": 6,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The model achieved a perfect 6/6 pass rate across all six extract tasks with no failures at n=1, demonstrating consistent performance across basic, optional, multi, classify, ambiguous, and nested scenarios.",
+      "evidence": "models/qwen3.8-27b-gsq-rco/README.md#extract-role",
+      "closed": "2026-09-13"
+    },
+    {
+      "model": "qwen3.8-27b-gsq-rco",
+      "modelSlug": "qwen3.8-27b-gsq-rco",
+      "role": "review",
+      "status": "neutral",
+      "statusLabel": "6/6 PASS, bare, single draw.",
+      "bare": null,
+      "current": {
+        "pass": 6,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The model achieved a perfect 6/6 pass rate across all review tasks, with no failures at n=1.",
+      "evidence": "models/qwen3.8-27b-gsq-rco/README.md#review-role",
+      "closed": "2026-09-13"
+    },
+    {
+      "model": "qwen3.8-27b-gsq-rco",
+      "modelSlug": "qwen3.8-27b-gsq-rco",
+      "role": "code-emitter",
+      "status": "neutral",
+      "statusLabel": "14/14 PASS, bare, single draw (12 C# + 2 Python tasks), real compile+test via bench.sh",
+      "bare": null,
+      "current": {
+        "pass": 14,
+        "total": 14,
+        "confirmed": false
+      },
+      "finding": "The model achieved a perfect 14/14 pass rate across all tasks, marking the first real result for this role on this machine after fixing the dotnet environment, with 13 improvements over the previous report and only one unchanged Python task.",
+      "evidence": "models/qwen3.8-27b-gsq-rco/README.md#code-emitter-role",
+      "closed": "2026-09-13"
     }
   ],
   "referenceBaseline": {
