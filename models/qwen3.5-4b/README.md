@@ -12,10 +12,10 @@ to transfer untested.
 | Role | Status | Pass rate (bare → current) | vs. mainstream LLM | Details |
 |---|---|---|---|---|
 | Documenter | ⚠️ Mixed — quality loop closed 2026-08-03, 4 reliable task shapes (up from 3, best among the smaller siblings — still behind `qwen3.5-9b`'s cleaner 8/9), 4 genuinely unstable (coin-flip reliability), 1 unsuitable | 5/9 bare-on-paper (44% empty output) → 4/9 stable, ~65% blended average (see caveat in Final report — this number is not the real picture) | ~65% of an assumed frontier ceiling, but this blends 4 solid tasks with 4 coin-flip ones — see Final report for why a single number misleads here | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-03) |
-| Reasoner | ⚠️ Mixed, 2026-09-12 | 3/9 bare → 7/9 steered (small samples) | Not assessed | [Reasoner role](#reasoner-role) |
+| Reasoner | ⚠️ Mixed, regressed same day 2026-09-12 | 3/9 bare → 6/9 (`reason-trace`, `reason-coverage` newly regressed; earlier 7/9 claim is stale) | Not assessed | [Reasoner role](#reasoner-role) |
 | Tool-use | ✅ Closed 6/6, 2026-09-12 | 4/6 bare → 6/6 steered | Matches `qwen3.8-27b`'s bare 6/6 once steered | [Tool-use role](#tool-use-role) |
 | Extract | ✅ Closed 6/6, 2026-09-12 | 4/6 bare → 6/6 steered | Not assessed | [Extract role](#extract-role) |
-| Review | ✅ Closed 6/6, 2026-09-12 | 4/6 bare → 6/6 steered | Not assessed | [Review role](#review-role) |
+| Review | ⚠️ Mixed, regressed same day 2026-09-12 | 4/6 bare → 5/6 (`review-clean` newly regressed; earlier 6/6 claim is stale) | Not assessed | [Review role](#review-role) |
 
 ## Documenter role: final report (closed 2026-08-03)
 
@@ -196,8 +196,14 @@ reminder per task, 3 draws each:
 | `reason-consequence` | 1/3 | Unstable — needs more work |
 | `reason-config-validity` | 1/3 | Unstable — needs more work |
 
-7/9 now clear the 60% gate. `reason-consequence` and
-`reason-config-validity` stay genuinely unresolved this pass.
+7/9 cleared the 60% gate at that point. `reason-consequence` and
+`reason-config-validity` stayed genuinely unresolved that pass.
+
+**Regressed same day, later run** (`reports/report-reason-20260912-125355.md`):
+real current result is 6/9, not 7/9. `reason-trace` and `reason-coverage` —
+both untouched, originally bare-passing — newly failed. That report's
+own Findings/root-cause section was left as a TODO placeholder; the
+cause is not yet investigated.
 
 ## Tool-use role
 
@@ -226,8 +232,14 @@ result for the same two tasks.
 the specific `DefaultContact.Name` access) and `review-concurrency`
 (same missing-specific-type idiom as `qwen3.5-9b` and `minicpm5-2b` on
 this identical task) both re-tested with a targeted reminder:
-`review-null` 2/3, `review-concurrency` 3/3 — both clear the gate, role
-closed 6/6.
+`review-null` 2/3, `review-concurrency` 3/3 — both cleared the gate at
+that point.
+
+**Regressed same day, later run** (`reports/report-review-20260912-125510.md`):
+real current result is 5/6, not 6/6. `review-clean` — untouched,
+originally bare-passing — newly failed. That report's own
+Findings/root-cause section was left as a TODO placeholder; the cause
+is not yet investigated.
 
 **Host for all four roles above**: `legion-t5` (`192.168.2.133`), not the
 primary/remote hosts in Setup below (unreachable from this session).

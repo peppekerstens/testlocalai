@@ -245,3 +245,16 @@ print(f"Result: {passed}/{total} PASS")
 PY
 
 rm -f "$RESULTS_FILE"
+
+# Last step, not a separate manual one to remember: surface this model's
+# real leaderboard-sync status right here, in the same output the caller
+# is already reading, immediately after the report that likely just
+# created a new gap (this run's own role is expected to show MISSING
+# below — it can't be synced before it exists; that is normal, not a
+# failure). Exit code is NOT checked — report.sh's own job (write the
+# report) already succeeded regardless, and every run legitimately shows
+# at least the just-written role as pending. See bench/leaderboard-check.sh
+# for what MISSING actually means and the fix command it prints.
+echo
+echo "-> leaderboard sync status for $MODEL_DIR_NAME:"
+bash "$(dirname "${BASH_SOURCE[0]}")/leaderboard-check.sh" "$MODEL_DIR_NAME" || true

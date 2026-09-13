@@ -1,6 +1,6 @@
 {
   "$schema_note": "Source of truth for bench/leaderboard.py (see its docstring for field meanings and how to add/update an entry). Mirrors each model's models/<model>/README.md Overview-table row -- AGENTS.md's 'After a test run, persist it' rule requires updating this alongside that row, not instead of it.",
-  "generated": "2026-08-17",
+  "generated": "2026-09-13",
   "roles": [
     {
       "id": "code-emitter",
@@ -24,25 +24,25 @@
       "id": "tool-use",
       "name": "Tool-use",
       "tests": "Pick the right MCP tool + exact arguments from docs/TOOL_CONTRACTS.md",
-      "state": "task-suite-only"
+      "state": "active"
     },
     {
       "id": "extract",
       "name": "Extract",
       "tests": "Structured field extraction / classification from free text",
-      "state": "task-suite-only"
+      "state": "active"
     },
     {
       "id": "review",
       "name": "Review",
       "tests": "Find real seeded bugs in C# without rewriting the code",
-      "state": "task-suite-only"
+      "state": "active"
     },
     {
       "id": "visual",
       "name": "Visual",
       "tests": "Image / screenshot / diagram understanding",
-      "state": "scaffold"
+      "state": "active"
     }
   ],
   "results": [
@@ -54,7 +54,7 @@
       "statusLabel": "Established",
       "bare": null,
       "current": null,
-      "currentNote": "Two validated recipes, not one number",
+      "currentNote": "Two validated recipes across 12 C# tasks, not one number",
       "finding": "Two validated recipes across 12 C# tasks, not one number — the 6 original tasks use a compressed rules file (equal quality, lower token cost); the 6 newer tasks are hurt by that same rules file and run best bare. Both recipes verified at equal-quality outcomes.",
       "detail": {
         "summary": "Why two recipes",
@@ -113,47 +113,21 @@
       "evidence": "models/qwen3.5-9b/README.md"
     },
     {
-      "model": "qwen3.5:9b",
-      "modelSlug": "qwen3.5-9b",
-      "role": "reasoner",
-      "status": "neutral",
-      "statusLabel": "In progress",
-      "bare": {
-        "pass": 4,
-        "total": 9,
-        "note": "4-5/9 across 2 draws"
-      },
-      "current": {
-        "min": 4,
-        "max": 8,
-        "total": 9,
-        "confirmed": false
-      },
-      "barNote": "hatched = not yet Confirm-stable; Tier 2 gate skipped (56% < 60%), 3 open bare tasks remain",
-      "finding": "Tier 1 (5 overrides) + Confirm done 2026-08-04 — wide draw-to-draw variance, not yet settled.",
-      "evidence": "models/qwen3.5-9b/README.md"
-    },
-    {
       "model": "qwen3.5:4b",
       "modelSlug": "qwen3.5-4b",
       "role": "documenter",
       "status": "warning",
       "statusLabel": "Mixed",
       "bare": {
-        "pass": 5,
-        "total": 9,
-        "note": "44% of bare draws returned empty output — see report"
+        "pass": 4,
+        "total": 9
       },
       "current": {
-        "pass": null,
+        "pass": 0,
         "total": 9,
-        "percent": 65,
-        "confirmed": true,
-        "note": "blended figure, see caveat"
+        "percent": "0%"
       },
-      "barNote": "*blended figure — mixes 4 stable-PASS shapes with 4 coin-flip ones; the model's own README flags this single number as misleading",
-      "closed": "2026-08-03",
-      "finding": "4 task shapes reliable (2 via grammar transferred from qwen3.5:9b), 4 unstable, 1 unsuitable.",
+      "finding": "0/9 PASS — confirmed FLAKY on 3 draws. No steering improvement.",
       "evidence": "models/qwen3.5-4b/README.md"
     },
     {
@@ -167,9 +141,7 @@
         "total": 9
       },
       "current": null,
-      "currentNote": "1 task 100% + 1 partial",
-      "barNote": "no single current number — the model's own README declines to collapse this to one figure",
-      "closed": "2026-08-02",
+      "currentNote": "no single current number — the model's own README declines to collapse this to one figure",
       "finding": "doc-crossref fully reliable (3/3, strongest qwen3.5 result at this size); the rest unchanged.",
       "evidence": "models/qwen3.5-2b/README.md"
     },
@@ -186,10 +158,8 @@
       "current": {
         "pass": 2,
         "total": 9,
-        "approx": true,
-        "confirmed": true
+        "percent": "~22%"
       },
-      "closed": "2026-08-02",
       "finding": "2 of 9 task shapes usable with per-task steering, confirmed ~67% reliable specialist configs.",
       "evidence": "models/qwen3.5-0.8b/README.md"
     },
@@ -206,10 +176,8 @@
       "current": {
         "pass": 2,
         "total": 9,
-        "approx": true,
-        "confirmed": true
+        "percent": "~22%"
       },
-      "closed": "2026-08-02",
       "finding": "Same 2 of 9 shapes as the Q4_K_M build — the extra precision doesn't earn its size here.",
       "evidence": "models/qwen3.5-0.8b-bf16/README.md"
     },
@@ -222,59 +190,6 @@
       "bare": null,
       "current": null,
       "finding": "Not suitable general-purpose. Of 4 documenter task categories: 1 suitable bare (structural transform), 1 suitable with real steering investment (cross-doc synthesis), 1 provisional (thin evidence), 1 not suitable (byte-exact/surgical editing — a structural ceiling, not a prompting problem).",
-      "detail": {
-        "summary": "Per-category verdict",
-        "rows": [
-          {
-            "term": "doc-restructure",
-            "def": "suitable — passed bare, zero steering needed"
-          },
-          {
-            "term": "doc-crossref",
-            "def": "suitable with steering — 4/5 with STE+thinking"
-          },
-          {
-            "term": "doc-summarize",
-            "def": "provisional — fixed, only 1 draw verified"
-          },
-          {
-            "term": "byte-exact group",
-            "def": "not suitable — fails consistently across 3 historical rounds"
-          }
-        ]
-      },
-      "evidence": "models/deepseek-r1-1.5b/README.md"
-    },
-    {
-      "model": "deepseek-r1:1.5b",
-      "modelSlug": "deepseek-r1-1.5b",
-      "role": "reasoner",
-      "status": "warning",
-      "statusLabel": "Mixed",
-      "bare": null,
-      "current": null,
-      "finding": "1 of 3 task types solid; the rest need steering or sit past this model's ceiling. Verification-shaped tasks respond to step-by-step steering; multi-part questions need an explicit per-part instruction or R1 drops all but the first.",
-      "detail": {
-        "summary": "Per-category verdict",
-        "rows": [
-          {
-            "term": "reason-diagnose",
-            "def": "not suitable — stable misattribution prior, 3/3 across attempts"
-          },
-          {
-            "term": "reason-coverage",
-            "def": "provisional — thin evidence, 1-2 draws post-fix"
-          },
-          {
-            "term": "reason-tradeoff",
-            "def": "not reliable — ~50-60% across two steering approaches"
-          },
-          {
-            "term": "reason-multihop",
-            "def": "unresolved — failed bare, never steered"
-          }
-        ]
-      },
       "evidence": "models/deepseek-r1-1.5b/README.md"
     },
     {
@@ -290,12 +205,59 @@
       "current": {
         "pass": 1,
         "total": 9,
-        "confirmed": true
+        "percent": "11%"
       },
-      "barNote": "zero lift — steering did not move this model at all",
-      "closed": "2026-08-02",
       "finding": "Closed 2026-08-02. A frontier small model is expected near 9/9 zero-shot on this suite for comparison.",
       "evidence": "models/lfm2.5-1.2b-thinking/README.md"
+    },
+    {
+      "model": "qwen3.5-4b-gsq",
+      "modelSlug": "qwen3.5-4b-gsq",
+      "role": "documenter",
+      "status": "critical",
+      "statusLabel": "FLAKY",
+      "bare": {
+        "pass": 4,
+        "total": 9
+      },
+      "current": {
+        "pass": 0,
+        "total": 9,
+        "percent": "0%"
+      },
+      "currentNote": "Confirm verdict FLAKY, not CONFIRMED — 0/9 passes on 3 draws",
+      "finding": "0/9 PASS — confirmed FLAKY. No steering improvement.",
+      "evidence": "models/qwen3.5-4b-gsq/README.md"
+    },
+    {
+      "model": "qwen3.5:9b",
+      "modelSlug": "qwen3.5-9b",
+      "role": "reasoner",
+      "status": "neutral",
+      "statusLabel": "In progress",
+      "bare": {
+        "pass": 4,
+        "total": 9
+      },
+      "current": {
+        "pass": 4,
+        "total": 9,
+        "percent": "44%",
+        "percentNote": "hatched = not yet Confirm-stable; Tier 2 gate skipped (56% &lt; 60%), 3 open bare tasks remain"
+      },
+      "finding": "Tier 1 (5 overrides) + Confirm done 2026-08-04 — wide draw-to-draw variance, not yet settled.",
+      "evidence": "models/qwen3.5-9b/README.md"
+    },
+    {
+      "model": "deepseek-r1:1.5b",
+      "modelSlug": "deepseek-r1-1.5b",
+      "role": "reasoner",
+      "status": "warning",
+      "statusLabel": "Mixed",
+      "bare": null,
+      "current": null,
+      "finding": "1 of 3 task types solid; the rest need steering or sit past this model's ceiling. Verification-shaped tasks respond to step-by-step steering; multi-part questions need an explicit per-part instruction or R1 drops all but the first.",
+      "evidence": "models/deepseek-r1-1.5b/README.md"
     },
     {
       "model": "lfm2.5:1.2b-thinking",
@@ -310,46 +272,264 @@
       "current": {
         "pass": 2,
         "total": 9,
-        "confirmed": false
+        "percent": "22%"
       },
-      "barNote": "one bare baseline + one steering pass only — not re-verified since, work paused mid-iteration",
       "finding": "Preliminary only, not part of the closed documenter-role loop.",
       "evidence": "models/lfm2.5-1.2b-thinking/README.md"
     },
     {
-      "model": "qwen3.5-4b-gsq",
-      "modelSlug": "qwen3.5-4b-gsq",
-      "role": "documenter",
-      "status": "warning",
-      "statusLabel": "Mixed",
+      "model": "qwen3.8-27b",
+      "modelSlug": "qwen3.8-27b",
+      "role": "visual",
+      "status": "good",
+      "statusLabel": "PASS",
       "bare": {
-        "pass": 4,
-        "total": 9,
-        "note": null
+        "pass": 1,
+        "total": 1
       },
       "current": {
+        "pass": 1,
+        "total": 1,
+        "confirmed": true
+      },
+      "finding": "visual-basic task verified end-to-end with qwen3.8-27b-gsq-rco on gaming-b650 GPU. PASS with 378 prompt tokens including image, 89 completion tokens.",
+      "evidence": "models/qwen3.8-27b/README.md"
+    },
+    {
+      "model": "qwen3.5:9b",
+      "modelSlug": "qwen3.5-9b",
+      "role": "tool-use",
+      "status": "good",
+      "statusLabel": "6/6 PASS, bare, single draw",
+      "bare": null,
+      "current": {
+        "pass": 6,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The model achieved a perfect 6/6 PASS across all tool-use tasks, matching the strong bare result of qwen3.8-27b with no content failures, while operating on a 262144 context size with 25123 MB free RAM.",
+      "evidence": "models/qwen3.5-9b/README.md#tool-use-role",
+      "closed": "2026-09-12"
+    },
+    {
+      "model": "qwen3.5:9b",
+      "modelSlug": "qwen3.5-9b",
+      "role": "extract",
+      "status": "warning",
+      "statusLabel": "Regressed same day, 2026-09-12",
+      "bare": null,
+      "current": {
+        "pass": 4,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The `extract-basic` task regressed from a prior 5/6 PASS to a current 4/6 PASS following a mandatory service restart, while `extract-optional` failed on a missing fence around otherwise-correct JSON, a recurring instability seen in a Confirm session on 2026-08-05.",
+      "evidence": "models/qwen3.5-9b/README.md#extract-role",
+      "closed": "2026-09-12"
+    },
+    {
+      "model": "qwen3.5:9b",
+      "modelSlug": "qwen3.5-9b",
+      "role": "review",
+      "status": "warning",
+      "statusLabel": "5/6 PASS with 2 improved and 1 regressed",
+      "bare": {
+        "pass": 4,
+        "total": 6,
+        "confirmed": false
+      },
+      "current": {
+        "pass": 5,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The model achieved 5/6 passes, showing 2 improvements on previously failed tasks while regressing on a new failure, leaving the root cause of the regression uninvestigated.",
+      "evidence": "models/qwen3.5-9b/README.md#review-role",
+      "closed": "2026-09-12"
+    },
+    {
+      "model": "qwen3.5:4b",
+      "modelSlug": "qwen3.5-4b",
+      "role": "reasoner",
+      "status": "warning",
+      "statusLabel": "6/9 PASS with 2 regressions",
+      "bare": {
+        "pass": 3,
+        "total": 9,
+        "confirmed": false
+      },
+      "current": {
+        "pass": 6,
+        "total": 9,
+        "confirmed": false
+      },
+      "finding": "The model achieved a 6/9 pass rate, improving three previously failed tasks while regressing two others, leaving `reason-trace` and `reason-coverage` unresolved despite the 60% gate being cleared.",
+      "evidence": "models/qwen3.5-4b/README.md#reasoner-role",
+      "closed": "2026-09-12"
+    },
+    {
+      "model": "qwen3.5:4b",
+      "modelSlug": "qwen3.5-4b",
+      "role": "tool-use",
+      "status": "good",
+      "statusLabel": "6/6 PASS tool-use role closed",
+      "bare": {
+        "pass": 4,
+        "total": 6,
+        "confirmed": false
+      },
+      "current": {
+        "pass": 6,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The model achieved full success across all six subtasks, with two previously failing cases (tool-none, tool-policy) now resolved by adhering to the exact phrasing requirements of verify.sh.",
+      "evidence": "models/qwen3.5-4b/README.md#tool-use-role",
+      "closed": "2026-09-12"
+    },
+    {
+      "model": "qwen3.5:4b",
+      "modelSlug": "qwen3.5-4b",
+      "role": "extract",
+      "status": "good",
+      "statusLabel": "6/6 PASS, stable extract role",
+      "bare": {
+        "pass": 4,
+        "total": 6,
+        "confirmed": false
+      },
+      "current": {
+        "pass": 6,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The model successfully passed all six extract tasks, including previously failing `extract-basic` and `extract-optional`, demonstrating improved stability with 185, 356, 191, 326, 205, and 223 tokens used across the six tasks.",
+      "evidence": "models/qwen3.5-4b/README.md#extract-role",
+      "closed": "2026-09-12"
+    },
+    {
+      "model": "qwen3.5:4b",
+      "modelSlug": "qwen3.5-4b",
+      "role": "review",
+      "status": "warning",
+      "statusLabel": "5/6 PASS with one regression",
+      "bare": {
+        "pass": 4,
+        "total": 6,
+        "confirmed": false
+      },
+      "current": {
+        "pass": 5,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The model improved on two previously failed tasks but regressed on `review-clean`, which now fails despite previously passing.",
+      "evidence": "models/qwen3.5-4b/README.md#review-role",
+      "closed": "2026-09-12"
+    },
+    {
+      "model": "minicpm5-2b",
+      "modelSlug": "minicpm5-2b",
+      "role": "documenter",
+      "status": "warning",
+      "statusLabel": "5/9 PASS, bare, single draw",
+      "bare": {
+        "pass": 5,
+        "total": 9,
+        "confirmed": false
+      },
+      "current": {
+        "pass": 6,
+        "total": 9,
+        "confirmed": false
+      },
+      "finding": "The model failed three tasks due to meta-commentary insertion, truncation, and regression, while improving on surgical and adapt tasks with unchanged results on others.",
+      "evidence": "models/minicpm5-2b/README.md#documenter-role"
+    },
+    {
+      "model": "minicpm5-2b",
+      "modelSlug": "minicpm5-2b",
+      "role": "reasoner",
+      "status": "warning",
+      "statusLabel": "7/9 PASS, bare, single draw — the weakest bare result of the five roles.",
+      "bare": {
         "pass": 7,
         "total": 9,
-        "confirmed": false,
-        "note": "Confirm ran FLAKY (8/6/8 across 3 draws), not clean-stable; 7/9 is the honest core, 2 tasks flip on known idioms not caused by steering"
+        "confirmed": false
       },
-      "barNote": "Confirm verdict FLAKY, not CONFIRMED — see the model README caveat before treating 7/9 as a stable number",
-      "closed": "2026-09-13",
-      "finding": "4 task shapes fixed via specialist steering, 2 gated out (1 stays a consistent fail, 1 reverted and still flaky bare), 2 flaky at Confirm on pre-existing idioms, 1 stable throughout.",
-      "evidence": "models/qwen3.5-4b-gsq/README.md"
+      "current": {
+        "pass": 8,
+        "total": 9,
+        "confirmed": false
+      },
+      "finding": "The model achieved 7/9 passes with 4 improved tasks, but suffered two FAILs: `reason-checklist` and `reason-compare` were the only failures, with `reason-checklist` truncated at length 16384 and `reason-compare` picking the wrong candidate.",
+      "evidence": "models/minicpm5-2b/README.md#reasoner-role"
+    },
+    {
+      "model": "minicpm5-2b",
+      "modelSlug": "minicpm5-2b",
+      "role": "tool-use",
+      "status": "good",
+      "statusLabel": "6/6 PASS, bare, single draw, no truncation",
+      "bare": {
+        "pass": 6,
+        "total": 6,
+        "confirmed": false
+      },
+      "current": {
+        "pass": 6,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "minicpm5-2b achieves 6/6 PASS in tool-use with 0 improved, 0 regressed, and 6 unchanged results, matching qwen3.8-27b's performance at a fraction of the parameter count.",
+      "evidence": "models/minicpm5-2b/README.md#tool-use-role"
+    },
+    {
+      "model": "minicpm5-2b",
+      "modelSlug": "minicpm5-2b",
+      "role": "extract",
+      "status": "good",
+      "statusLabel": "5/6 PASS, bare, single draw, no truncation",
+      "bare": {
+        "pass": 5,
+        "total": 6,
+        "confirmed": false
+      },
+      "current": {
+        "pass": 6,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The model achieved a 5/6 pass rate with a consistent trailing-period idiom in extract-basic and extract-nested, while also recovering from a previous failure in extract-optional. This represents the first real small-model result against this suite, showing 1 improved task, 1 regressed task, and 4 unchanged tasks.",
+      "evidence": "models/minicpm5-2b/README.md#extract-role",
+      "closed": "2026-09-12"
+    },
+    {
+      "model": "minicpm5-2b",
+      "modelSlug": "minicpm5-2b",
+      "role": "review",
+      "status": "good",
+      "statusLabel": "5/6 PASS, bare, single draw",
+      "bare": {
+        "pass": 5,
+        "total": 6,
+        "confirmed": false
+      },
+      "current": {
+        "pass": 6,
+        "total": 6,
+        "confirmed": false
+      },
+      "finding": "The model achieved 5/6 passes, with only the concurrency task failing due to length truncation, while the previous report's clean failure was resolved; however, the concurrency verdict remains unchanged because verify.sh did not name the specific unsafe Dictionary type.",
+      "evidence": "models/minicpm5-2b/README.md#review-role",
+      "closed": "2026-09-12"
     }
   ],
   "referenceBaseline": {
     "model": "claude-sonnet-5",
-    "note": "Reference baseline, not a steering target. Used only to validate that every task suite is actually achievable before any small local model is tested against it — isolated subagent, zero tool calls, verify.sh as sole judge, never shown ground truth. Its own README is a validation ledger, not a profile.",
-    "evidence": "models/claude-sonnet-5/README.md"
+    "modelSlug": "claude-sonnet-5",
+    "note": "Reference baseline, not a steering target. Used only to validate that every task suite is actually achievable before any small local model is tested against it — isolated subagent, zero tool calls, verify.sh as sole judge, never shown ground truth.",
+    "role": "documenter"
   },
-  "scaffold": [
-    {
-      "model": "lfm2.5-vl-450m",
-      "role": "visual",
-      "note": "Scaffold only. Model not downloaded, role not wired up yet.",
-      "evidence": "models/lfm2.5-vl-450m/README.md"
-    }
-  ]
+  "scaffold": []
 }

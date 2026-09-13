@@ -14,8 +14,8 @@ this GPU (4GB VRAM) via an explicit partial `-ngl` offload, tuned to
 | Documenter | ⚠️ Mixed — quality loop closed 2026-08-03, 8 of 9 task shapes stable (3/3 Confirm), 1 unresolved | 5/9 bare → 8/9 stable (89%) | ~89% of an assumed frontier-model ceiling on this specific 9-task suite — see the Final report for reasoning | [Documenter role: final report](#documenter-role-final-report-closed-2026-08-03) |
 | Reasoner | ✅ Closed 2026-09-12 — all 9 task shapes now have a steered config clearing a 60%+ gate; 3 that were chronically-failing bare are fixed | 4-5/9 bare → 8/9 stable + `reason-config-validity` 2/3, `reason-coverage` 2/3 (small samples, real fixes) | Not assessed | [Reasoner role: current status](#reasoner-role-current-status-in-progress) |
 | Tool-use | ✅ Strong bare baseline, 2026-09-12 | 6/6 bare | Matches `qwen3.8-27b`'s own 6/6 | [Tool-use role](#tool-use-role) |
-| Extract | ⚠️ Mixed, 2026-09-12 | 5/6 bare, 1 task unstable even steered (2/4) | Not assessed | [Extract role](#extract-role) |
-| Review | ✅ Steered to 6/6, 2026-09-12 | 4/6 bare → 6/6 steered (small samples) | Not assessed | [Review role](#review-role) |
+| Extract | ⚠️ Mixed, regressed same day 2026-09-12 | 4/6 bare, 2 tasks failing (`extract-optional` unstable even steered at 2/4, `extract-basic` newly regressed) | Not assessed | [Extract role](#extract-role) |
+| Review | ⚠️ Mixed, regressed same day 2026-09-12 | 4/6 bare → 5/6 (`review-offbyone`/`review-concurrency` fixes hold, `review-logic` newly regressed, unresolved) | Not assessed | [Review role](#review-role) |
 
 ## Documenter role: final report (closed 2026-08-03)
 
@@ -344,13 +344,22 @@ own strong bare tool-use result.
 
 ## Extract role
 
-5/6 PASS bare. `extract-optional` failed on a missing fence around
-otherwise-correct JSON. A fencing reminder got 2/4 draws to PASS — below
-the 60% gate, and two different new content failures (a stray quote left
-in, null-valued optional fields emitted) surfaced across those 4 draws.
-Genuinely unstable at this model's required `temperature=1.0` sampling
-profile, same category as `doc-surgical` in the documenter role above —
-not closed, needs a different lever than a prompt reminder.
+**Regressed same day, 2026-09-12** (`reports/report-extract-20260912-124957.md`,
+run right after a mandatory service restart): `extract-basic` newly
+failed, was passing in the prior run the same day
+(`reports/report-extract-20260912-092830.md`). Real result now 4/6 PASS,
+not the 5/6 this section originally reported. That report's own
+Findings/root-cause section was left as a TODO placeholder — the cause
+of `extract-basic`'s regression is not yet investigated.
+
+`extract-optional` failed on a missing fence around otherwise-correct
+JSON, unrelated to the regression above. A fencing reminder got 2/4
+draws to PASS — below the 60% gate, and two different new content
+failures (a stray quote left in, null-valued optional fields emitted)
+surfaced across those 4 draws. Genuinely unstable at this model's
+required `temperature=1.0` sampling profile, same category as
+`doc-surgical` in the documenter role above — not closed, needs a
+different lever than a prompt reminder.
 
 **Cross-session corroboration, found while writing this up**: this
 exact task was already flagged flaky for this exact model on
@@ -374,8 +383,17 @@ recurring property of the task+model pair, not one-off noise.
   type, not a paraphrase — matches the same idiom `minicpm5-2b` hit on
   this identical task.
 
-6/6 with these two overrides applied. Small sample (n=2 each) — worth
-1-2 more draws before calling either fully Confirm-stable.
+Confirmed still holding, same day, in the next full run
+(`reports/report-review-20260912-125025.md`): both overrides show
+`✅ improved` there. Small sample (n=2 each) — worth 1-2 more draws
+before calling either fully Confirm-stable.
+
+**Regressed the same run, unrelated to the two fixes above**:
+`review-logic` newly failed (`❌ regressed`, was passing in the prior
+run the same day). Real current result is 5/6, not 6/6 — the two
+fixes hold, but this is a new, separate, unresolved failure. That
+report's own Findings/root-cause section was left as a TODO
+placeholder — the cause is not yet investigated.
 
 ## Setup
 
