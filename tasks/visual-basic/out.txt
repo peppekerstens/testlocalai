@@ -1,0 +1,3 @@
+Circle, red, top-left
+Square, blue, center
+Triangle, green, bottom-right

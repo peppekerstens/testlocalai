@@ -77,7 +77,7 @@ failure modes, not a re-labeling of another role.
 | Tool-use | `tool-*` | Pick the right MCP tool + exact arguments from this repo's real `docs/TOOL_CONTRACTS.md`; recognize when no tool applies or when several calls are needed | Added 2026-08-02 |
 | Extract | `extract-*` | Structured field extraction / classification from free text into a fixed schema | Added 2026-08-02 |
 | Review | `review-*` | Find real seeded bugs in C# without rewriting the code — opposite skill direction from code-emitter | Added 2026-08-02 |
-| Visual | `visual-*` | Image/screenshot/diagram understanding | **⚠️ Scaffold only — see `models/lfm2.5-vl-450m/README.md`** |
+| Visual | `visual-*` | Image/screenshot/diagram understanding | 1 task (`visual-basic`), real PASS on 2026-09-13 — see that task's `run.sh`. Uses `qwen3.8-27b-gsq-rco` (gaming-b650), not `lfm2.5-vl-450m` (still a scaffold, see `models/lfm2.5-vl-450m/README.md`) |
 
 ## Layout
 

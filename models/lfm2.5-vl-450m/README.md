@@ -1,3 +1,13 @@
+**Update, 2026-09-13**: the Visual role now has one real, passing task
+(`tasks/visual-basic`), but it uses `qwen3.8-27b-gsq-rco` on `gaming-b650`,
+not this model — that model already had a working vision projector
+(`mmproj`) from an unrelated download, so it was the fastest path to a
+real end-to-end proof. Everything below, about `lfm2.5-vl-450m` itself,
+is still true and still open. `tasks/visual-basic/run.sh` bypasses
+`bench/dispatch.sh` entirely (step 5 below, the image-passing plumbing,
+is still not built project-wide) — a real second model plus the plumbing
+in `dispatch.sh` is still real, separate work.
+
 # lfm2.5-vl-450m — ⚠️ SCAFFOLD ONLY, NOT WIRED UP
 
 **Status: placeholder. Nothing in this file has been executed or
