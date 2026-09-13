@@ -24,14 +24,18 @@
 # tasks/visual-basic/run.sh), not through report.sh, so even a
 # vision-capable model still gets a reminder here, not an automatic run.
 #
-# Usage: bash bench/full-test.sh <model> [backend] [port]
+# Usage: bash bench/full-test.sh <model> [backend] [port] [host]
 #   model  : an ALLOWED_MODELS entry in bench/dispatch.sh, e.g. qwen3.5:9b
+#   backend, port, host: passed straight through to report.sh - see that
+#   script's own header for what each backend does (llamacpp/ollama/
+#   litellm) and DISPATCH_HOST's remote-box use, added 2026-09-13.
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-MODEL="${1:?usage: full-test.sh <model> [backend] [port]}"
+MODEL="${1:?usage: full-test.sh <model> [backend] [port] [host]}"
 BACKEND="${2:-llamacpp}"
-PORT="${3:-8080}"
+PORT="${3:-}"
+HOST="${4:-}"
 SLUG="$(echo "$MODEL" | tr ':' '-')"
 
 ROLES=(docs reason tool extract review code)
@@ -49,7 +53,7 @@ for role in "${ROLES[@]}"; do
   echo "======================================================================"
   echo "== $MODEL / $role"
   echo "======================================================================"
-  if ! bash bench/report.sh "$MODEL" "$role" "$BACKEND" "$PORT"; then
+  if ! bash bench/report.sh "$MODEL" "$role" "$BACKEND" "$PORT" "$HOST"; then
     ERRORED+=("$role")
   fi
 done

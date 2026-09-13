@@ -307,7 +307,7 @@
         "total": 6,
         "confirmed": false
       },
-      "finding": "The model achieved a perfect 6/6 PASS across all tool-use tasks, matching the strong bare result of qwen3.8-27b with no content failures, while operating on a 262144 context size with 25123 MB free RAM.",
+      "finding": "The model achieved a perfect 6/6 pass rate on all tool-use tasks, matching qwen3.8-27b's strong bare result with no failures across the 6 tasks, requiring only a tag-mismatch quirk fix for the host's llama-server.",
       "evidence": "models/qwen3.5-9b/README.md#tool-use-role",
       "closed": "2026-09-12"
     },

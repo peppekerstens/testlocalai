@@ -10,8 +10,18 @@
 #
 # Sends the prompt to the configured backend (non-streaming).
 # Backend is selected by the DISPATCH_BACKEND env var:
-#   llamacpp (default) - POST /v1/chat/completions on localhost:${LLAMACPP_PORT:-8080}
-#   ollama             - POST /api/generate on localhost:${OLLAMA_PORT:-11434}
+#   llamacpp (default) - POST /v1/chat/completions, direct to a llama-server
+#   ollama              - POST /api/generate, direct to an Ollama server
+#   litellm             - POST /v1/chat/completions through ai-stack's
+#                         litellm-router (local-first with cloud fallback;
+#                         see the litellm branch further down for the real
+#                         cache/timings trade-offs this backend has)
+# Host defaults to localhost for llamacpp/ollama (override with
+# DISPATCH_HOST=<ip>, added 2026-09-13 to reach a remote box like legion-t5
+# or gaming-b650 directly, with no SSH detour) and to the router's own
+# address for litellm (override with DISPATCH_HOST or LITELLM_HOST). Ports:
+# LLAMACPP_PORT (default 8080), OLLAMA_PORT (default 11434), LITELLM_PORT
+# (default 4000).
 # llama-server reports prompt/output token counts in its response; when used,
 # a sidecar "<output-file>.tokens.json" is written with the counts.
 #
@@ -67,29 +77,76 @@ OUT_FILE="$3"
 MODE="${4:-text}"
 BACKEND="${DISPATCH_BACKEND:-llamacpp}"
 
-# Hard enforcement: only these models may ever be dispatched.
+# Hard enforcement: only these models may ever be dispatched to
+# llamacpp/ollama directly. Does NOT apply to backend=litellm - the real
+# gate there is litellm-router's own config.yaml (an unconfigured
+# model_name just 404s), and litellm's model_name space (e.g.
+# "qwen3.5-9b-local") is a different set of strings than this list's raw
+# model tags (e.g. "qwen3.5:9b") - the same model reached two ways under
+# two different names, not two models.
 ALLOWED_MODELS=(
   "qwen2.5-coder:1.5b" "deepseek-r1:1.5b"
   "lfm2.5:1.2b-thinking" "qwen3.5:0.8b" "qwen3.5:2b" "qwen3.5:0.8b-bf16"
   "qwen3.5:4b" "qwen3.5:9b" "minicpm5:2b" "qwen3.5-4b-gsq"
 )
-MODEL_OK=0
-for m in "${ALLOWED_MODELS[@]}"; do
-  if [ "$MODEL" = "$m" ]; then MODEL_OK=1; break; fi
-done
-if [ "$MODEL_OK" -ne 1 ]; then
-  echo "ERROR: model '$MODEL' is not allowed. Only: ${ALLOWED_MODELS[*]}" >&2
-  exit 3
+if [ "$BACKEND" != "litellm" ]; then
+  MODEL_OK=0
+  for m in "${ALLOWED_MODELS[@]}"; do
+    if [ "$MODEL" = "$m" ]; then MODEL_OK=1; break; fi
+  done
+  if [ "$MODEL_OK" -ne 1 ]; then
+    echo "ERROR: model '$MODEL' is not allowed. Only: ${ALLOWED_MODELS[*]}" >&2
+    exit 3
+  fi
 fi
 
+# DISPATCH_HOST: added 2026-09-13 so llamacpp/ollama can reach a remote
+# box directly (e.g. legion-t5, gaming-b650) instead of only ever
+# localhost - no change for existing callers, since it defaults to
+# localhost exactly as before. litellm has its own separate default
+# (the router's real address), set below, since "localhost" is never
+# right for it in this environment.
+DISPATCH_HOST_DEFAULT="localhost"
 PORT="${OLLAMA_PORT:-11434}"
 LLAMACPP_PORT="${LLAMACPP_PORT:-8080}"
+LITELLM_MASTER_KEY=""
 if [ "$BACKEND" = "llamacpp" ]; then
+  HOST="${DISPATCH_HOST:-$DISPATCH_HOST_DEFAULT}"
   # /v1/chat/completions applies the model's ChatML template, so qwen emits
   # <|im_end|> and stops naturally (raw /completion would ramble without EOS).
-  URL="http://localhost:${LLAMACPP_PORT}/v1/chat/completions"
+  URL="http://${HOST}:${LLAMACPP_PORT}/v1/chat/completions"
+elif [ "$BACKEND" = "litellm" ]; then
+  # Routes through ai-stack/litellm-router instead of a bare llama-server -
+  # local-first with cloud fallback, whichever this model_name's config.yaml
+  # entry resolves to. Real loss found live 2026-09-13: the router's Redis
+  # response cache returns a byte-identical cached answer (and cached
+  # timings) for a repeat of the exact same model+messages+params, which
+  # would silently turn every 2nd/3rd draw of this project's own 3-draw
+  # Confirm methodology into a replay of draw 1, not a real new run. Fixed
+  # below by disabling cache on every request this script sends - a
+  # per-request override, not a change to the router's own production
+  # cache setting (see litellm-router/config.yaml's own cache: True).
+  #
+  # Real gap, not fixed: a request that actually falls through to the
+  # cloud fallback tier gets no "timings" field at all (that object is a
+  # llama.cpp-specific extension a hosted OpenAI-compatible endpoint does
+  # not return) - tok/s is simply absent for those responses, not wrong.
+  HOST="${DISPATCH_HOST:-${LITELLM_HOST:-192.168.2.183}}"
+  LITELLM_PORT="${LITELLM_PORT:-4000}"
+  URL="http://${HOST}:${LITELLM_PORT}/v1/chat/completions"
+  LITELLM_ENV_FILE="${LITELLM_ENV_FILE:-$HOME/github/ai-stack/litellm-router/.env}"
+  if [ ! -f "$LITELLM_ENV_FILE" ]; then
+    echo "ERROR: $LITELLM_ENV_FILE not found - set LITELLM_ENV_FILE to point at ai-stack/litellm-router/.env" >&2
+    exit 6
+  fi
+  LITELLM_MASTER_KEY="$(grep '^LITELLM_MASTER_KEY=' "$LITELLM_ENV_FILE" | head -1 | cut -d= -f2-)"
+  if [ -z "$LITELLM_MASTER_KEY" ]; then
+    echo "ERROR: LITELLM_MASTER_KEY not found in $LITELLM_ENV_FILE" >&2
+    exit 6
+  fi
 else
-  URL="http://localhost:${PORT}/api/generate"
+  HOST="${DISPATCH_HOST:-$DISPATCH_HOST_DEFAULT}"
+  URL="http://${HOST}:${PORT}/api/generate"
 fi
 
 PROMPT_SIZE=$(wc -c < "$PROMPT_FILE")
@@ -124,12 +181,19 @@ PRESENCE_PENALTY="${DISPATCH_PRESENCE_PENALTY:-}"
 ENABLE_THINKING="${DISPATCH_ENABLE_THINKING:-}"
 GRAMMAR_FILE="${DISPATCH_GRAMMAR_FILE:-}"
 
-python3 - "$MODEL" "$PROMPT_FILE" "$MODE" "$URL" "$BACKEND" "$OUT_FILE" "$CHECK_MODEL" "$NOTHINK" "$TEMPERATURE" "$TOP_P" "$TOP_K" "$MIN_P" "$PRESENCE_PENALTY" "$ENABLE_THINKING" "$GRAMMAR_FILE" <<'PY' > "$OUT_FILE"
+python3 - "$MODEL" "$PROMPT_FILE" "$MODE" "$URL" "$BACKEND" "$OUT_FILE" "$CHECK_MODEL" "$NOTHINK" "$TEMPERATURE" "$TOP_P" "$TOP_K" "$MIN_P" "$PRESENCE_PENALTY" "$ENABLE_THINKING" "$GRAMMAR_FILE" "$LITELLM_MASTER_KEY" <<'PY' > "$OUT_FILE"
 import json, re, sys, urllib.request
 
 (model, prompt_file, mode, url, backend, out_file, check_model, nothink,
  temperature, top_p, top_k, min_p, presence_penalty, enable_thinking,
- grammar_file) = sys.argv[1:16]
+ grammar_file, litellm_master_key) = sys.argv[1:17]
+# litellm's response shape mirrors llama-server's own OpenAI-compatible
+# shape exactly (choices[0].message, timings, usage) - checked live
+# 2026-09-13, litellm passes the backend's own "timings" object through
+# unchanged. Treated the same everywhere below except request headers
+# (needs the router's own Authorization) and the cache override.
+openai_shaped = backend in ("llamacpp", "litellm")
+auth_headers = {"Authorization": f"Bearer {litellm_master_key}"} if backend == "litellm" else {}
 with open(prompt_file, encoding="utf-8") as f:
     prompt = f.read()
 grammar = None
@@ -139,16 +203,17 @@ if grammar_file:
 
 
 def check_loaded_model():
-    if backend == "llamacpp":
+    if openai_shaped:
         check_url = url.rsplit("/v1/chat/completions", 1)[0] + "/v1/models"
         strict = True
     else:
         check_url = url.rsplit("/api/generate", 1)[0] + "/api/ps"
         strict = False
     try:
-        with urllib.request.urlopen(check_url, timeout=5) as resp:
+        check_req = urllib.request.Request(check_url, headers=auth_headers)
+        with urllib.request.urlopen(check_req, timeout=5) as resp:
             data = json.load(resp)
-        if backend == "llamacpp":
+        if openai_shaped:
             # llama-server can serve one model under several --alias names.
             # /v1/models reports one of them as "id" and the rest under
             # "aliases" — which one lands in "id" is not the first alias
@@ -156,7 +221,11 @@ def check_loaded_model():
             # server's own choice). Checking "id" alone false-failed every
             # dispatch to a model whose id happened to differ from the tag
             # passed here, even though the server was serving that exact
-            # tag correctly under an alias. Check both.
+            # tag correctly under an alias. Check both. litellm's own
+            # /v1/models has no "aliases" key at all (checked live
+            # 2026-09-13) - .get("aliases") or [] just contributes nothing
+            # there, which is correct: litellm's model_name IS what you
+            # request, "id" alone is the whole answer for that backend.
             ids = []
             for m in data.get("data", []):
                 if m.get("id"):
@@ -223,7 +292,7 @@ if nothink == "1":
     sys.stdout.write(response)
     sys.exit(0)
 
-if backend == "llamacpp":
+if openai_shaped:
     body_dict = {
         "model": model,
         "messages": [{"role": "user", "content": prompt}],
@@ -243,6 +312,11 @@ if backend == "llamacpp":
         body_dict["chat_template_kwargs"] = {"enable_thinking": enable_thinking == "true"}
     if grammar:
         body_dict["grammar"] = grammar
+    if backend == "litellm":
+        # Per-request override, not a change to the router's own
+        # production cache:True setting - see the litellm branch above
+        # for why this must always be set for this backend.
+        body_dict["cache"] = {"no-cache": True}
     body = json.dumps(body_dict)
     if mode == "json":
         body = json.loads(body)
@@ -261,29 +335,37 @@ else:
         body = json.dumps(body)
 
 req = urllib.request.Request(
-    url, data=body.encode(), headers={"Content-Type": "application/json"}
+    url, data=body.encode(), headers={"Content-Type": "application/json", **auth_headers}
 )
 with urllib.request.urlopen(req, timeout=1800) as resp:
     data = json.load(resp)
 
-choice = data["choices"][0] if backend == "llamacpp" else None
+choice = data["choices"][0] if openai_shaped else None
 message = choice["message"] if choice else None
-response = message["content"] if backend == "llamacpp" else data["response"]
+response = message["content"] if openai_shaped else data["response"]
 # Reasoning models (e.g. DeepSeek-R1 via llama-server) may return the
 # chain-of-thought in a separate `reasoning_content` field, distinct from
 # `content` (the actual answer). If generation is truncated by the
 # server's context window while still inside that reasoning phase,
 # `content` is legitimately empty — not a model failure, a sizing bug.
 # Surface this immediately instead of silently shipping an empty output.
-reasoning_content = (message or {}).get("reasoning_content") if backend == "llamacpp" else None
+reasoning_content = (message or {}).get("reasoning_content") if openai_shaped else None
 finish_reason = choice.get("finish_reason") if choice else None
 
-if backend == "llamacpp":
+if openai_shaped:
     # llama-server includes a "timings" object on every non-streamed
     # response by default (no extra request flag needed) — real
     # generation speed, not estimated from wall-clock time here (which
     # would also count network/queue time). Added 2026-09-12: this data
     # existed in every response all along but was previously discarded.
+    # litellm passes this same object through unchanged when a local
+    # backend actually serves the request (checked live 2026-09-13) - but
+    # a request that falls through to a cloud fallback tier gets no
+    # "timings" at all (hosted OpenAI-compatible endpoints don't have
+    # this llama.cpp-specific field), so both tok/s fields below come
+    # back None for those responses. Not a bug - there is nothing to
+    # report for a call this script's own dispatch never actually ran
+    # against a llama.cpp backend.
     timings = data.get("timings") or {}
     tokens = {
         "prompt_tokens": data.get("usage", {}).get("prompt_tokens"),

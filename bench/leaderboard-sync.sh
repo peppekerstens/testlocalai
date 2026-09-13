@@ -7,11 +7,14 @@
 #      for this role: status emoji, statusLabel, bare/current fractions,
 #      closed date, the evidence anchor. Pure table parsing - the numbers
 #      that matter never touch a model.
-#   2. One litellm-router call (default: qwen3.5-9b-local - override with
-#      LEADERBOARD_SYNC_MODEL). Given ONLY the role's own README subsection
-#      and its latest report file, asked for exactly two things: a short
-#      statusLabel and a one-paragraph finding. Told which numbers are
-#      already known and to introduce no others.
+#   2. One dispatch.sh call, DISPATCH_BACKEND=litellm (default model:
+#      qwen3.5-9b-local - override with LEADERBOARD_SYNC_MODEL). Given
+#      ONLY the role's own README subsection and its latest report file,
+#      asked for exactly two things: a short statusLabel and a
+#      one-paragraph finding. Told which numbers are already known and
+#      to introduce no others. Goes through dispatch.sh, not a direct
+#      curl, so the router's auth and per-request cache-disable (see
+#      dispatch.sh's litellm branch) live in one place project-wide.
 #   3. Script only. Checks every number in the model's `finding` text
 #      against the numbers step 1 already extracted (plus the closed
 #      date). Any number that doesn't match stops the whole run before
@@ -40,8 +43,10 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 SLUG="${1:?usage: leaderboard-sync.sh <model-slug> <role-id>}"
 ROLE="${2:?usage: leaderboard-sync.sh <model-slug> <role-id>}"
 README="models/$SLUG/README.md"
+# Which model does the write in step 2, and where - passed straight to
+# dispatch.sh (DISPATCH_HOST/LITELLM_HOST/LITELLM_PORT override the
+# router's address the same way as everywhere else in this project).
 LITELLM_MODEL="${LEADERBOARD_SYNC_MODEL:-qwen3.5-9b-local}"
-LITELLM_URL="${LEADERBOARD_SYNC_URL:-http://192.168.2.183:4000/v1/chat/completions}"
 
 [ -f "$README" ] || { echo "ERROR: $README not found" >&2; exit 1; }
 
@@ -232,27 +237,21 @@ FINDING: <one paragraph, 2-3 sentences, the headline claim for this role, using 
 """)
 PY
 
-# litellm-router needs its master key - same .env every other ai-stack
-# script reads (see ai-stack/litellm-router/render-env.sh).
-LITELLM_ENV="${LEADERBOARD_SYNC_ENV:-$HOME/github/ai-stack/litellm-router/.env}"
-[ -f "$LITELLM_ENV" ] || { echo "ERROR: $LITELLM_ENV not found - set LEADERBOARD_SYNC_ENV" >&2; exit 1; }
-set -a; source "$LITELLM_ENV"; set +a
-
-RESPONSE=$(curl -s -m 120 "$LITELLM_URL" -H "Authorization: Bearer $LITELLM_MASTER_KEY" -H 'Content-Type: application/json' \
-  -d "$(python3 -c "import json,sys; print(json.dumps({'model': '$LITELLM_MODEL', 'messages': [{'role': 'user', 'content': open('$PROMPT_FILE', encoding='utf-8').read()}], 'temperature': 0.2, 'max_tokens': 300, 'reasoning_effort': 'none'}))")")
+# Calls dispatch.sh (DISPATCH_BACKEND=litellm) instead of curling the
+# router directly - one dispatch mechanism for the whole project, not a
+# second copy of its auth/cache handling here. dispatch.sh already
+# reads litellm-router's master key from ai-stack's own .env and, for
+# this backend, always disables the response cache per-request (a real
+# bug this exact script's design surfaced 2026-09-13 - see dispatch.sh's
+# litellm branch for why that matters here).
+DISPATCH_OUT=$(mktemp)
+DISPATCH_BACKEND=litellm DISPATCH_TEMPERATURE=0.2 DISPATCH_CHECK_MODEL=0 \
+  bash "$(dirname "${BASH_SOURCE[0]}")/dispatch.sh" "$LITELLM_MODEL" "$PROMPT_FILE" "$DISPATCH_OUT"
 rm -f "$PROMPT_FILE"
+MODEL_TEXT=$(cat "$DISPATCH_OUT")
+rm -f "$DISPATCH_OUT" "$DISPATCH_OUT.tokens.json"
 
-MODEL_TEXT=$(echo "$RESPONSE" | python3 -c "
-import json, sys
-try:
-    d = json.load(sys.stdin)
-    print(d['choices'][0]['message']['content'])
-except Exception as e:
-    print(f'ERROR: bad response from $LITELLM_MODEL: {e}', file=sys.stderr)
-    sys.exit(1)
-")
-
-echo "-> step 2 ($LITELLM_MODEL): got a draft"
+echo "-> step 2 ($LITELLM_MODEL, via dispatch.sh): got a draft"
 
 # --- Step 3: validate, then write, no other path to a written entry ----
 python3 - "$EXTRACT_JSON" "$MODEL_TEXT" "$SLUG" "$ROLE" <<'PY'

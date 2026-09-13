@@ -12,7 +12,7 @@
 # with "Findings" / "Suggested next steps" sections left as an explicit
 # TODO placeholder rather than faking analysis the script didn't do.
 #
-# Usage: bash bench/report.sh <model> <role> [backend] [port]
+# Usage: bash bench/report.sh <model> <role> [backend] [port] [host]
 #   model   : qwen2.5-coder:1.5b | deepseek-r1:1.5b | ... (required)
 #   role    : docs | reason | tool | extract | review | code (required —
 #             see pure-run.sh's --test for what each covers). `code` runs
@@ -21,17 +21,25 @@
 #             produces (see pure-run.sh) - everything below this point
 #             (results table, diff, token counts) works identically
 #             regardless of which role produced the RESULT lines.
-#   backend : llamacpp (default) | ollama
-#   port    : LLAMACPP_PORT override (default 8080)
+#   backend : llamacpp (default) | ollama | litellm — see dispatch.sh's
+#             own header for what each does and, for litellm, the real
+#             cache/timings trade-offs it carries.
+#   port    : LLAMACPP_PORT/OLLAMA_PORT/LITELLM_PORT override, matched to
+#             whichever backend above (default per dispatch.sh)
+#   host    : DISPATCH_HOST override (default localhost for llamacpp/
+#             ollama, the router's own address for litellm) — added
+#             2026-09-13 to reach a remote box (legion-t5, gaming-b650)
+#             directly, with no SSH detour needed
 set -euo pipefail
 
 SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
 ORCH_DIR="$(cd "$SELF_DIR/.." && pwd)"
 
-MODEL="${1:?usage: report.sh <model> <role> [backend] [port]}"
-ROLE="${2:?usage: report.sh <model> <role> [backend] [port]}"
+MODEL="${1:?usage: report.sh <model> <role> [backend] [port] [host]}"
+ROLE="${2:?usage: report.sh <model> <role> [backend] [port] [host]}"
 BACKEND="${3:-llamacpp}"
-PORT="${4:-8080}"
+PORT="${4:-}"
+HOST="${5:-}"
 
 case "$ROLE" in
   docs|reason|tool|extract|review|code) ;;
@@ -91,7 +99,16 @@ echo "==> pre-run free VRAM: ${FREE_VRAM_MB} MB, free RAM (available): ${FREE_RA
 echo "==> hardware: ${HW_LABEL}" >&2
 
 echo "==> running pure-run.sh: model=$MODEL role=$ROLE backend=$BACKEND port=$PORT" >&2
-RESULTS="$(DISPATCH_BACKEND="$BACKEND" LLAMACPP_PORT="$PORT" bash "$SELF_DIR/pure-run.sh" "$MODEL" --test "$ROLE" 2>&1 | grep '^RESULT ')"
+# PORT maps to the port env var the chosen backend actually reads -
+# passing it as LLAMACPP_PORT unconditionally (the old behavior) silently
+# did nothing for backend=ollama/litellm. Empty PORT/HOST mean "let
+# dispatch.sh use its own per-backend default", not "force 8080".
+case "$BACKEND" in
+  ollama)  PORT_VAR="OLLAMA_PORT" ;;
+  litellm) PORT_VAR="LITELLM_PORT" ;;
+  *)       PORT_VAR="LLAMACPP_PORT" ;;
+esac
+RESULTS="$(env DISPATCH_BACKEND="$BACKEND" DISPATCH_HOST="$HOST" ${PORT:+"$PORT_VAR=$PORT"} bash "$SELF_DIR/pure-run.sh" "$MODEL" --test "$ROLE" 2>&1 | grep '^RESULT ')"
 
 if [ -z "$RESULTS" ]; then
   echo "ERROR: pure-run.sh produced no RESULT lines — check it ran correctly" >&2

@@ -78,7 +78,12 @@
 set -uo pipefail
 
 SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
-export DISPATCH_BACKEND=llamacpp
+# Real bug fixed 2026-09-13: this unconditionally forced llamacpp,
+# silently overriding any DISPATCH_BACKEND the caller (report.sh,
+# full-test.sh) had already set - ollama and the new litellm backend
+# were both unreachable through this script until now, even though
+# dispatch.sh itself supported them fine. Default only when unset.
+export DISPATCH_BACKEND="${DISPATCH_BACKEND:-llamacpp}"
 export LLAMACPP_PORT="${LLAMACPP_PORT:-8080}"
 
 TMP_DIR="$SELF_DIR/tmp"
