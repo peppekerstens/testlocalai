@@ -26,6 +26,7 @@ persist it" rule) — this index alone does not update the dashboard.
 | [`qwen3.5-2b`](qwen3.5-2b/) | documenter | ⚠️ Mixed — quality loop closed 2026-08-02, `doc-crossref` fully reliable (3/3, strongest qwen3.5 result), rest unsuitable | `qwen3.5-2b/README.md` |
 | [`qwen3.5-4b`](qwen3.5-4b/) | documenter | ⚠️ Mixed — quality loop closed 2026-08-03, 4 stable-PASS task shapes (2 via grammar transferred from `qwen3.5-9b`), 4 genuinely unstable, 1 unsuitable (cross-model confirmed) | `qwen3.5-4b/README.md` |
 | [`qwen3.5-9b`](qwen3.5-9b/) | documenter | ⚠️ Mixed — quality loop closed 2026-08-03, 8 of 9 task shapes stable (3/3 Confirm, ~89% of an assumed frontier ceiling), `doc-surgical` genuinely unresolved (best qwen3.5-family result of the session) | `qwen3.5-9b/README.md` |
+| [`qwen3.5-4b-gsq`](qwen3.5-4b-gsq/) | documenter | 🔬 Quality loop in progress, started 2026-09-13 | `qwen3.5-4b-gsq/README.md` |
 | [`qwen3.8-27b`](qwen3.8-27b/) | documenter | 🔬 Phase 1 only — 9/9 bare, single draw, no steering needed (unlike every smaller model above) | `qwen3.8-27b/README.md` |
 | [`qwen3.8-27b`](qwen3.8-27b/) | tool-use | 🔬 Phase 1 only — 6/6 bare, single draw. First real small-model result against this suite | `qwen3.8-27b/README.md` |
 | [`qwen3.8-27b`](qwen3.8-27b/) | review | 🔬 Phase 1 only — 6/6 bare, single draw | `qwen3.8-27b/README.md` |
