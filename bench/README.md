@@ -79,7 +79,35 @@ hard fail on mismatch; `GET /api/ps` for ollama, soft warning) — so running
 instead of silently talking to the wrong model. Skip the check with
 `DISPATCH_CHECK_MODEL=0` if needed.
 
-## Running
+## Running a full test of a model
+
+```bash
+bash bench/full-test.sh qwen3.5:9b
+```
+
+Runs every role a model can technically attempt: `docs`, `reason`, `tool`,
+`extract`, `review`, and `code` — **`code` (code-emitter) included by
+default.** Excluding it from a "full test" was an observed habit, not a
+rule (2026-09-13) — `report.sh` already runs it as role `code` through
+the exact same interface as every other role. A model may score badly on
+a role; that is a real result, not grounds to leave it out of the run.
+
+The only role skipped by default is `visual`, and only because it needs
+a real capability most models lack — a vision-trained model plus an
+`mmproj` vision projector, not something every LLM can even attempt.
+Marked per model via an empty `models/<model-slug>/vision-capable` file
+(presence = capable, same one-file-no-schema convention as
+`ALLOWED_MODELS` onboarding in `templates/new-model/README.md`). No
+model in this repo carries that marker yet — `visual` is dispatched
+per-model by hand today (`tasks/visual-basic/run.sh` is the current
+one), not through `report.sh`, so `full-test.sh` prints a reminder
+instead of running it even for a marked model.
+
+**The rule, stated plainly: exclude a role only when a model cannot
+technically produce output for it at all. Never exclude a role because
+it usually fails, takes longer, or was forgotten last time.**
+
+## Running one role at a time
 
 ```bash
 # baseline (no rules) — one code task at a time:
