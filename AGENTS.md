@@ -11,7 +11,7 @@ belongs in `models/<model>/README.md` + `models/<model>/rules/`.
 ## Scoping language is literal
 
 A named subset ("the doc tests", "just tool-use") is an exact filter,
-not a hint. `bench/pure-run.sh` defaults to the 18-task doc+reason
+not a hint. `bench/pure-run.sh` defaults to the 20-task doc+reason
 suite; scope explicitly:
 
 ```bash

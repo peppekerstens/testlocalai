@@ -340,3 +340,54 @@ confirms the suite isn't just rewarding "always report a bug" — the model
 correctly returned an empty `bugs` array on the one snippet with no real
 defect. Every task's `SPEC.md`/`expected.md` pair was also control-checked
 directly (`expected.md`→PASS, empty→FAIL) before the blind run.
+
+## 10th-task extension: every role brought to 10 tasks (2026-09-15, model: claude-sonnet-5)
+
+`doc-*` and `reason-*` had 9 tasks each; `tool-*`, `extract-*`, and
+`review-*` had 6 each. 14 new tasks were added — 1 to `doc-*`, 1 to
+`reason-*`, 4 each to `tool-*`/`extract-*`/`review-*` — every one harder
+than the tasks that already existed in its role, grounded in real
+research (see `../../bench/README.md`'s "10th-task extension" section
+for the archetype/grounding table).
+
+Same purity protocol as every extension above: a fresh, isolated
+subagent (zero tool calls, confirmed), `SPEC.md` only, `verify.sh` —
+never shown to the subagent — as sole judge. Two tasks
+(`tool-clarify`/`tool-chain` and `tool-typecoerce`/`tool-conflict`,
+`extract-numeric`/`extract-conflict` and `extract-noisy`/`extract-invalid`,
+`review-dispose`/`review-swallow` and `review-multi`/`review-decoy`)
+were paired two-per-subagent-call to conserve calls; each pair still ran
+as one blind draw with no cross-task context beyond the two prompts
+given in the same call, and neither `expected.md` nor `verify.sh` was
+ever shown.
+
+| task | verdict |
+|---|---|
+| doc-audience | **PASS** |
+| reason-priority | **PASS** |
+| tool-clarify | **PASS** |
+| tool-chain | **PASS** |
+| tool-typecoerce | **PASS** |
+| tool-conflict | **PASS** |
+| extract-numeric | **PASS** |
+| extract-conflict | **PASS** |
+| extract-noisy | **PASS** |
+| extract-invalid | **PASS** |
+| review-dispose | **PASS** |
+| review-swallow | **PASS** |
+| review-multi | **PASS** |
+| review-decoy | **PASS** |
+
+**Result: 14/14 PASS, first blind draw, no `verify.sh` fixes needed.**
+Two tasks are worth calling out directly: `review-decoy` (a harder
+second negative control, reusing `review-concurrency`'s exact "plain
+Dictionary behind a static field" shape as false-positive bait, with a
+stated single-worker guarantee that makes it genuinely safe) correctly
+returned `{ "bugs": [] }` and explicitly reasoned about the stated
+guarantee rather than pattern-matching the shape — the trap this task
+targets. `reason-priority` correctly ranked the calm, technical Issue B
+(a real cross-session privacy leak, no workaround) above the alarmist
+Issue A (a single-company error with a workaround) — the surface-
+urgency-vs-actual-impact trap this task targets. Every task's
+`expected.md` was also control-checked directly (`expected.md` → PASS,
+empty → FAIL) before the blind run, same as every task in this suite.

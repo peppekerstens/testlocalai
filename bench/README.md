@@ -332,3 +332,59 @@ not guessed:
 See `../README.md`'s "Roles" table for status of each, and
 `../models/claude-sonnet-5/README.md`'s "Tool-use extension" section for
 the first role's blind-subagent validation record.
+
+## 10th-task extension: every role brought to 10 tasks (2026-09-15)
+
+`doc-*` and `reason-*` had 9 tasks each; `tool-*`, `extract-*`, and
+`review-*` had 6 each. This pass adds one new, harder task to `doc-*` and
+`reason-*`, and 4 new, harder tasks to each of `tool-*`, `extract-*`, and
+`review-*` — 14 new tasks total, every role now at 10. Each is grounded
+in real usage-pattern or benchmark research, not invented, the same
+standard as every prior extension in this file.
+
+| task | archetype | grounding |
+|---|---|---|
+| doc-audience | audience simplification under fact-preservation pressure (new archetype — `doc-restructure` only changes format, not reading level) | Simplified Technical English / plain-language readability research (ASD-STE100); text-simplification faithfulness literature (SARI-metric evaluation) |
+| reason-priority | 3-way severity-ranked incident triage, surface-urgency-vs-actual-impact trap (same trap pattern as `extract-classify`) | real incident-severity/triage frameworks (SRE-style severity classification) |
+| tool-clarify | missing required argument value — recognize and ask, don't invent | API-Bank / Berkeley Function-Calling Leaderboard (BFCL) missing-parameter category |
+| tool-chain | sequentially dependent 2-call chain (`tool-multi`'s calls are independent) | BFCL multi-step/dependent-call category |
+| tool-typecoerce | argument type/format normalization (`#4,521` → JSON number `4521`) | BFCL argument-type-fidelity findings |
+| tool-conflict | compound failure diagnosis — combines `tool-none` + `tool-clarify` in one answer (hardest tool task) | same BFCL/API-Bank sources above |
+| extract-numeric | prose/currency numeric normalization | numeric-normalization research in information-extraction benchmarks |
+| extract-conflict | temporal correction — extract the corrected value, not the first mention | fact-updating/temporal-consistency research in information extraction |
+| extract-noisy | semi-structured (log-line) source format, not prose | real-world format-variation robustness, same practical grounding as this project's own log-based fixtures |
+| extract-invalid | out-of-schema enum value → defined sentinel, not force-fit (hardest extract task) | mirrors `extract-ambiguous`'s "resist inventing a value" skill for an out-of-domain value |
+| review-dispose | `IDisposable` resource leak (no `using`/`try`-`finally`) | SWE-Sharp-Bench real-world C# bug categories, the same source cited for the `code-*` suite |
+| review-swallow | `catch (Exception)` swallows the real error, silently wrong not crashing | SWE-Sharp-Bench real-world C# bug categories |
+| review-multi | two distinct real bugs in one snippet, must find both | tests exhaustiveness, not just detection |
+| review-decoy | second negative control — reuses `review-concurrency`'s exact bug shape as false-positive bait, but a stated single-worker guarantee makes it safe (hardest review task) | pattern-matching-resistance, the mirror failure mode of `review-clean`'s check |
+
+Each was validated with this project's own purity protocol: a fresh,
+isolated subagent (zero tool calls, blind to `expected.md`/`verify.sh`)
+got only the task's `SPEC.md`, scored by `verify.sh` alone.
+
+| task | verdict |
+|---|---|
+| doc-audience | **PASS** |
+| reason-priority | **PASS** |
+| tool-clarify | **PASS** |
+| tool-chain | **PASS** |
+| tool-typecoerce | **PASS** |
+| tool-conflict | **PASS** |
+| extract-numeric | **PASS** |
+| extract-conflict | **PASS** |
+| extract-noisy | **PASS** |
+| extract-invalid | **PASS** |
+| review-dispose | **PASS** |
+| review-swallow | **PASS** |
+| review-multi | **PASS** |
+| review-decoy | **PASS** |
+
+**Result: 14/14 PASS, first blind draw, no `verify.sh` fixes needed.**
+Every task's `expected.md`/reference answer was also control-checked
+directly (`expected.md` → PASS, empty file → FAIL) before the blind run,
+same as every task in this suite — see
+`../models/claude-sonnet-5/README.md`'s "10th-task extension" section
+for the full scorecard and blind-draw transcripts. `bench/pure-run.sh`'s
+`DOC_TASKS`/`REASON_TASKS`/`TOOL_TASKS`/`EXTRACT_TASKS`/`REVIEW_TASKS`
+variables were updated to include all 14 new task names.
