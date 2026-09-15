@@ -9,7 +9,10 @@
       "Read(//home/peppe/llama/**)",
       "Read(//tmp/**)",
       "Edit",
-      "Write"
+      "Write",
+      "mcp__hindsight__recall",
+      "mcp__hindsight__retain",
+      "mcp__hindsight__sync_retain"
     ],
     "deny": [
       "Bash(git push --force*)",

@@ -57,6 +57,10 @@ SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ORCH_DIR="$(cd "$SELF_DIR/.." && pwd)"
 cd "$ORCH_DIR"
 
+# Captured before any commit_if_changed call, so the end-of-run check
+# can tell whether this invocation actually changed anything.
+START_COMMIT="$(git rev-parse HEAD 2>/dev/null || echo "")"
+
 VERBOSE=0
 ARGS=()
 for arg in "$@"; do
@@ -797,3 +801,21 @@ commit_if_changed "$MODEL role=$ROLE: loop.sh Confirm (3 draws)"
 log "=== loop.sh done ==="
 log "Automated: Phase 1/resume, Tier 1 steering rounds (up to $MAX_ROUNDS), gate-on-run-2 decisions, Tier 2 gate, Confirm."
 log "NOT automated — do these manually next: Tier 2 generalist search (if GATE said GO), Performance run, Final report."
+
+# Hindsight's model-steering-findings mental model only needs a refresh
+# when this run actually changed something — a no-op run (nothing new,
+# nothing committed) has nothing new for it to reflect. Best-effort:
+# a Hindsight outage must never fail a benchmark run over an unrelated
+# service being offline.
+END_COMMIT="$(git rev-parse HEAD 2>/dev/null || echo "")"
+if [ -n "$START_COMMIT" ] && [ "$START_COMMIT" != "$END_COMMIT" ]; then
+  if curl -fsS --max-time 5 -X POST \
+    "http://192.168.2.183:8888/v1/default/banks/testlocalai/mental-models/model-steering-findings/refresh" \
+    >/dev/null 2>&1; then
+    log "Hindsight: model-steering-findings refresh queued (run changed $START_COMMIT -> $END_COMMIT)"
+  else
+    log "Hindsight: refresh request failed or unreachable, skipped (non-fatal)"
+  fi
+else
+  log "Hindsight: no commits this run, refresh skipped"
+fi

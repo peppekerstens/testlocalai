@@ -343,3 +343,19 @@ echo "-> step 3 (script): regenerating and verifying"
 python3 bench/leaderboard.py
 echo "-> this model's full sync status (other roles may still be pending - that is not a failure of this run):"
 bash bench/leaderboard-check.sh "$SLUG" || true
+
+# Hindsight's model-steering-findings mental model only needs a refresh
+# when this sync actually changed the leaderboard - re-running it on an
+# already-current entry writes nothing new. Best-effort: an unreachable
+# Hindsight must never fail this sync.
+if ! git diff --quiet -- data/leaderboard.json; then
+  if curl -fsS --max-time 5 -X POST \
+    "http://192.168.2.183:8888/v1/default/banks/testlocalai/mental-models/model-steering-findings/refresh" \
+    >/dev/null 2>&1; then
+    echo "-> Hindsight: model-steering-findings refresh queued (data/leaderboard.json changed)"
+  else
+    echo "-> Hindsight: refresh request failed or unreachable, skipped (non-fatal)"
+  fi
+else
+  echo "-> Hindsight: data/leaderboard.json unchanged, refresh skipped"
+fi

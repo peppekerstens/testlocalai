@@ -143,7 +143,11 @@ description that follows is what it implements (plus the parts it
 doesn't, which still need a human/Claude Code session).
 
 **Check for prior work before starting.** Read
-`models/<model>/reports/report-<role>-*.md`, `README.md`, `history.md`.
+`models/<model>/reports/report-<role>-*.md`, `README.md`, `history.md`,
+and call `mcp__hindsight__recall` (bank_id `testlocalai`) for this
+model and role, since a fix found on another model can transfer here.
+Best-effort: if the recall call fails or times out, note that Hindsight
+was unreachable and proceed on the file-based prior work alone.
 Run budgets (4/task Tier 1, 5 Tier 2) are cumulative across sessions,
 not reset per invocation — map prior runs onto the phases below and
 continue from there, don't restart at Phase 1.
@@ -305,6 +309,22 @@ conversation:
    see that script's header comment.
 4. New idiom/regression/finding → also add to `models/<model>/
    history.md` — README stays current-state-only.
+5. Call `mcp__hindsight__retain` (bank_id `testlocalai`), one fact per
+   real outcome. This is the cross-model memory the next model's
+   steering pass reads back from. A run not retained here stays
+   invisible to it, not just to this session's chat log. Best-effort:
+   if the retain call fails or times out, note that Hindsight was
+   unreachable and continue. Do not retry, and do not treat a run as
+   incomplete over an unreachable Hindsight. Required on every call
+   when Hindsight is reachable:
+   - Tags: `model:<name>`, `role:<role>`, `task:<task-id>` — exact
+     tags, not free text, so a later recall can filter precisely
+     instead of relying on semantic search alone.
+   - Content: model, role, task, pass/fail, and the fix tried. Include
+     the fix's actual text, or its file path (for example
+     `tasks/<task>/overrides/<model>.md`), not only whether it worked.
+     A fact that only says "a fix worked" gives the next model nothing
+     to actually reuse.
 
 **Why:** `lfm2.5-1.2b-thinking` had a real baseline and steering pass
 reported only in conversation, zero persisted — indistinguishable from
