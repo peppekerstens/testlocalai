@@ -240,18 +240,18 @@ This cost stays the same when no request runs. It is not in the cost per token.
 hardware cost per 1M tokens = purchase price / (write-off years x 365 x tokens per day / 1,000,000)
 ```
 
-Example for each **EUR 1,000 of hardware** (placeholder price, not the real purchase price) with a 3-year write-off. Output tokens only, one request stream:
+Example with **EUR 3,000 of hardware per host and a 5-year write-off**. These are placeholder values, not the real purchase price or write-off period. Output tokens only, one request stream:
 
 | Host | Use of the day | Output tokens per day | Write-off per 1M output tokens | Energy cost per 1M output tokens (this report) |
 |---|---|---|---|---|
-| gaming-b650 | 100% | 3.35M | EUR 0.27 | EUR 0.80 |
-| gaming-b650 | 25% | 0.84M | EUR 1.09 | EUR 0.80 |
-| gaming-b650 | 10% | 0.34M | EUR 2.72 | EUR 0.80 |
-| legion-t5 | 100% | 8.90M | EUR 0.10 | EUR 0.20 |
-| legion-t5 | 25% | 2.22M | EUR 0.41 | EUR 0.20 |
-| legion-t5 | 10% | 0.89M | EUR 1.03 | EUR 0.20 |
+| gaming-b650 | 100% | 3.35M | EUR 0.49 | EUR 0.80 |
+| gaming-b650 | 25% | 0.84M | EUR 1.96 | EUR 0.80 |
+| gaming-b650 | 10% | 0.34M | EUR 4.90 | EUR 0.80 |
+| legion-t5 | 100% | 8.90M | EUR 0.18 | EUR 0.20 |
+| legion-t5 | 25% | 2.22M | EUR 0.74 | EUR 0.20 |
+| legion-t5 | 10% | 0.89M | EUR 1.85 | EUR 0.20 |
 
-Multiply the write-off column by the real purchase price in thousands of EUR. At low use, the write-off is larger than the energy cost. With 2 busy slots, the tokens per day are about double, and the write-off per token is about half.
+To use real values, replace EUR 3,000 and 5 years in the formula. The write-off scales in proportion to the price and in inverse proportion to the years. Even at 100% use, the write-off is close to the energy cost on legion-t5. At low use, it is larger on both hosts. With 2 busy slots, the tokens per day are about double, and the write-off per token is about half.
 
 ## Limits of this measurement
 
