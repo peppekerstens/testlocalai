@@ -1,6 +1,6 @@
 {
   "$schema_note": "Source of truth for bench/leaderboard.py (see its docstring for field meanings and how to add/update an entry). Mirrors each model's models/<model>/README.md Overview-table row -- AGENTS.md's 'After a test run, persist it' rule requires updating this alongside that row, not instead of it.",
-  "generated": "2026-09-13",
+  "generated": "2026-09-17",
   "roles": [
     {
       "id": "code-emitter",
@@ -433,64 +433,51 @@
       "modelSlug": "minicpm5-2b",
       "role": "documenter",
       "status": "warning",
-      "statusLabel": "5/10 PASS bare, expanded 10-task suite (2026-09-16)",
+      "statusLabel": "Flaky: no confirmed steering gain",
       "bare": {
         "pass": 5,
         "total": 10,
         "confirmed": false
       },
       "current": {
-        "pass": 5,
+        "min": 6,
+        "max": 7,
         "total": 10,
         "confirmed": false
       },
-      "finding": "Suite expanded to 10 tasks 2026-09-16 (added doc-audience, PASS). Bare: verbatim, adapt, script, synthesize, repair failed; verbatim/repair truncated at 16384 tokens. Per-task thinking-off removed the truncation on both but they still failed on real content underneath \u2014 not fixed. No targeted steering attempted this pass.",
-      "evidence": "models/minicpm5-2b/README.md#2026-09-16-expanded-suite-10-tasksrole-6-roles"
+      "barNote": "Confirm 7, 6, 6 (3 draws), verdict FLAKY. Bare = 2026-09-17 re-run. 10 tasks used 2026-09-12 overrides, because pure-run.sh uses an override file when it exists.",
+      "finding": "doc-adapt and doc-script failed bare and passed every draw with their round 1 overrides. doc-restructure and doc-surgical vary. doc-verbatim, doc-repair and doc-audience failed every draw, mostly truncated at 16384 tokens with empty output. The Tier 2 gate gave SKIP.",
+      "evidence": "models/minicpm5-2b/README.md#documenter-role-flaky-2026-09-17",
+      "closed": "2026-09-17"
     },
     {
       "model": "minicpm5-2b",
       "modelSlug": "minicpm5-2b",
       "role": "reasoner",
-      "status": "warning",
-      "statusLabel": "4/10 PASS bare, expanded 10-task suite (2026-09-16) \u2014 regressed from 7/9",
+      "status": "critical",
+      "statusLabel": "Flaky: no confirmed steering gain, weakest role",
       "bare": {
-        "pass": 4,
+        "pass": 5,
         "total": 10,
         "confirmed": false
       },
       "current": {
-        "pass": 4,
+        "min": 5,
+        "max": 6,
         "total": 10,
         "confirmed": false
       },
-      "finding": "Suite expanded to 10 tasks 2026-09-16 (added reason-priority, PASS). Real regression vs. 2026-09-12: reason-trace, reason-consequence, reason-coverage all dropped from a prior PASS. reason-coverage still truncates at 16384 tokens even with per-task thinking off \u2014 new anomaly, this fix worked on 2026-09-12 but not this pass.",
-      "evidence": "models/minicpm5-2b/README.md#2026-09-16-expanded-suite-10-tasksrole-6-roles"
+      "barNote": "Confirm 6, 6, 5 (3 draws), verdict FLAKY. Bare = 2026-09-17 re-run. 10 tasks used 2026-09-12 overrides, because pure-run.sh uses an override file when it exists.",
+      "finding": "reason-checklist, reason-compare and reason-trace failed every draw. reason-config-validity, reason-consequence and reason-multihop vary. reason-coverage passed every draw with its round 1 override, after it truncated in every bare run. The earlier regression claim from 7/9 is not confirmed: both runs were single draws with the same overrides.",
+      "evidence": "models/minicpm5-2b/README.md#reasoner-role-flaky-2026-09-17",
+      "closed": "2026-09-17"
     },
     {
       "model": "minicpm5-2b",
       "modelSlug": "minicpm5-2b",
       "role": "tool-use",
       "status": "good",
-      "statusLabel": "9/10 PASS bare, expanded 10-task suite (2026-09-16)",
-      "bare": {
-        "pass": 9,
-        "total": 10,
-        "confirmed": false
-      },
-      "current": {
-        "pass": 9,
-        "total": 10,
-        "confirmed": false
-      },
-      "finding": "Suite expanded to 10 tasks 2026-09-16, adding tool-chain, tool-clarify, tool-conflict, tool-typecoerce \u2014 all 4 PASS bare with no steering. Only tool-error fails. Still the strongest role for this model, matching qwen3.8-27b at a fraction of the parameter count.",
-      "evidence": "models/minicpm5-2b/README.md#2026-09-16-expanded-suite-10-tasksrole-6-roles"
-    },
-    {
-      "model": "minicpm5-2b",
-      "modelSlug": "minicpm5-2b",
-      "role": "extract",
-      "status": "good",
-      "statusLabel": "9/10 bare \u2192 10/10 after per-task thinking-off fix (2026-09-16)",
+      "statusLabel": "Confirmed: tool-error fixed by a per-task override",
       "bare": {
         "pass": 9,
         "total": 10,
@@ -499,29 +486,56 @@
       "current": {
         "pass": 10,
         "total": 10,
+        "confirmed": true
+      },
+      "barNote": "Confirm 10, 10, 10 (3 draws). Bare = 2026-09-17 re-run. 10 tasks used 2026-09-12 overrides, because pure-run.sh uses an override file when it exists.",
+      "finding": "tool-error failed in all 3 bare runs and passed in round 1 and in all 3 Confirm draws with task-overrides/tool-error.md, which targets a question-echo idiom. The other 9 tasks need no steering. This is the only confirmed steering gain for this model on 2026-09-17.",
+      "evidence": "models/minicpm5-2b/README.md#tool-use-role-confirmed-2026-09-17",
+      "closed": "2026-09-17"
+    },
+    {
+      "model": "minicpm5-2b",
+      "modelSlug": "minicpm5-2b",
+      "role": "extract",
+      "status": "good",
+      "statusLabel": "Flaky: no confirmed steering gain",
+      "bare": {
+        "pass": 8,
+        "total": 10,
         "confirmed": false
       },
-      "finding": "Suite expanded to 10 tasks 2026-09-16, adding extract-conflict, extract-invalid, extract-noisy, extract-numeric \u2014 all 4 PASS bare. extract-basic (truncated at 16384) fixed by per-task DISPATCH_ENABLE_THINKING=false, no collateral damage. Blanket thinking-off across the whole suite was worse (extract-optional broke instead) \u2014 confirms per-task-only rule.",
-      "evidence": "models/minicpm5-2b/README.md#2026-09-16-expanded-suite-10-tasksrole-6-roles"
+      "current": {
+        "min": 9,
+        "max": 10,
+        "total": 10,
+        "confirmed": false
+      },
+      "barNote": "Confirm 9, 10, 9 (3 draws), verdict FLAKY. Bare = 2026-09-17 re-run. 10 tasks used 2026-09-12 overrides, because pure-run.sh uses an override file when it exists.",
+      "finding": "9 tasks passed every Confirm draw and no task failed every draw. extract-optional passed 1 of 3 draws after its 2026-09-12 override was gated out. The Tier 2 gate gave GO, but no Tier 2 search ran. Reported as measured, no revert rounds.",
+      "evidence": "models/minicpm5-2b/README.md#extract-role-flaky-2026-09-17",
+      "closed": "2026-09-17"
     },
     {
       "model": "minicpm5-2b",
       "modelSlug": "minicpm5-2b",
       "role": "review",
       "status": "warning",
-      "statusLabel": "7/10 bare \u2192 8/10 after per-task thinking-off fix (2026-09-16)",
+      "statusLabel": "Flaky: no confirmed steering gain",
       "bare": {
         "pass": 7,
         "total": 10,
         "confirmed": false
       },
       "current": {
-        "pass": 8,
+        "min": 6,
+        "max": 8,
         "total": 10,
         "confirmed": false
       },
-      "finding": "Suite expanded to 10 tasks 2026-09-16, adding review-dispose, review-multi, review-decoy (PASS) and review-swallow (FAIL, truncated). review-clean fixed by per-task thinking-off; review-async and review-swallow lost their truncation but still fail on real content underneath. Blanket thinking-off across the whole suite was much worse (4/10).",
-      "evidence": "models/minicpm5-2b/README.md#2026-09-16-expanded-suite-10-tasksrole-6-roles"
+      "barNote": "Confirm 7, 8, 6 (3 draws), verdict FLAKY. Bare = 2026-09-17 re-run. 10 tasks used 2026-09-12 overrides, because pure-run.sh uses an override file when it exists.",
+      "finding": "review-concurrency, review-decoy and review-dispose vary between draws. review-swallow (truncated at 16384 tokens in every draw) and review-multi failed every draw. The Tier 2 gate gave GO, but no Tier 2 search ran. Reported as measured, no revert rounds.",
+      "evidence": "models/minicpm5-2b/README.md#review-role-flaky-2026-09-17",
+      "closed": "2026-09-17"
     },
     {
       "model": "qwen3.8-27b-gsq-rco",
@@ -703,20 +717,23 @@
       "model": "minicpm5-2b",
       "modelSlug": "minicpm5-2b",
       "role": "code-emitter",
-      "status": "good",
-      "statusLabel": "11/14 PASS bare, single draw \u2014 first code-emitter pass for this model (2026-09-16)",
+      "status": "warning",
+      "statusLabel": "Flaky: no confirmed steering gain, config is bare",
       "bare": {
         "pass": 11,
         "total": 14,
         "confirmed": false
       },
       "current": {
-        "pass": 11,
+        "min": 9,
+        "max": 11,
         "total": 14,
         "confirmed": false
       },
-      "finding": "First code-emitter attempt for this model (2026-09-12 pass skipped it, no build+test harness available then). code-csharp-batch, code-csharp-events, code-csharp-workflow failed. Blanket thinking-off made this much worse (8/14) \u2014 same pattern as every other role. No targeted steering attempted this pass.",
-      "evidence": "models/minicpm5-2b/README.md#2026-09-16-expanded-suite-10-tasksrole-6-roles"
+      "barNote": "Confirm 11, 9, 10 (3 draws) on a fully bare config, verdict FLAKY.",
+      "finding": "Shared C# and Python rules files gave 10/14 in 2 rounds and were gated out, so Confirm ran bare. code-csharp-batch, code-csharp-events and code-csharp-workflow failed every draw. code-csharp-httpclient and code-csharp-tool vary. The Tier 2 gate gave GO, but no Tier 2 search ran.",
+      "evidence": "models/minicpm5-2b/README.md#code-emitter-role-flaky-2026-09-17",
+      "closed": "2026-09-17"
     },
     {
       "model": "minicpm5-2b",
@@ -728,7 +745,7 @@
       "current": null,
       "currentNote": "Not attempted",
       "finding": "This model has no mmproj vision-projector file on legion-t5, only the text GGUF. report.sh has no visual role at all \u2014 the only real visual pass in this repo uses qwen3.8-27b-gsq-rco, the one model here with a working vision projector.",
-      "evidence": "models/minicpm5-2b/README.md#2026-09-16-expanded-suite-10-tasksrole-6-roles"
+      "evidence": "models/minicpm5-2b/README.md#visual-role-not-attempted"
     }
   ],
   "referenceBaseline": {
