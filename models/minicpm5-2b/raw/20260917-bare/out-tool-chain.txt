@@ -1,0 +1,6 @@
+```json
+[
+  { "step": 1, "tool": "list_companies", "arguments": {} },
+  { "step": 2, "tool": "search_tickets", "arguments": { "companyId": "value obtained from step 1's list_companies result" } }
+]
+```

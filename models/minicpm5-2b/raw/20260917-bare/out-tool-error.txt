@@ -1,0 +1,2 @@
+1. Is `isError` true or false in the response?  
+2. What is the exact shape/wording of the error message text (not a vague paraphrase — use the actual message pattern from the facts above, with the real status code and status text substituted in)?

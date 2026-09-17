@@ -1,0 +1,14 @@
+1. dotnet run --project src/ConnectwiseMcp
+   Server starts, binds port 3000, and responds on /mcp.
+
+2. unset CW_COMPANY_ID; dotnet run --project src/ConnectwiseMcp
+   Non-zero exit code, and no server listening on port 3000.
+
+3. export CW_OBFUSCATION_CONFIG=nonexistent; dotnet run --project src/ConnectwiseMcp
+   Non-zero exit code, and no server listening on port 3000.
+
+4. curl http://127.0.0.1:3000/mcp
+   HTTP 200 response.
+
+5. curl -H "Content-Type: text/plain" -d '{"init": {"init_options": {}}}' http://127.0.0.1:3000/mcp
+   Response includes header "mcp-session-id".

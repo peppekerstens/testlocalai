@@ -1,0 +1,3 @@
+The mechanism that decides whether a key is redacted is `redactDeep`, which walks the response tree recursively and checks each JSON property name against `nestedEntities`. After the config change, `owner` is no longer a key in `nestedEntities`, so when `redactDeep` encounters the `owner` key, it finds it absent from the map. According to the document, "If a key is absent from this map, its value passes through completely untouched, however deep it is nested and whatever shape it has." Therefore, `owner.id` and `owner.name` are not redacted by any entity's `fields` rule and are emitted in the tool output unchanged.
+
+owner.name and owner.id pass through completely untouched.

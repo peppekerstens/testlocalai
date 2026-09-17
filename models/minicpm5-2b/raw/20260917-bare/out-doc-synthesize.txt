@@ -1,0 +1,10 @@
+## Error behavior (C# port)
+
+The C# port reimplements the TypeScript server's error behavior, with the MCP SDK catching handler exceptions and returning an error object with `isError: true` and a content text item.
+
+```json
+{ "content": [{ "type": "text", "text": "<message>" }], "isError": true }
+```
+
+- **Invalid input**: The C# host throws an exception before the handler runs, with a message shaped like `Input validation error: Invalid arguments for tool <name>: <validation detail>`.
+- **Handler-thrown errors**: The C# ConnectWise client throws `ConnectWise API error: <status> <statusText>` for any non-2xx ConnectWise response, and `HttpRequestException` when ConnectWise is unreachable. There is no retry and no error-code taxonomy.

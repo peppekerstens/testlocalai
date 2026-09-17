@@ -1,0 +1,7 @@
+```json
+{
+  "id": null,
+  "summary": "A customer called back about their ongoing mail server issue, escalated to support again this morning and still shows as Open.",
+  "status": "Open"
+}
+```

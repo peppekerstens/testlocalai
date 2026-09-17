@@ -1,0 +1,3 @@
+```json
+{ "bugs": [ { "line": "        var hasMore = all.Count <= start + pageSize;", "issue": "hasMore is incorrectly computed. It should be all.Count > start + pageSize - 1 to correctly determine if there are more pages. The current condition uses start + pageSize instead of start + pageSize - 1, causing hasMore to be true when there are exactly start + pageSize items, which should mean no more pages." }, { "line": "        return company.DefaultContact.Name;", "issue": "company.DefaultContact is optional, so this line will throw a NullReferenceException if company.DefaultContact is null." } ] }
+```

@@ -1,0 +1,3 @@
+```json
+{ "bugs": [ { "line": "7", "issue": "The dictionary is not thread-safe; concurrent calls to GetOrAdd can cause race conditions where the key is added multiple times or values are overwritten, leading to potential incorrect behavior if the factory is not idempotent and the cache is used in a way that depends on the first value." } ] }
+```

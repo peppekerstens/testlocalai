@@ -1,0 +1,1 @@
+The project uses TypeScript/Node, not Python. The official MCP SDK is also TypeScript. This choice paid off because the TypeScript SDK offers OAuth support that Python's didn't. Existing ConnectWise MCP servers are likewise TypeScript/Node, reinforcing this decision.

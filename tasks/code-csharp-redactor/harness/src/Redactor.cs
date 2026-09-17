@@ -24,7 +24,6 @@ public sealed class Redactor
         }
 
         string result = input;
-
         foreach (var rule in rules)
         {
             try
@@ -33,7 +32,7 @@ public sealed class Redactor
             }
             catch (ArgumentException)
             {
-                // Skip invalid regex
+                continue;
             }
         }
 

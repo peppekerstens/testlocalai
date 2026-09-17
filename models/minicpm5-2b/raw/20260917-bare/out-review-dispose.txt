@@ -1,0 +1,3 @@
+```json
+{ "bugs": [ { "line": "        var writer = new StreamWriter(path);", "issue": "StreamWriter is not disposed, so the file handle may remain open and leak a resource. If an exception occurs during the loop, the writer is not disposed either, leading to a resource leak." } ] }
+```

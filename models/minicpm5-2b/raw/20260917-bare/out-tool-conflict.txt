@@ -1,0 +1,6 @@
+```json
+[
+  { "request": "delete the ticket", "tool": null, "reason": "None of the 5 available tools can delete tickets. The available tools are read-only: list_companies, list_contacts, search_tickets, get_ticket_details, and describe_obfuscation_policy. There is no delete function available." },
+  { "request": "pull up the contacts", "tool": null, "reason": "The tool list_contacts requires a companyId parameter (number), but the user did not provide one. To pull up contacts, the user must first provide the companyId for the company they want contacts for." }
+]
+```

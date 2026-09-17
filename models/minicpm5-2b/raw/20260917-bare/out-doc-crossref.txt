@@ -1,0 +1,1 @@
+To ensure your email isn't exposed, you can ask the assistant to use `describe_obfuscation_policy` to see exactly how contact emails are handled. The system replaces email addresses with `{token}@obfuscated.invalid` to maintain privacy. This approach lets you verify the current configuration without revealing any actual email addresses.

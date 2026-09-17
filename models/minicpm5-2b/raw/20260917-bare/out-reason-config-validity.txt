@@ -1,0 +1,7 @@
+Step-by-step verification:
+1. `mode`: The config has `mode: session-random`, which is one of the allowed enum values (`"consistent"` or `"session-random"`). Rule passes.
+2. `entities`: The config provides a map with keys `company` and `contact`, each mapping to an EntityRule. This satisfies the requirement that `entities` is a required map of string → EntityRule with entity type name keys. Rule passes.
+3. `nestedEntities`: The config has `nestedEntities: defaultContact: owner`. The key `defaultContact` is a valid JSON property name, but the value `owner` must be a key that exists in `entities`. The `entities` map contains keys `company` and `contact`, not `owner`. Therefore, this rule fails.
+4. `customFields`: The config includes `customFields: exclude: ["password"]`, which is a valid optional field. Rule passes.
+
+Final answer: the config is invalid. The failing rule is `nestedEntities`, where the value `owner` is not a key in `entities`. The offending field is `nestedEntities` with value `owner` (specifically the mapping `defaultContact: owner`), breaking the rule that the value must be a key that exists in `entities`.

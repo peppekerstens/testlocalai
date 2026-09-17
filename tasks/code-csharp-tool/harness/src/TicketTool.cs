@@ -17,7 +17,7 @@ public sealed class InMemoryTicketStore : ITicketStore
     }
 }
 
-public class TicketTool
+public sealed class TicketTool
 {
     private readonly ITicketStore _store;
 
@@ -30,6 +30,7 @@ public class TicketTool
     {
         // returns store.GetTicketAsync(id) result, synchronously;
         // never creates an ITicketStore itself
+        return _store.GetTicketAsync(id).Result;
     }
 }
 
@@ -38,7 +39,9 @@ public static class TicketServiceCollectionExtensions
     public static IServiceCollection AddTicketTool(this IServiceCollection services)
     {
         // register InMemoryTicketStore as ITicketStore (singleton)
+        services.AddSingleton<ITicketStore, InMemoryTicketStore>();
         // register TicketTool (singleton)
+        services.AddSingleton<TicketTool>();
         return services;
     }
 }

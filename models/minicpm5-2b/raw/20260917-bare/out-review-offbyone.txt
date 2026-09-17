@@ -1,0 +1,3 @@
+```json
+{ "bugs": [ { "line": "for (int start = 0; start <= items.Count; start += pageSize)", "issue": "When items.Count is exactly divisible by pageSize, the loop runs one extra iteration with start equal to items.Count. The inner loop then adds no items because i < items.Count is false, so an empty list is added to pages. This results in an extra empty page being returned." } ] }
+```

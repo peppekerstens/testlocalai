@@ -1,0 +1,3 @@
+```json
+{ "tool": null, "reason": "The required argument 'companyId' is missing. The user did not specify a company or client ID. Please ask the user for the company ID or client identifier." }
+```

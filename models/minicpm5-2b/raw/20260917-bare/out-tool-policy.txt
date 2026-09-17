@@ -1,0 +1,3 @@
+```json
+{ "tool": "describe_obfuscation_policy", "arguments": {}, "answer": "The real phone numbers will show up in the list_contacts export because the phones[].number field is passthrough (not obfuscated) per the server's current config." }
+```

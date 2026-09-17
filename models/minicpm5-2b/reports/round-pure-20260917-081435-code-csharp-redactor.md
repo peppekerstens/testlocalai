@@ -1,0 +1,10 @@
+# Bench report: code-csharp-redactor (round pure-20260917-081435)
+
+- Prompt: `/home/peppe/github/testlocalai/tasks/code-csharp-redactor/rounds/prompt-pure-20260917-081435.txt`
+- Model: minicpm5:2b (temp 0.2)
+- Backend: llamacpp
+- Mode: bare SPEC.md (current best)
+- Tokens: 413 prompt / 2402 completion
+
+## VERDICT: PASS
+Passed!  - Failed:     0, Passed:     5, Skipped:     0, Total:     5, Duration: 25 ms - Bench.Task6.dll (net8.0)

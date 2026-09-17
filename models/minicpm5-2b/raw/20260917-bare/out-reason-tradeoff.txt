@@ -1,0 +1,10 @@
+**Tradeoff analysis**
+
+*Phone numbers.*  
+Obfuscating contact phone numbers would gain privacy by removing them from the visible field, but it would also lose the ability to actually contact someone if that number is needed. Leaving them as documented passthrough (Option B) means phone numbers remain visible, preserving contactability but exposing them in the same way the system already does.
+
+*Note/description text.*  
+Obfuscating ticket note/description text would gain privacy by hiding free-form prose, but it would also lose the chance to use the note for technical detail that might answer a support question. Keeping them as documented passthrough (Option B) means the note remains visible, maintaining its potential usefulness while still matching the current behavior.
+
+**Recommendation:** Option B.  
+Justification: The facts explicitly state that contact phone numbers and ticket note/description text are never obfuscated, and that this is the server’s current, documented, real behavior. Option B formally confirms this documented behavior as an intentional narrower scope, whereas Option A would contradict the documented facts by introducing a change not supported by them. Choosing Option B respects the evidence without inventing new information.

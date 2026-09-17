@@ -23,12 +23,10 @@ public sealed class InMemoryRepository<T> : IRepository<T>
         {
             throw new ArgumentNullException(nameof(id));
         }
-
         if (_items.ContainsKey(id))
         {
             throw new ArgumentException("Key already exists", nameof(id));
         }
-
         _items[id] = item;
     }
 
@@ -43,12 +41,10 @@ public sealed class InMemoryRepository<T> : IRepository<T>
         {
             return false;
         }
-
         if (!_items.ContainsKey(id))
         {
             return false;
         }
-
         _items[id] = item;
         return true;
     }
@@ -59,7 +55,6 @@ public sealed class InMemoryRepository<T> : IRepository<T>
         {
             return false;
         }
-
         return _items.Remove(id);
     }
 

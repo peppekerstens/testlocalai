@@ -1,0 +1,1 @@
+The error message "Error: Missing required environment variable: CW_PRIVATE_KEY" is produced by the application's startup validation, which aborts if the required environment variable is not set. The exact fix is to set the CW_PRIVATE_KEY environment variable to the correct value.
