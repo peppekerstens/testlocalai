@@ -31,6 +31,12 @@ persist it" rule) — this index alone does not update the dashboard.
 | [`qwen3.8-27b`](qwen3.8-27b/) | tool-use | 🔬 Phase 1 only — 6/6 bare, single draw. First real small-model result against this suite | `qwen3.8-27b/README.md` |
 | [`qwen3.8-27b`](qwen3.8-27b/) | review | 🔬 Phase 1 only — 6/6 bare, single draw | `qwen3.8-27b/README.md` |
 | [`qwen3.8-27b`](qwen3.8-27b/) | reasoner | ⚠️ Mixed, Phase 1 only — 6/9 bare, single draw; all 3 failures partial/imprecise, not wrong-headed (see README) | `qwen3.8-27b/README.md` |
+| [`minicpm5-2b`](minicpm5-2b/) | tool-use | ✅ Confirmed 2026-09-17 — 10/10 in all 3 Confirm draws, `tool-error` fixed by a per-task override | `minicpm5-2b/README.md` |
+| [`minicpm5-2b`](minicpm5-2b/) | extract | ⚠️ Flaky 2026-09-17 — Confirm 9/10/9, no confirmed steering gain (`extract-optional` unstable) | `minicpm5-2b/README.md` |
+| [`minicpm5-2b`](minicpm5-2b/) | review | ⚠️ Flaky 2026-09-17 — Confirm 7/8/6, no confirmed steering gain, `review-swallow` and `review-multi` always fail | `minicpm5-2b/README.md` |
+| [`minicpm5-2b`](minicpm5-2b/) | code-emitter | ⚠️ Flaky 2026-09-17 — Confirm 11/9/10 of 14, no steering gain, 3 C# tasks always fail | `minicpm5-2b/README.md` |
+| [`minicpm5-2b`](minicpm5-2b/) | reasoner | ⚠️ Flaky 2026-09-17 — Confirm 6/6/5, no confirmed steering gain, weakest role | `minicpm5-2b/README.md` |
+| [`minicpm5-2b`](minicpm5-2b/) | documenter | ⚠️ Flaky 2026-09-17 — Confirm 7/6/6, no confirmed steering gain, 3 tasks always fail | `minicpm5-2b/README.md` |
 | [`lfm2.5-vl-450m`](lfm2.5-vl-450m/) | visual | 🚧 Scaffold only — model not downloaded, role not wired up | `lfm2.5-vl-450m/README.md` |
 | — (no model tested yet) | extract | Task suite built + blind-subagent-validated only — no real small-model run yet | `claude-sonnet-5/README.md` "Extract extension" |
 
