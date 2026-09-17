@@ -1,0 +1,70 @@
+# C# output rules
+
+1. Write every line of code in full. Never write `...` in the code. The compiler rejects `...` (error CS8635). This applies to method bodies, argument lists, collection initializers, switch arms, and long expressions. If a body or a line is long, write it all.
+   - Before you give the answer, find each `...` in your code. Replace it with the real code.
+
+2. Match the lambda to the delegate type of the parameter.
+   - A parameter of type `Action<T>` or `Func<T, Task>` takes a lambda that does not return a value. Do not write `return someValue;` in that lambda (errors CS8030 and CS8031).
+   - If the lambda must give a result, the parameter must be `Func<T, TResult>` or `Func<T, Task<TResult>>`.
+   - If you cannot change the parameter type, store the result in a variable or collection outside the lambda. Do not return it.
+   - To get results from many async calls, use `Select` and `Task.WhenAll`:
+
+```csharp
+var tasks = items.Select(async item =>
+{
+    var result = await ProcessAsync(item);
+    return result;
+});
+var results = await Task.WhenAll(tasks);
+```
+
+
+--- TASK BELOW ---
+
+TASK: MCP tool that resolves the calling user's identity from a `ClaimsPrincipal`, using the real ModelContextProtocol SDK's per-request identity binding (not a manually-passed header/string, and not a DI-scoped service).
+FILE: one file `IdentityTool.cs`. Namespace: `Bench.McpIdentity`.
+
+File MUST start with these EXACT using lines, in order:
+```csharp
+using System.Security.Claims;
+using ModelContextProtocol.Server;
+```
+(No other using lines — no `System.ComponentModel`, no `Description` import; the `Description` attribute is not required for this file.)
+
+Then namespace and type:
+```csharp
+namespace Bench.McpIdentity;
+
+[McpServerToolType]
+public sealed class IdentityTool
+{
+    [McpServerTool]
+    public static string GetIdentity(ClaimsPrincipal principal)
+    {
+        // implement per the behavior contract
+    }
+}
+```
+
+BEHAVIOR (must hold exactly):
+1. Look up the claim of type `ClaimTypes.NameIdentifier` on `principal` (use `principal.FindFirst(ClaimTypes.NameIdentifier)`).
+2. If that claim exists, return the literal string `"identity="` followed immediately by the claim's `Value` (e.g. a principal whose `NameIdentifier` claim value is `"test-user-123"` returns exactly `"identity=test-user-123"`).
+3. If that claim does NOT exist — including a `ClaimsPrincipal` with zero identities attached — return exactly the literal string `"identity=anonymous"`. Never throw, never return null.
+
+Use EXACTLY this method body shape:
+```csharp
+[McpServerTool]
+public static string GetIdentity(ClaimsPrincipal principal)
+{
+    var value = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    return $"identity={value ?? "anonymous"}";
+}
+```
+
+DO NOT:
+- Add a constructor, any field, or any other method to `IdentityTool`.
+- Make `GetIdentity` an instance method — it must stay `public static`, matching how the real SDK binds `ClaimsPrincipal` as a special tool parameter type per request (an instance/DI-scoped field would NOT be re-populated per request and would silently return stale or default data — this is a real bug class, not a style preference).
+- Read identity from any source other than the `ClaimsPrincipal principal` parameter (no `IHttpContextAccessor`, no environment variable, no extra parameter).
+- Remove or rename the `[McpServerToolType]` / `[McpServerTool]` attributes — the real SDK requires both to expose this method as an MCP tool at all, and auto-converts the method name `GetIdentity` to the wire tool name `get_identity` (snake_case) using them.
+
+OUTPUT: ONLY complete `IdentityTool.cs` in one fenced ```csharp block. No explanations, no other text.

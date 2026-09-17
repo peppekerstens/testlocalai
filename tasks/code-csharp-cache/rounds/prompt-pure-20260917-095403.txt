@@ -1,0 +1,78 @@
+# C# output rules
+
+1. Write every line of code in full. Never write `...` in the code. The compiler rejects `...` (error CS8635). This applies to method bodies, argument lists, collection initializers, switch arms, and long expressions. If a body or a line is long, write it all.
+   - Before you give the answer, find each `...` in your code. Replace it with the real code.
+
+2. Match the lambda to the delegate type of the parameter.
+   - A parameter of type `Action<T>` or `Func<T, Task>` takes a lambda that does not return a value. Do not write `return someValue;` in that lambda (errors CS8030 and CS8031).
+   - If the lambda must give a result, the parameter must be `Func<T, TResult>` or `Func<T, Task<TResult>>`.
+   - If you cannot change the parameter type, store the result in a variable or collection outside the lambda. Do not return it.
+   - To get results from many async calls, use `Select` and `Task.WhenAll`:
+
+```csharp
+var tasks = items.Select(async item =>
+{
+    var result = await ProcessAsync(item);
+    return result;
+});
+var results = await Task.WhenAll(tasks);
+```
+
+
+--- TASK BELOW ---
+
+TASK: thread-safe token cache, capacity-based eviction.
+FILE: one file `TokenCache.cs`. Namespace: `Bench.Task2`.
+
+File MUST start with these EXACT using lines, in order:
+```csharp
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+```
+
+Implement EXACTLY this class (complete, verbatim):
+```csharp
+namespace Bench.Task2;
+
+public sealed class TokenCache
+{
+    private readonly ConcurrentDictionary<string, string> _data = new();
+    private readonly List<string> _order = new();
+    private readonly int _capacity;
+    private readonly object _lock = new();
+
+    public TokenCache(int capacity)
+    {
+        if (capacity <= 0) throw new ArgumentOutOfRangeException(nameof(capacity));
+        _capacity = capacity;
+    }
+
+    public bool TryGet(string userId, out string? token)
+        => _data.TryGetValue(userId, out token);
+
+    public void Set(string userId, string token)
+    {
+        lock (_lock)
+        {
+            if (_data.Count >= _capacity && !_data.ContainsKey(userId))
+            {
+                var oldest = _order[0];
+                _order.RemoveAt(0);
+                _data.TryRemove(oldest, out _);   // NOT _data.Remove(oldest)
+            }
+            _data[userId] = token;
+            if (!_order.Contains(userId)) _order.Add(userId);
+        }
+    }
+}
+```
+
+BEHAVIOR (must hold exactly):
+1. `Set` stores; `TryGet` returns. Overwrite existing key keeps only newest value.
+2. When distinct stored keys would exceed `capacity`, evict oldest-stored key (the one Set FIRST among current entries) so cache never holds more than `capacity` distinct keys.
+3. `TryGet` on missing key returns false.
+4. MUST be safe for concurrent use: many threads call `Set` and `TryGet` at the same time, no data loss, no exceptions.
+
+Do NOT call `.Remove(key)` on ConcurrentDictionary — that overload does not exist. Use `TryRemove` as above.
+
+OUTPUT: ONLY complete `TokenCache.cs` in one fenced ```csharp block. No explanations, no other text.

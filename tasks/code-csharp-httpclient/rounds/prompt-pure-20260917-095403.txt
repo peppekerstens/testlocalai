@@ -1,0 +1,79 @@
+# C# output rules
+
+1. Write every line of code in full. Never write `...` in the code. The compiler rejects `...` (error CS8635). This applies to method bodies, argument lists, collection initializers, switch arms, and long expressions. If a body or a line is long, write it all.
+   - Before you give the answer, find each `...` in your code. Replace it with the real code.
+
+2. Match the lambda to the delegate type of the parameter.
+   - A parameter of type `Action<T>` or `Func<T, Task>` takes a lambda that does not return a value. Do not write `return someValue;` in that lambda (errors CS8030 and CS8031).
+   - If the lambda must give a result, the parameter must be `Func<T, TResult>` or `Func<T, Task<TResult>>`.
+   - If you cannot change the parameter type, store the result in a variable or collection outside the lambda. Do not return it.
+   - To get results from many async calls, use `Select` and `Task.WhenAll`:
+
+```csharp
+var tasks = items.Select(async item =>
+{
+    var result = await ProcessAsync(item);
+    return result;
+});
+var results = await Task.WhenAll(tasks);
+```
+
+
+--- TASK BELOW ---
+
+TASK: async HTTP client method returning a JsonNode.
+FILE: one file `CwClient.cs`. Namespace: `Bench.Task3`.
+
+File MUST start with these EXACT using lines, in order:
+```csharp
+using System.Net;
+using System.Net.Http;
+using System.Text.Json.Nodes;
+using System.Threading;
+using System.Threading.Tasks;
+```
+(System and System.Text.Json implicit; never import single types — CancellationToken is a type in System.Threading, never write `using System.Threading.CancellationToken;`.)
+
+```csharp
+namespace Bench.Task3;
+
+public sealed class CwClient
+{
+    private readonly HttpClient _http;
+
+    public CwClient(HttpClient httpClient)
+    {
+        _http = httpClient;
+    }
+
+    public async Task<System.Text.Json.Nodes.JsonNode?> GetAsync(
+        string path, CancellationToken cancellationToken = default)
+    {
+        // implement per the behavior contract
+    }
+}
+```
+
+BEHAVIOR (must hold exactly):
+1. GET request for `path` (relative to BaseAddress, e.g. "/companies"). Pass `cancellationToken` through to HttpClient call.
+2. Status 204 No Content (or empty body) -> return null.
+3. Status NOT 2xx -> throw `HttpRequestException` (use `response.EnsureSuccessStatusCode()`).
+4. Otherwise read body text, parse with `System.Text.Json.Nodes.JsonNode.Parse(body)`, return node. Empty/whitespace body -> null.
+5. Canceled token -> call must throw (HttpClient throws OperationCanceledException when token passed through).
+
+Use EXACTLY this method body shape (no extra throw statements; never pass `response` to exception constructor — 2nd arg of HttpRequestException must be Exception, not HttpResponseMessage):
+```csharp
+using var response = await _http.GetAsync(path, cancellationToken);
+if (response.StatusCode == HttpStatusCode.NoContent)
+    return null;
+response.EnsureSuccessStatusCode();
+var body = await response.Content.ReadAsStringAsync(cancellationToken);
+if (string.IsNullOrWhiteSpace(body))
+    return null;
+return JsonNode.Parse(body);
+```
+(HttpStatusCode is System.Net.HttpStatusCode; add using if needed.)
+
+DO NOT use `GetFromJsonAsync<T>`; return type must be `JsonNode?` exactly.
+
+OUTPUT: ONLY complete `CwClient.cs` in one fenced ```csharp block. No explanations, no other text.
