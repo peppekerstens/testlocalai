@@ -27,7 +27,7 @@ public sealed class TokenCache
             {
                 var oldest = _order[0];
                 _order.RemoveAt(0);
-                _data.TryRemove(oldest, out _);
+                _data.TryRemove(oldest, out _);   // NOT _data.Remove(oldest)
             }
             _data[userId] = token;
             if (!_order.Contains(userId)) _order.Add(userId);

@@ -33,15 +33,24 @@ as `qwen3.8-27b`'s README). Visual has no tasks yet (scaffold only).
 
 ## Overview
 
-| Role | Status | Bare | Steered (2026-09-12) | Details |
+**Suite expanded to 10 tasks/role 2026-09-16 — table below is current, the
+2026-09-12 9-task/6-task numbers are historical, see that section below.**
+
+| Role | Status | Bare (10 tasks, 2026-09-16) | After per-task fix | Details |
 |---|---|---|---|---|
-| Documenter | ⚠️ Mixed | 5/9 (2nd draw, 131072 ctx) | 6/9 — 3 unresolved (see below) | [Documenter](#documenter-role) |
-| Reasoner | ⚠️ Mixed | 7/9 (2nd draw, 131072 ctx) | 8/9 clears the 60% gate — 3 unresolved | [Reasoner](#reasoner-role) |
-| Tool-use | ✅ Closed | 6/6 | 6/6, no steering needed | [Tool-use](#tool-use-role) |
-| Extract | ✅ Closed 2026-09-12 | 5/6 (2nd draw, 131072 ctx) | 6/6 clears the gate | [Extract](#extract-role) |
-| Review | ✅ Closed 2026-09-12 | 5/6 (2nd draw, 131072 ctx) | 6/6 clears the gate | [Review](#review-role) |
-| **Total, first draw (32768 ctx)** | | **22/36 (61%)** | **30/36 clear the gate (83%)** | |
-| **Total, second draw (131072 ctx)** | | **28/36 (78%)** | (10 re-tested, see below — same outcome) | |
+| Documenter | ⚠️ Mixed | 5/10 | 5/10 — not steered this pass | [2026-09-16 section](#2026-09-16-expanded-suite-10-tasksrole-6-roles) |
+| Reasoner | ⚠️ Mixed, regressed | 4/10 | 4/10 — not steered this pass | [2026-09-16 section](#2026-09-16-expanded-suite-10-tasksrole-6-roles) |
+| Tool-use | ✅ Strongest role | 9/10 | 9/10 — not steered this pass | [2026-09-16 section](#2026-09-16-expanded-suite-10-tasksrole-6-roles) |
+| Extract | ✅ Good | 9/10 | **10/10** — extract-basic fixed | [2026-09-16 section](#2026-09-16-expanded-suite-10-tasksrole-6-roles) |
+| Review | ⚠️ Mixed | 7/10 | **8/10** — review-clean fixed | [2026-09-16 section](#2026-09-16-expanded-suite-10-tasksrole-6-roles) |
+| Code-emitter | ✅ Good, first pass | 11/14 | 11/14 — not steered this pass | [2026-09-16 section](#2026-09-16-expanded-suite-10-tasksrole-6-roles) |
+| Visual | Not attempted | — | — | no `mmproj` vision projector on legion-t5, `report.sh` has no `visual` role |
+| **Total** | | **45/64 (70%)** | **47/64 (73%)** | |
+
+Blanket `DISPATCH_ENABLE_THINKING=false` across all 6 roles was tried and
+made every single role worse (see 2026-09-16 section) — do not use it as
+a global default for this model. 12 content-idiom failures across
+docs/reason/tool/code remain un-steered (deferred, not attempted).
 
 **Small samples throughout** (n=1 per bare draw, n=3 per steered task) —
 not a reliability sample. The bare rate moved from 22/36 to 28/36 between
@@ -53,6 +62,75 @@ each: `doc-verbatim`, `doc-script`, `doc-repair` (documenter),
 `reason-trace`, `reason-consequence`, `reason-compare` (reasoner). See
 each role's section below for what was tried and why it did not close
 them.
+
+## 2026-09-16 Expanded Suite (10 tasks/role, 6 roles)
+
+Task suite expanded 2026-09-15 to 10 tasks per role (doc/reason/tool/
+extract/review) plus 14 brand-new tasks this model had never seen. Same
+transport as before (temporary `llama-server` on legion-t5, port 11434,
+same flags), `qwen3.5-4b-gsq`'s production `llama-chat.service` stopped
+for the duration, per explicit ask. `code` role attempted for the first
+time this pass (text-only, no build+test harness gap for this role —
+that gap only ever blocked the *2026-09-12* pass). `visual` still not
+attempted: this model has no `mmproj` vision-projector file on legion-t5,
+and `report.sh` has no `visual` role at all — the only real visual pass
+in this repo uses `qwen3.8-27b-gsq-rco`, the one model here with a
+working vision projector.
+
+**Bare, single draw, thinking on (the default, no override):**
+
+| Role | Bare | New tasks this role | Failing tasks |
+|---|---|---|---|
+| Documenter | 5/10 | doc-audience (PASS) | verbatim(trunc), adapt, script, synthesize, repair(trunc) |
+| Reasoner | 4/10 | reason-priority (PASS) | config-validity, checklist, trace, consequence, compare, coverage(trunc) |
+| Tool-use | 9/10 | chain, clarify, conflict, typecoerce (all PASS) | tool-error |
+| Extract | 9/10 | conflict, invalid, noisy, numeric (all PASS) | extract-basic(trunc) |
+| Review | 7/10 | dispose, multi, decoy (PASS), swallow (FAIL) | async(trunc), clean(trunc), swallow(trunc) |
+| Code-emitter | 11/14 | — (first pass for this role) | code-csharp-batch, code-csharp-events, code-csharp-workflow |
+
+Real regression vs. 2026-09-12: reasoner dropped from 7/9 to 4/10 —
+`reason-trace`, `reason-consequence`, `reason-coverage` all regressed
+from a prior PASS. Two of the four new tool tasks and all four new
+extract tasks passed bare with no steering.
+
+**Blanket `DISPATCH_ENABLE_THINKING=false`, all 6 roles, full re-run —
+confirms the 2026-09-12 finding, harder evidence this time:**
+
+| Role | Bare | Thinking off | Verdict |
+|---|---|---|---|
+| Documenter | 5/10 | 4/10 | worse |
+| Reasoner | 4/10 | 3/10 | worse |
+| Tool-use | 9/10 | 8/10 | worse |
+| Extract | 9/10 | 9/10 | no net gain — `extract-basic` fixed, `extract-optional` newly broke |
+| Review | 7/10 | 4/10 | much worse |
+| Code-emitter | 11/14 | 8/14 | much worse |
+
+Many thinking-off failures returned near-empty completions (12, 33, 56,
+66 tokens) — the model cutting itself short, not a lost reasoning
+benefit. **Blanket disable is confirmed worse across every role on the
+expanded suite. The per-task-only rule from 2026-09-12 stands — do not
+set this as a global default for this model.**
+
+**Per-task `DISPATCH_ENABLE_THINKING=false`, scoped only to the 7 tasks
+that failed by truncation in the bare pass** (`doc-verbatim`,
+`doc-repair`, `reason-coverage`, `extract-basic`, `review-async`,
+`review-clean`, `review-swallow`):
+
+| Task | Truncation gone? | Result |
+|---|---|---|
+| `extract-basic` | yes | **PASS — fixed** |
+| `review-clean` | yes | **PASS — fixed** |
+| `doc-verbatim` | yes | still FAIL — real content defect underneath, same as 2026-09-12 |
+| `doc-repair` | yes | still FAIL — real content defect underneath |
+| `review-async` | yes | still FAIL — near-empty (12 tokens) |
+| `review-swallow` | yes | still FAIL — near-empty (12 tokens) |
+| `reason-coverage` | **no** | still FAIL, still truncated at 16384 — new anomaly, this task did not respond to the fix this time (it did on 2026-09-12) |
+
+2 of 7 fixed outright. On the other 4, thinking-off removes the
+truncation but the task still fails on real content — the truncation was
+masking a defect, not causing one, same conclusion as 2026-09-12. No
+further per-task steering (targeted reminders for the remaining 12
+content-idiom failures) was run this pass — deferred, not attempted.
 
 ## Steering pass, 2026-09-12
 

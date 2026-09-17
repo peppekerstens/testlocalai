@@ -18,13 +18,6 @@ public sealed class CwClient
     public async Task<System.Text.Json.Nodes.JsonNode?> GetAsync(
         string path, CancellationToken cancellationToken = default)
     {
-        using var response = await _http.GetAsync(path, cancellationToken);
-        if (response.StatusCode == HttpStatusCode.NoContent)
-            return null;
-        response.EnsureSuccessStatusCode();
-        var body = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (string.IsNullOrWhiteSpace(body))
-            return null;
-        return JsonNode.Parse(body);
+        // implement per the behavior contract
     }
 }

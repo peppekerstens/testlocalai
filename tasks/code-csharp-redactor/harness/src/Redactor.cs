@@ -13,26 +13,30 @@ public sealed class Redactor
 {
     public string Redact(string input, IReadOnlyList<PatternRule> rules)
     {
-        if (input == null || input.Length == 0)
+        if (string.IsNullOrEmpty(input))
         {
-            return "";
+            return string.Empty;
         }
 
-        string currentText = input;
+        if (rules == null || !rules.Any())
+        {
+            return input;
+        }
+
+        string result = input;
 
         foreach (var rule in rules)
         {
             try
             {
-                currentText = Regex.Replace(currentText, rule.Regex, rule.Replacement);
+                result = Regex.Replace(result, rule.Regex, rule.Replacement);
             }
             catch (ArgumentException)
             {
-                // Skip this rule and continue with the next one
-                continue;
+                // Skip invalid regex
             }
         }
 
-        return currentText;
+        return result;
     }
 }
