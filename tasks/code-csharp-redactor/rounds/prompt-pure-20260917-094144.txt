@@ -1,0 +1,53 @@
+# C# output rules
+
+1. Write every line of code in full. Never write `...` in the code. The compiler rejects `...` (error CS8635). This applies to method bodies, argument lists, collection initializers, and switch arms. If a body is long, write it all.
+
+2. Match the lambda to the delegate type of the parameter.
+   - A parameter of type `Action<T>` or `Func<T, Task>` takes a lambda that does not return a value. Do not write `return someValue;` in that lambda.
+   - If the lambda must give a result, the parameter must be `Func<T, TResult>` or `Func<T, Task<TResult>>`.
+   - If you cannot change the parameter type, store the result in a variable or collection outside the lambda. Do not return it.
+
+
+--- TASK BELOW ---
+
+TASK: text redactor applying regex rules.
+FILE: one file `Redactor.cs`. Namespace: `Bench.Task6`.
+
+File MUST contain ALL of these, exactly as specified.
+
+File MUST start with this EXACT using line as its first line:
+```csharp
+using System.Text.RegularExpressions;
+```
+
+```csharp
+namespace Bench.Task6;
+
+public sealed class PatternRule
+{
+    public string Name { get; set; } = "";
+    public string Regex { get; set; } = "";
+    public string Replacement { get; set; } = "";
+}
+
+public sealed class Redactor
+{
+    public string Redact(string input, IReadOnlyList<PatternRule> rules)
+    {
+        // implement per the behavior contract
+    }
+}
+```
+
+BEHAVIOR (must hold exactly):
+1. For each rule, replace every match of `rule.Regex` in current text with `rule.Replacement`, using `System.Text.RegularExpressions.Regex.Replace`. Apply rules IN ORDER, each rule working on the result of the previous.
+2. Invalid `rule.Regex` (Regex.Replace throws `ArgumentException`) -> SKIP that rule and continue with next. Never let a bad rule abort the operation.
+3. Empty input -> empty string. Empty rules list -> input unchanged.
+
+EXAMPLE (must reproduce): rules
+`email = @"\b[\w.+-]+@[\w-]+\.[\w.]+\b" -> "[EMAIL]"` and
+`phone = @"\b\d{3}-\d{3}-\d{4}\b" -> "[PHONE]"`,
+`Redact("Contact alice@example.com or 555-123-4567.", rules)`
+returns `"Contact [EMAIL] or [PHONE]."`.
+
+OUTPUT: ONLY complete `Redactor.cs` in one fenced ```csharp block. No explanations, no other text.

@@ -1,3 +1,5 @@
+```python
 def resolve_user(require_auth: bool, x_dev_user: str | None) -> str:
     # implement per the behavior contract
     ...
+```
