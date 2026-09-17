@@ -53,6 +53,32 @@ machine. The initial run here showed 1/14 because `dotnet` was not
 installed at all. Installing it (`dotnet-install.sh --channel 8.0`,
 user-local, no sudo) and rerunning gave this real number.
 
+## Performance and cost (measured 2026-09-17)
+
+Clean measurement on `gaming-b650` (Radeon AI PRO R9700), direct to `llama-server`, `litellm-router` stopped, one request stream. Full method and all tables: [`docs/POWER-AND-COST.md`](../../docs/POWER-AND-COST.md). Raw data: [`power/2026-09-17/`](power/2026-09-17/).
+
+| Value | Result |
+|---|---|
+| Generation | 38.7 to 38.9 tok/s, GPU 296 to 299 W (300 W cap), CPU package 28 W |
+| Prefill, 12k-token prompt | 942 to 954 tok/s (12.0 s), GPU 284 to 289 W |
+| Idle | GPU 8 to 11 W, CPU package 20 W |
+| Cost per 1M tokens, wall estimate | input EUR 0.032, output EUR 0.80 |
+| Cost per 1M tokens, GPU + CPU sensors | input EUR 0.026, output EUR 0.65 |
+| GPU junction temperature | 96 to 100 °C, no throttling seen |
+
+Reasoning mode changes the tokens per task, not the cost per token. The same DNS essay task needs:
+
+| Mode (`reasoning_effort`) | Output tokens | Of which reasoning | Time | Energy (wall est.) |
+|---|---|---|---|---|
+| off (`enable_thinking: false`) | 1,756 | 0 | 45 s | 5.0 Wh |
+| low | 2,131 | 268 | 55 s | 6.1 Wh |
+| medium | 2,711 | 576 | 70 s | 7.8 Wh |
+| xhigh (template default) | 4,292 | 537 | 112 s | 12.4 Wh |
+
+The chat template accepts only `low`, `medium` and `xhigh`. Any other value raises a template error.
+
+`--ctx-size` (524288, 262144 and 131072, with `--parallel 2 --no-kv-unified`) changed nothing for prompts up to 12k tokens. The answers were byte-identical, and speed and power stayed within 0.5% and 2%. Only VRAM changes: 31.9 GB, 23.1 GB and 18.7 GB. Single draws per mode (xhigh: 1 completed request), so read the tokens-per-task values as single samples. Power and speed values rest on about 120 samples per set.
+
 ## How to optimize (verify before trusting)
 
 Nothing steered yet — every role above is a bare, single-draw baseline.

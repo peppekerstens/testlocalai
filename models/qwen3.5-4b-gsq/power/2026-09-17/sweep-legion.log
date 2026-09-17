@@ -1,0 +1,22 @@
+2026-09-17T08:50:20+02:00 legion ctx=245760 modes=off on: restart
+
+2026-09-17T08:50:28+02:00 legion ctx=245760: healthy, n_ctx per slot=245760
+
+
+DONE legion ctx245760 2026-09-17T08:55:48+02:00
+2026-09-17T08:55:48+02:00 legion ctx=122880 modes=off on: restart
+
+2026-09-17T08:55:55+02:00 legion ctx=122880: healthy, n_ctx per slot=122880
+
+
+DONE legion ctx122880 2026-09-17T09:01:13+02:00
+2026-09-17T09:01:13+02:00 legion ctx=61440 modes=off on: restart
+
+2026-09-17T09:01:20+02:00 legion ctx=61440: healthy, n_ctx per slot=61440
+
+
+DONE legion ctx61440 2026-09-17T09:06:38+02:00
+2026-09-17T09:06:38+02:00 legion: restore production
+
+restored n_ctx per slot 245760
+SWEEP DONE legion 2026-09-17T09:06:45+02:00

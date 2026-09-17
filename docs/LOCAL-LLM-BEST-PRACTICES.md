@@ -69,6 +69,15 @@ budgeting a subagent's context window.
 - Reports show `- Tokens: <P> prompt / <C> completion` — see
   `bench/report.sh` for the enriched, per-run version with deltas.
 
+### Context size, reasoning mode and energy cost
+
+Measured 2026-09-17 on qwen3.8-27b-gsq-rco and qwen3.5-4b-gsq. Details: [`POWER-AND-COST.md`](POWER-AND-COST.md).
+
+- **`--ctx-size` is a VRAM choice, not a quality choice,** for prompts up to 12k tokens. Three context sizes per model gave byte-identical answers with fixed seeds, and the same speed and power. This test did not cover long conversations near the slot limit.
+- **Reasoning changes tokens per task, not cost per token.** Generation power and speed stay the same in every mode. On qwen3.8-27b-gsq-rco, xhigh used 2.4 times the tokens and energy of reasoning off for the same essay.
+- **Always set `max_tokens`.** Without it, a small model can loop until the context is full (22,000+ tokens seen on qwen3.5-4b-gsq).
+- **Measure speed without other load.** Under parallel load, prefill on gaming-b650 was 117 tok/s. Without load, it was 945 tok/s. Generation speed changed much less.
+
 ## 3. File map
 
 | Path | What |
@@ -78,6 +87,8 @@ budgeting a subagent's context window.
 | `history.md` | this project's own history — origin, cross-model findings, retired conventions |
 | `docs/SETUP.md` | one-time environment/machine setup (WSL2, CUDA, llama.cpp build, systemd) |
 | `docs/LOCAL-LLM-BEST-PRACTICES.md` | this file — cross-model guidance only |
+| `docs/POWER-AND-COST.md` | power, speed and cost per token, reasoning modes and context sizes (2026-09-17) |
+| `bench/power/` | scripts for the power, speed and cost measurement |
 | `docs/GRAMMAR-STEERING-PATTERNS.md` | when to reach for grammar-constrained decoding, backend capability notes, starter grammar patterns |
 | `bench/dispatch.sh` | dispatch (ollama + llamacpp backends; token sidecar; per-call loaded-model check; `DISPATCH_GRAMMAR_FILE`) |
 | `bench/bench.sh` | bench runner (code harness vs doc `verify.sh`; `--rules <lang>` → `models/<model>/rules/<lang>-rules.md`) |

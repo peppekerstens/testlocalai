@@ -1,0 +1,6 @@
+{"phase":"idle","event":"start","ts":1789628495.154359007}
+{"phase":"idle","event":"end","ts":1789628535.172399783}
+{"phase":"off","event":"start","ts":1789628535.177244774}
+{"phase":"off","event":"end","ts":1789628655.262220713}
+{"phase":"on","event":"start","ts":1789628665.269686250}
+{"phase":"on","event":"end","ts":1789628785.356170731}

@@ -1,0 +1,3 @@
+12
+Model name:                              AMD Ryzen 5 5600G with Radeon Graphics
+7.0.0-31-generic

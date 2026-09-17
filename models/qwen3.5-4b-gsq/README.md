@@ -98,6 +98,28 @@ failures — this is a raw pass/fail count only, not steered.
 14/14 PASS, bare, single draw (13 C# + 1 Python task), real
 compile+test via `bench.sh`. `reports/report-code-20260913-190003.md`.
 
+## Performance and cost (measured 2026-09-17)
+
+Clean measurement on `legion-t5` (RTX 3060 Ti 8 GB), direct to `llama-server`, `litellm-router` stopped, one request stream. Full method and all tables: [`docs/POWER-AND-COST.md`](../../docs/POWER-AND-COST.md). Raw data: [`power/2026-09-17/`](power/2026-09-17/).
+
+| Value | Reasoning off | Reasoning on |
+|---|---|---|
+| Generation | 102.8 to 103.1 tok/s, GPU 195 W | 87.7 tok/s (context grows during reasoning), GPU 199 W |
+| Prefill, 12k-token prompt | 2,418 to 2,434 tok/s (4.7 s), GPU 183 to 192 W | same |
+| CPU package under load | 14 W | 14.6 W |
+| Idle | GPU 10 to 12 W, CPU package 3 W | – |
+| Cost per 1M tokens, wall estimate | input EUR 0.008, output EUR 0.20 | output EUR 0.235 |
+| Cost per 1M tokens, GPU + CPU sensors | input EUR 0.007, output EUR 0.16 | output EUR 0.19 |
+
+Quality signals from the same run (single draws, not a reliability sample):
+
+- **Needle task** (list 5 error codes hidden in a 12k-token log), reasoning off: 2 of 8 correct. One request looped until its 600-token cap (`finish_reason: length`).
+- **Needle task, reasoning on:** more than 9,200 reasoning tokens and no answer before the 120 s stop, at all 3 context sizes.
+- **Calculations, reasoning off:** 3 of 4 correct. One answer was 53.7 instead of 53.6.
+- **No output cap:** an earlier run without `max_tokens` looped for more than 22,000 tokens on a backup-design essay with reasoning off. Set `max_tokens` for every call to this model.
+
+`--ctx-size` (245760, 122880 and 61440, with `--parallel 2 --kv-unified`) changed nothing for prompts up to 12k tokens. All 34 completed request pairs were byte-identical, and speed and power stayed the same. Only VRAM changes: 7.5 GB, 4.8 GB and 3.5 GB of 8 GB.
+
 ## How to optimize (verify before trusting)
 
 - Reasoner, tool-use, extract, review, code-emitter: nothing steered

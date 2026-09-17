@@ -1,0 +1,22 @@
+2026-09-17T08:50:19+02:00 gaming-b650 ctx=524288 modes=off low medium xhigh: restart
+
+2026-09-17T08:50:25+02:00 gaming-b650 ctx=524288: healthy, n_ctx per slot=262144
+
+
+DONE gaming-b650 ctx524288 2026-09-17T09:00:02+02:00
+2026-09-17T09:00:02+02:00 gaming-b650 ctx=262144 modes=off xhigh: restart
+
+2026-09-17T09:00:08+02:00 gaming-b650 ctx=262144: healthy, n_ctx per slot=131072
+
+
+DONE gaming-b650 ctx262144 2026-09-17T09:05:25+02:00
+2026-09-17T09:05:25+02:00 gaming-b650 ctx=131072 modes=off xhigh: restart
+
+2026-09-17T09:05:31+02:00 gaming-b650 ctx=131072: healthy, n_ctx per slot=65536
+
+
+DONE gaming-b650 ctx131072 2026-09-17T09:10:48+02:00
+2026-09-17T09:10:48+02:00 gaming-b650: restore production
+
+restored n_ctx per slot 262144
+SWEEP DONE gaming-b650 2026-09-17T09:10:54+02:00

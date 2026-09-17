@@ -1,0 +1,10 @@
+{"phase":"idle","event":"start","ts":1789627839.843776532}
+{"phase":"idle","event":"end","ts":1789627879.872553465}
+{"phase":"off","event":"start","ts":1789627879.890361021}
+{"phase":"off","event":"end","ts":1789628000.000515706}
+{"phase":"low","event":"start","ts":1789628010.013728185}
+{"phase":"low","event":"end","ts":1789628130.093402698}
+{"phase":"medium","event":"start","ts":1789628140.103588338}
+{"phase":"medium","event":"end","ts":1789628260.192829689}
+{"phase":"xhigh","event":"start","ts":1789628270.205420647}
+{"phase":"xhigh","event":"end","ts":1789628390.304601617}
