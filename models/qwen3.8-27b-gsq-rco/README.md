@@ -66,6 +66,8 @@ Clean measurement on `gaming-b650` (Radeon AI PRO R9700), direct to `llama-serve
 | Cost per 1M tokens, GPU + CPU sensors | input EUR 0.026, output EUR 0.65 |
 | GPU junction temperature | 96 to 100 °C, no throttling seen |
 
+> **Energy cost only, not TCO.** The EUR values leave out hardware write-off, idle power (about EUR 177 per year for this host) and other ownership costs. See [`docs/POWER-AND-COST.md`](../../docs/POWER-AND-COST.md#what-the-cost-values-do-not-include).
+
 Reasoning mode changes the tokens per task, not the cost per token. The same DNS essay task needs:
 
 | Mode (`reasoning_effort`) | Output tokens | Of which reasoning | Time | Energy (wall est.) |

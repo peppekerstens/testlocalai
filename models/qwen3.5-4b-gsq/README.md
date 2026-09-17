@@ -111,6 +111,8 @@ Clean measurement on `legion-t5` (RTX 3060 Ti 8 GB), direct to `llama-server`, `
 | Cost per 1M tokens, wall estimate | input EUR 0.008, output EUR 0.20 | output EUR 0.235 |
 | Cost per 1M tokens, GPU + CPU sensors | input EUR 0.007, output EUR 0.16 | output EUR 0.19 |
 
+> **Energy cost only, not TCO.** The EUR values leave out hardware write-off, idle power (about EUR 107 per year for this host) and other ownership costs. See [`docs/POWER-AND-COST.md`](../../docs/POWER-AND-COST.md#what-the-cost-values-do-not-include).
+
 Quality signals from the same run (single draws, not a reliability sample):
 
 - **Needle task** (list 5 error codes hidden in a 12k-token log), reasoning off: 2 of 8 correct. One request looped until its 600-token cap (`finish_reason: length`).

@@ -14,12 +14,14 @@ Scripts: [`bench/power/`](../bench/power/). Raw data: [`models/qwen3.8-27b-gsq-r
 | GPU power, prefill | 284 to 289 W | 183 to 192 W |
 | CPU package power under load | 28 W | 14 W |
 | Idle power, GPU + CPU package | 8 to 11 W + 20 W | 10 to 12 W + 3 W |
-| Output cost, wall estimate | **EUR 0.80 per 1M tokens** | **EUR 0.20 per 1M tokens** |
-| Input cost, wall estimate | **EUR 0.032 per 1M tokens** | **EUR 0.008 per 1M tokens** |
+| Output cost, wall estimate (energy only) | **EUR 0.80 per 1M tokens** | **EUR 0.20 per 1M tokens** |
+| Input cost, wall estimate (energy only) | **EUR 0.032 per 1M tokens** | **EUR 0.008 per 1M tokens** |
 | Output cost, GPU + CPU sensors only | EUR 0.65 per 1M tokens | EUR 0.16 per 1M tokens |
 | Input cost, GPU + CPU sensors only | EUR 0.026 per 1M tokens | EUR 0.007 per 1M tokens |
 
 Price: EUR 0.28 per kWh. The "wall estimate" adds a fixed rest-of-system load and a PSU loss (see Method).
+
+> **Energy cost only, not the total cost of ownership (TCO).** All EUR values in this report are the electricity cost during inference. They do not include the hardware purchase and write-off, idle power, or other ownership costs. The values are incomplete as a cost of local inference. See [What the cost values do not include](#what-the-cost-values-do-not-include).
 
 Main findings:
 
@@ -206,8 +208,54 @@ What this test does not cover. These are other possible causes for the worse beh
 
 The 340 W basis of yesterday is GPU + CPU, so compare it with the sensor values.
 
+## What the cost values do not include
+
+The cost values in this report show only the electricity that the hosts use while they process requests. They are a lower limit, not the total cost of ownership (TCO). Do not compare them directly with cloud API prices, because a cloud price includes hardware, idle capacity and operations.
+
+| Cost part | In this report | Note |
+|---|---|---|
+| Electricity during inference | yes | GPU + CPU package measured, rest of system and PSU loss estimated |
+| Hardware purchase and write-off (GPU, host, PSU) | **no** | Usually the largest part when the hosts are not busy all day |
+| Idle power when no request runs | **no** | The hosts run 24 hours a day. See the estimate below. |
+| Hardware wear, repair and replacement | **no** | A GPU at 300 W and 96 to 100 °C junction ages faster |
+| Cooling and room heat | **no** | |
+| Network, UPS, disk space for models | **no** | |
+| Time for setup, maintenance and steering tests | **no** | |
+| Lower quality: retries, failed requests, cloud fallback | **no** | Example: legion-t5 found the error codes in only 2 of 8 requests |
+
+### Idle power around the clock (estimate)
+
+Based on the measured idle power, plus the same rest-of-system estimate and PSU loss as above. EUR 0.28 per kWh.
+
+| Host | Idle power, wall estimate | Energy per day | Cost per day | Cost per year |
+|---|---|---|---|---|
+| gaming-b650 | about 72 W | 1.73 kWh | EUR 0.49 | about EUR 177 |
+| legion-t5 | about 43 W | 1.04 kWh | EUR 0.29 | about EUR 107 |
+
+This cost stays the same when no request runs. It is not in the cost per token.
+
+### Hardware write-off per token (formula and example)
+
+```
+hardware cost per 1M tokens = purchase price / (write-off years x 365 x tokens per day / 1,000,000)
+```
+
+Example for each **EUR 1,000 of hardware** (placeholder price, not the real purchase price) with a 3-year write-off. Output tokens only, one request stream:
+
+| Host | Use of the day | Output tokens per day | Write-off per 1M output tokens | Energy cost per 1M output tokens (this report) |
+|---|---|---|---|---|
+| gaming-b650 | 100% | 3.35M | EUR 0.27 | EUR 0.80 |
+| gaming-b650 | 25% | 0.84M | EUR 1.09 | EUR 0.80 |
+| gaming-b650 | 10% | 0.34M | EUR 2.72 | EUR 0.80 |
+| legion-t5 | 100% | 8.90M | EUR 0.10 | EUR 0.20 |
+| legion-t5 | 25% | 2.22M | EUR 0.41 | EUR 0.20 |
+| legion-t5 | 10% | 0.89M | EUR 1.03 | EUR 0.20 |
+
+Multiply the write-off column by the real purchase price in thousands of EUR. At low use, the write-off is larger than the energy cost. With 2 busy slots, the tokens per day are about double, and the write-off per token is about half.
+
 ## Limits of this measurement
 
+- **Energy cost only.** The cost values leave out hardware write-off, idle power and other ownership costs (see [What the cost values do not include](#what-the-cost-values-do-not-include)).
 - **No wall meter.** The rest-of-system power (35 W / 25 W) and the PSU efficiency (90%) are estimates. The sensor values are a lower limit.
 - **One request stream.** Production uses `--parallel 2`. Yesterday, 2 parallel streams gave about 35 tok/s each on gaming-b650 at the same 300 W. That is about 70 tok/s in total, so the cost per token is about half with 2 busy slots. This test did not measure that.
 - **Small samples.** xhigh (gaming-b650) and reasoning on (legion-t5) completed only 1 request per set. Their speed and power values are reliable, because each set has about 120 power samples. Their tokens-per-task and correctness values are single samples.
@@ -224,7 +272,7 @@ The 340 W basis of yesterday is GPU + CPU, so compare it with the sensor values.
    | qwen3.8-27b-local, qwen3.8-27b-nothink | 0.000000032 | 0.00000080 |
    | qwen3.5-9b-local, qwen3.5-9b-last-resort (4B) | 0.000000008 | 0.00000020 |
 
-   With 2 busy slots, the real cost per token is lower (see Limits).
+   With 2 busy slots, the real energy cost per token is lower (see Limits). These values are energy cost only. The litellm spend numbers are therefore also energy only, not TCO.
 2. **Set `max_tokens` in clients** that call legion-t5, and do not use reasoning on with the 4B model for extraction work.
 3. **The context size is a memory choice, not a quality choice** for prompts up to 12k tokens. A smaller context frees VRAM, for example about 9.5 GB on gaming-b650 at `--ctx-size 262144`.
 4. **Optional next test (about 30 minutes):** 2 parallel streams on gaming-b650 for the cost per token with full slots, and a long-context quality test at 64k and 128k tokens of input.
