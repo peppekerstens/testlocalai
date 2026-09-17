@@ -30,18 +30,15 @@ public sealed class BatchProcessor
         Func<TItem, CancellationToken, Task<TResult>> operation,
         CancellationToken cancellationToken = default)
     {
-        if (items == null)
-            throw new ArgumentNullException(nameof(items));
-        if (operation == null)
-            throw new ArgumentNullException(nameof(operation));
+        if (items == null || operation == null)
+            throw new ArgumentNullException(null, "items and operation must not be null");
 
         var itemList = items.ToList();
-        var tasks = new List<Task<BatchResult<TResult>>>(itemList.Count);
+        var tasks = new List<Task<BatchResult<TResult>>>();
 
-        for (int i = 0; i < itemList.Count; i++)
+        foreach (var item in itemList)
         {
-            var item = itemList[i];
-            tasks.Add(Task.Run(async () =>
+            tasks.Add(async () =>
             {
                 try
                 {
@@ -52,7 +49,7 @@ public sealed class BatchProcessor
                 {
                     return BatchResult<TResult>.Failure(ex);
                 }
-            }, TaskCreationOptions.LongRunning));
+            });
         }
 
         var results = await Task.WhenAll(tasks);

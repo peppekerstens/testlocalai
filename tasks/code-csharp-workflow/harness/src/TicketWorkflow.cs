@@ -44,6 +44,10 @@ public sealed class TicketWorkflow
         [TicketStatus.Cancelled] = new HashSet<TicketStatus>(),
     };
 
-    public bool CanTransition(TicketStatus from, TicketStatus to) { ... }
-    public void Transition(Ticket ticket, TicketStatus newStatus) { ... }
+    public bool CanTransition(TicketStatus from, TicketStatus to) { return AllowedTransitions[from]Contains(to); }
+    public void Transition(Ticket ticket, TicketStatus newStatus) { 
+        if (ticket == null) throw new ArgumentNullException(); 
+        if (!CanTransition(ticket.Status, newStatus)) throw new InvalidTransitionException(ticket.Status, newStatus); 
+        ticket.Status = newStatus; 
+    }
 }

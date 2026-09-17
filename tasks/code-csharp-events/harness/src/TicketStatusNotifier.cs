@@ -1,23 +1,23 @@
 using System;
 using System.Collections.Generic;
+using System.Array;
 
-namespace Bench.Events
+public delegate void StatusChangedHandler(string ticketId, string oldStatus, string newStatus);
+
+namespace Bench.Events;
+
+public sealed class TicketStatusNotifier
 {
-    public delegate void StatusChangedHandler(string ticketId, string oldStatus, string newStatus);
+    public event StatusChangedHandler? StatusChanged;
 
-    public sealed class TicketStatusNotifier
+    public void Publish(string ticketId, string oldStatus, string newStatus)
     {
-        public event StatusChangedHandler? StatusChanged;
-
-        public void Publish(string ticketId, string oldStatus, string newStatus)
+        var exceptions = new List<Exception>();
+        foreach (var d in StatusChanged?.GetInvocationList() ?? Array.Empty<Delegate>())
         {
-            var exceptions = new List<Exception>();
-            foreach (var d in StatusChanged?.GetInvocationList() ?? Array.Empty<Delegate>())
-            {
-                try { ((StatusChangedHandler)d)(ticketId, oldStatus, newStatus); }
-                catch (Exception ex) { exceptions.Add(ex); }
-            }
-            if (exceptions.Count > 0) throw new AggregateException(exceptions);
+            try { ((StatusChangedHandler)d)(ticketId, oldStatus, newStatus); }
+            catch (Exception ex) { exceptions.Add(ex); }
         }
+        if (exceptions.Count > 0) throw new AggregateException(exceptions);
     }
 }

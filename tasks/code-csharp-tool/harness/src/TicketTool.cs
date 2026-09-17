@@ -17,7 +17,7 @@ public sealed class InMemoryTicketStore : ITicketStore
     }
 }
 
-public sealed class TicketTool
+public class TicketTool
 {
     private readonly ITicketStore _store;
 

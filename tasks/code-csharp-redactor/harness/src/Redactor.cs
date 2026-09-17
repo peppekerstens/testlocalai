@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace Bench.Task6;
 
@@ -18,7 +19,7 @@ public sealed class Redactor
             return string.Empty;
         }
 
-        if (rules == null || !rules.Any())
+        if (rules == null || rules.Count == 0)
         {
             return input;
         }
@@ -32,7 +33,7 @@ public sealed class Redactor
             }
             catch (ArgumentException)
             {
-                continue;
+                // Skip invalid regex
             }
         }
 
