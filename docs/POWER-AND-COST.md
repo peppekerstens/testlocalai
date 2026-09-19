@@ -253,6 +253,51 @@ Example with **EUR 3,000 of hardware per host and a 5-year write-off**. These ar
 
 To use real values, replace EUR 3,000 and 5 years in the formula. The write-off scales in proportion to the price and in inverse proportion to the years. Even at 100% use, the write-off is close to the energy cost on legion-t5. At low use, it is larger on both hosts. With 2 busy slots, the tokens per day are about double, and the write-off per token is about half.
 
+### Real use and total cost (2026-09-19)
+
+These tables use the real traffic from `LiteLLM_SpendLogs` on LXC 109 for the 7 days before 2026-09-19. The cost values are from this report: inference energy (wall estimate), idle power for the hours without requests, EUR 0.28 per kWh. Busy time comes from the measured prefill and generation speeds, one request stream. The cloud fallback tiers are not included.
+
+| Host | Tokens per day, in / out | Busy time per day |
+|---|---|---|
+| gaming-b650 (qwen3.8-27B) | 5.5M / 0.46M | about 5 h |
+| legion-t5 (qwen3.5-4B) | 8.7M / 0.14M | about 1.4 h |
+
+**Total cost with a placeholder write-off** (EUR 3,000 per host, 5 years, not the real purchase price):
+
+| | gaming-b650 | legion-t5 |
+|---|---|---|
+| Inference energy per day | EUR 0.55 | EUR 0.10 |
+| Idle energy per day (rest of the day) | EUR 0.39 | EUR 0.27 |
+| Write-off per day | EUR 1.64 | EUR 1.64 |
+| **Total per day** | **EUR 2.58** | **EUR 2.01** |
+| **Per 1M output tokens** | **EUR 5.55** | **EUR 14.80** |
+| Per 1M tokens, in + out together | EUR 0.43 | EUR 0.23 |
+
+Each EUR 1,000 of hardware over 5 years adds EUR 1.18 per 1M output tokens on gaming-b650 and EUR 4.04 on legion-t5. legion-t5 costs more per output token because it is busy only about 6% of the day.
+
+**Total cost without write-off** (inference energy + idle energy):
+
+| | gaming-b650 | legion-t5 | Both hosts |
+|---|---|---|---|
+| Inference energy per day | EUR 0.55 | EUR 0.10 | EUR 0.65 |
+| Idle energy per day | EUR 0.39 | EUR 0.27 | EUR 0.66 |
+| **Total per day** | **EUR 0.94** | **EUR 0.37** | **EUR 1.31** |
+| Total per month | EUR 28.60 | EUR 11.30 | EUR 39.90 |
+| Total per year | EUR 343 | EUR 135 | EUR 478 |
+| **Per 1M output tokens** | **EUR 2.02** (energy only: 0.80) | **EUR 2.73** (energy only: 0.20) | |
+| Per 1M tokens, in + out together | EUR 0.16 | EUR 0.04 | |
+
+Idle power is 41% of this cost on gaming-b650 and 74% on legion-t5. The idle cost stays the same when the traffic changes, so the cost per token goes down with more use. Both tables assume that the hosts run 24 hours a day only for LLM work. For comparison, the OpenCode Go cloud fallback costs a flat $10 per month.
+
+### Value in litellm: 2 times the energy cost (decision 2026-09-19)
+
+The litellm cost values are 2 times the measured energy cost. The uplift is a middle-ground share of idle power and hardware write-off. The hosts were not bought only for AI, so a full write-off is too high, and energy only is too low.
+
+| litellm model | input_cost_per_token | output_cost_per_token | EUR per 1M, in / out |
+|---|---|---|---|
+| qwen3.8-27b-local, qwen3.8-27b-nothink | 0.000000064 | 0.0000016 | 0.064 / 1.60 |
+| qwen3.5-9b-local, qwen3.5-9b-last-resort, qwen3.5-9b-json (4B) | 0.000000016 | 0.00000040 | 0.016 / 0.40 |
+
 ## Limits of this measurement
 
 - **Energy cost only.** The cost values leave out hardware write-off, idle power and other ownership costs (see [What the cost values do not include](#what-the-cost-values-do-not-include)).
@@ -265,14 +310,14 @@ To use real values, replace EUR 3,000 and 5 years in the formula. The write-off 
 
 ## Recommendations
 
-1. **Put the measured costs in litellm** `model_info`. The wall estimate is the more realistic value. The values are EUR per token. litellm shows all costs as USD, so treat its spend numbers as EUR.
+1. **Put the costs in litellm** `model_info`. Use 2 times the wall estimate (see [Value in litellm](#value-in-litellm-2-times-the-energy-cost-decision-2026-09-19)). The values are EUR per token. litellm shows all costs as USD, so treat its spend numbers as EUR.
 
    | litellm model | input_cost_per_token | output_cost_per_token |
    |---|---|---|
-   | qwen3.8-27b-local, qwen3.8-27b-nothink | 0.000000032 | 0.00000080 |
-   | qwen3.5-9b-local, qwen3.5-9b-last-resort (4B) | 0.000000008 | 0.00000020 |
+   | qwen3.8-27b-local, qwen3.8-27b-nothink | 0.000000064 | 0.0000016 |
+   | qwen3.5-9b-local, qwen3.5-9b-last-resort, qwen3.5-9b-json (4B) | 0.000000016 | 0.00000040 |
 
-   With 2 busy slots, the real energy cost per token is lower (see Limits). These values are energy cost only. The litellm spend numbers are therefore also energy only, not TCO.
+   Live on litellm-router since 2026-09-19. The energy-only values (0.032 / 0.80 and 0.008 / 0.20 per 1M) were live from 2026-09-17 to 2026-09-19.
 2. **Set `max_tokens` in clients** that call legion-t5, and do not use reasoning on with the 4B model for extraction work.
 3. **The context size is a memory choice, not a quality choice** for prompts up to 12k tokens. A smaller context frees VRAM, for example about 9.5 GB on gaming-b650 at `--ctx-size 262144`.
 4. **Optional next test (about 30 minutes):** 2 parallel streams on gaming-b650 for the cost per token with full slots, and a long-context quality test at 64k and 128k tokens of input.
