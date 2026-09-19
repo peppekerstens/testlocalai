@@ -298,6 +298,29 @@ The litellm cost values are 2 times the measured energy cost. The uplift is a mi
 | qwen3.8-27b-local, qwen3.8-27b-nothink | 0.000000064 | 0.0000016 | 0.064 / 1.60 |
 | qwen3.5-9b-local, qwen3.5-9b-last-resort, qwen3.5-9b-json (4B) | 0.000000016 | 0.00000040 | 0.016 / 0.40 |
 
+### History in litellm is not recalculated
+
+LiteLLM calculates the cost once, when a request completes, and stores it in `LiteLLM_SpendLogs`. A price change does not change the stored rows. The database keeps the old values on purpose (decision 2026-09-19). Use the table below for the history.
+
+| Period | Stored cost for local tiers |
+|---|---|
+| 2026-09-11 to 2026-09-17 12:17 | 0 or partial, no prices set |
+| 2026-09-17 12:17 to 2026-09-19 deploy | 1 times energy (old prices) |
+| After the 2026-09-19 deploy | 2 times energy (new prices) |
+
+All local calls from 2026-09-11 to 2026-09-19, stored cost against the cost at the new prices (EUR):
+
+| Tier | Calls | Stored | At new price |
+|---|---|---|---|
+| qwen3.8-27b-local | 3,283 | 0.002 | 3.751 |
+| qwen3.8-27b-nothink | 1,885 | 1.188 | 4.428 |
+| qwen3.5-9b-last-resort | 687 | 0.005 | 0.768 |
+| qwen3.5-9b-local | 709 | 0.034 | 0.544 |
+| qwen3.5-9b-json | 397 | 0.000 | 0.078 |
+| **Total** | **6,961** | **1.230** | **9.569** |
+
+The "At new price" column does not subtract cached prompt tokens, so it can be up to about 8% too high. For a period that starts before the 2026-09-19 deploy, add the difference (EUR 8.34) to the litellm spend.
+
 ## Limits of this measurement
 
 - **Energy cost only.** The cost values leave out hardware write-off, idle power and other ownership costs (see [What the cost values do not include](#what-the-cost-values-do-not-include)).
