@@ -36,7 +36,7 @@ Measures GPU and CPU power, prefill and generation speed, and energy cost per to
 
 ## Requirements and limits
 
-- SSH aliases `gaming-b650` and `legion`, and `HOMELAB_PEPPE_SUDO_PASSWORD` in `~/.env` (sudo for the sampler and systemd).
+- SSH aliases `gaming-b650` and `legion`, and `HOMELAB_PEPPE_SUDO_PASSWORD` in `~/.env` (sudo for the sampler and systemd). The source of this value is `gopass show shared/homelab-peppe-sudo-password`.
 - `PRICE`, `REST_W` and `PSU_EFF` in `analyze.py` are inputs. `REST_W` and `PSU_EFF` are estimates, because no wall meter is available.
 - Sets are 120 s (`SET_S` in `run_host.sh`). A long reasoning request can fill a whole set, so xhigh gives few completed requests.
 - The load generator uses one request stream. It does not measure 2 parallel slots.

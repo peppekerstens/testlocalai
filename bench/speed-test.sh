@@ -7,12 +7,10 @@
 # in every task's <out>.tokens.json, added 2026-09-12) from llama-server's
 # own "timings" field on each response - genuinely real, not wall-clock
 # estimated. But that is one data point per task, at whatever prompt length
-# that task happens to have, no repetition, no statistics. gpu-backend-bench/
-# used the correct tool for a real speed answer (llama-bench: fixed prompt/
-# generation lengths, repeated N times, averaged) but that investigation was
-# Windows/WSL2-specific and is marked for archival - nothing reusable was
-# left for the current Linux hosts (legion-t5, gaming-b650). This script is
-# that reusable version: host-agnostic, run over SSH, no WSL assumptions.
+# that task happens to have, no repetition, no statistics. llama-bench is
+# the correct tool for a real speed answer (fixed prompt/generation lengths,
+# repeated N times, averaged). This script runs it on the current Linux
+# hosts (legion-t5, gaming-b650): host-agnostic, run over SSH.
 #
 # llama-bench LOADS THE MODEL ITSELF - it does not talk to a running
 # llama-server. It needs the same GPU memory the target host's live

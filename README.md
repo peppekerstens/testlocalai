@@ -87,7 +87,6 @@ failure modes, not a re-labeling of another role.
 | `docs/LOCAL-LLM-BEST-PRACTICES.md` | cross-model guidance — not a specific model's steering profile |
 | `docs/GRAMMAR-STEERING-PATTERNS.md` | when to reach for grammar-constrained decoding instead of prompt text, backend capability notes, and a starter library of structural grammar patterns |
 | `docs/QUALITY-LOOP-WORKFLOW.md` | visual (mermaid) guide to the quality loop + the scripted/rule-machine/template/judgment control mechanism — doubles as an AI agent's quick-reference for which script to run at each step |
-| `docs/REMOTE-WSL2-SETUP.md` | condensed findings from standing up a second, remote llama.cpp host over SSH |
 | `docs/LANDSCAPE-COMPARISON.md` | how this project compares to other LLM eval/benchmark tooling (PinchBench, llama-bench, etc.) and why it stays its own thing |
 | `docs/leaderboard.html` | generated steering-lift dashboard (bare vs. current, per model+role) — regenerate with `python3 bench/leaderboard.py`, never hand-edit; source data is `data/leaderboard.json` |
 | `bench/` | generic runner: `dispatch.sh`, `bench.sh`, `pure-run.sh`, `report.sh`, `leaderboard.py` |
