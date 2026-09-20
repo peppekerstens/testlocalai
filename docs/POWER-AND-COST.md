@@ -296,7 +296,8 @@ The litellm cost values are 2 times the measured energy cost. The uplift is a mi
 | litellm model | input_cost_per_token | output_cost_per_token | EUR per 1M, in / out |
 |---|---|---|---|
 | qwen3.8-27b-local, qwen3.8-27b-nothink | 0.000000064 | 0.0000016 | 0.064 / 1.60 |
-| qwen3.5-9b-local, qwen3.5-9b-last-resort, qwen3.5-9b-json (4B) | 0.000000016 | 0.00000040 | 0.016 / 0.40 |
+| embed-local (Qwen3-Embedding, legion-t5 GPU) | 0.0000000037 | 0 |
+   | embed-fallback (gaming-b650 CPU) | 0.000000043 | 0 | 0.016 / 0.40 |
 
 ### History in litellm is not recalculated
 
@@ -321,6 +322,29 @@ All local calls from 2026-09-11 to 2026-09-19, stored cost against the cost at t
 
 The "At new price" column does not subtract cached prompt tokens, so it can be up to about 8% too high. For a period that starts before the 2026-09-19 deploy, add the difference (EUR 8.34) to the litellm spend.
 
+### Embedding and rerank on legion-t5 (measured 2026-09-20)
+
+The 2026-09-20 stack change moved Qwen3-Embedding-0.6B and Qwen3-Reranker-0.6B to llama-server on the legion-t5 GPU, and put a CPU copy of both on gaming-b650 as the fallback. qwen3.5-4B stopped, which freed the RTX 3060 Ti. Method: load from the workstation straight to llama-server, 60 s per test, GPU power at 1 Hz, CPU package 14 W and rest of system 25 W from the 2026-09-17 measurement, PSU 0.90, EUR 0.28 per kWh.
+
+| Test | Throughput | GPU power | Energy per 1M tokens | With the x2 uplift |
+|---|---|---|---|---|
+| Embedding, 32 texts per call | 6,577 tok/s | 103 W | EUR 0.0019 | EUR 0.0037 |
+| Rerank, 50 documents per call | 7,828 tok/s | 139 W | EUR 0.0019 | EUR 0.0039 |
+| Idle, both models loaded | — | 17.7 W | — | — |
+
+The CPU fallback on gaming-b650 is much slower. Its throughput is measured, its power is an estimate of 80 W CPU package, because the energy counter needs root.
+
+| Fallback test | Throughput | Against the GPU | Energy per 1M tokens | With the x2 uplift |
+|---|---|---|---|---|
+| Embedding (CPU) | 463 tok/s | 14 times slower | EUR 0.022 | EUR 0.043 |
+| Rerank (CPU) | 30 tok/s | 260 times slower | EUR 0.33 | EUR 0.66 |
+
+A real rerank call carries 6,229 tokens (6.9 documents), from 1,522 calls in 6 hours of live traffic. One call therefore costs EUR 0.0000245 on the GPU and about EUR 0.0041 on the CPU fallback.
+
+**LiteLLM cannot track a rerank call.** It records 0 tokens for it, and its rerank price needs `meta.billed_units.search_units` in the response. llama-server does not send that field, so `input_cost_per_query` changes nothing (checked live 2026-09-20). The rerank tiers therefore always show 0 spend. The embedding tiers do track cost: `embed-local` 0.0000000037 per token, `embed-fallback` 0.000000043.
+
+Limits of this measurement: other traffic ran on the same GPU during the rerank window (25 embedding calls and 11 rerank calls through the router), so the rerank value is an upper limit. The embedding window was almost clean (2 foreign calls, 22 tokens). The idle power of 17.7 W is higher than the 10 to 12 W of 2026-09-17, because 2 models now stay loaded.
+
 ## Limits of this measurement
 
 - **Energy cost only.** The cost values leave out hardware write-off, idle power and other ownership costs (see [What the cost values do not include](#what-the-cost-values-do-not-include)).
@@ -338,9 +362,10 @@ The "At new price" column does not subtract cached prompt tokens, so it can be u
    | litellm model | input_cost_per_token | output_cost_per_token |
    |---|---|---|
    | qwen3.8-27b-local, qwen3.8-27b-nothink | 0.000000064 | 0.0000016 |
-   | qwen3.5-9b-local, qwen3.5-9b-last-resort, qwen3.5-9b-json (4B) | 0.000000016 | 0.00000040 |
+   | embed-local (Qwen3-Embedding, legion-t5 GPU) | 0.0000000037 | 0 |
+   | embed-fallback (gaming-b650 CPU) | 0.000000043 | 0 |
 
-   Live on litellm-router since 2026-09-19. The energy-only values (0.032 / 0.80 and 0.008 / 0.20 per 1M) were live from 2026-09-17 to 2026-09-19.
+   Live on litellm-router since 2026-09-19, and the embedding values since 2026-09-20. The four qwen3.5-9b tiers were removed on 2026-09-20, when qwen3.5-4B stopped on legion-t5. A rerank tier cannot be priced (see above).
 2. **Set `max_tokens` in clients** that call legion-t5, and do not use reasoning on with the 4B model for extraction work.
 3. **The context size is a memory choice, not a quality choice** for prompts up to 12k tokens. A smaller context frees VRAM, for example about 9.5 GB on gaming-b650 at `--ctx-size 262144`.
 4. **Optional next test (about 30 minutes):** 2 parallel streams on gaming-b650 for the cost per token with full slots, and a long-context quality test at 64k and 128k tokens of input.
