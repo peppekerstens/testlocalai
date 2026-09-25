@@ -8,7 +8,9 @@
 #      closed date, the evidence anchor. Pure table parsing - the numbers
 #      that matter never touch a model.
 #   2. One dispatch.sh call, DISPATCH_BACKEND=litellm (default model:
-#      qwen3.5-9b-local - override with LEADERBOARD_SYNC_MODEL). Given
+#      qwen3.8-27b-nothink, the qwen3.8 model on gaming-b650 with reasoning
+#      off - override with LEADERBOARD_SYNC_MODEL). The old default,
+#      qwen3.5-9b-local, is disabled in litellm-router since 2026-09-20. Given
 #      ONLY the role's own README subsection and its latest report file,
 #      asked for exactly two things: a short statusLabel and a
 #      one-paragraph finding. Told which numbers are already known and
@@ -46,7 +48,7 @@ README="models/$SLUG/README.md"
 # Which model does the write in step 2, and where - passed straight to
 # dispatch.sh (DISPATCH_HOST/LITELLM_HOST/LITELLM_PORT override the
 # router's address the same way as everywhere else in this project).
-LITELLM_MODEL="${LEADERBOARD_SYNC_MODEL:-qwen3.5-9b-local}"
+LITELLM_MODEL="${LEADERBOARD_SYNC_MODEL:-qwen3.8-27b-nothink}"
 
 [ -f "$README" ] || { echo "ERROR: $README not found" >&2; exit 1; }
 

@@ -76,6 +76,7 @@ Measured 2026-09-17 on qwen3.8-27b-gsq-rco and qwen3.5-4b-gsq. Details: [`POWER-
 - **`--ctx-size` is a VRAM choice, not a quality choice,** for prompts up to 12k tokens. Three context sizes per model gave byte-identical answers with fixed seeds, and the same speed and power. This test did not cover long conversations near the slot limit.
 - **Reasoning changes tokens per task, not cost per token.** Generation power and speed stay the same in every mode. On qwen3.8-27b-gsq-rco, xhigh used 2.4 times the tokens and energy of reasoning off for the same essay.
 - **Always set `max_tokens`.** Without it, a small model can loop until the context is full (22,000+ tokens seen on qwen3.5-4b-gsq).
+- **A low reasoning effort does not guarantee short thinking.** Ternary Bonsai 2 27B (a 1.75-bit Qwen3.8-27B) at `low` used all 16,384 tokens on `reason-checklist` and gave no answer, but passed with thinking off in 432 tokens (2026-09-25). Test thinking off first on a heavily quantized model.
 - **The measured cost per token is energy only, not TCO.** It leaves out hardware write-off and idle power. At low use, the write-off is larger than the energy cost. See [`POWER-AND-COST.md`](POWER-AND-COST.md#what-the-cost-values-do-not-include).
 - **Measure speed without other load.** Under parallel load, prefill on gaming-b650 was 117 tok/s. Without load, it was 945 tok/s. Generation speed changed much less.
 

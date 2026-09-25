@@ -28,6 +28,18 @@ All results are single draws, not reliability samples.
 - Thinking control: the chat template defaults to thinking ON at `xhigh`. `DISPATCH_ENABLE_THINKING=false` turns it off. `DISPATCH_REASONING_EFFORT=low` reaches the template (the prompt grows by the low-effort sentence). The template accepts only `low`, `medium` and `xhigh`.
 - Each report's hardware line records the thinking mode of that run.
 
+## Gotchas
+
+- **Special llama.cpp build required.** Mainline llama.cpp refuses `PTQ1_0`. Use the PrismML fork (release `prism-b10709-9a9394a` or newer) in `/opt/llama.cpp-prism/`. Never replace `/opt/llama.cpp`, the production services use it.
+- **Gibberish means the wrong binary.** Mainline has no Hadamard transform. A Bonsai 2 `Q2_0` file loads there but gives gibberish.
+- **The fork CUDA tarball has no CUDA runtime.** Error: `libcudart.so.12: cannot open shared object file`. Fix: `LD_LIBRARY_PATH=/opt/llama.cpp-prism:/opt/llama.cpp`.
+- **Thinking is ON at `xhigh` by default.** Set `DISPATCH_ENABLE_THINKING=false` for every role. The template accepts only `low`, `medium` and `xhigh`.
+- **Thinking `low` can run away.** 2 of 10 reason tasks used more than 15,000 tokens. `reason-checklist` gave no answer after 16,384 tokens and 9 minutes, and passed with thinking off.
+- **`speed-test.sh` needs the fork binary.** Use `SPEED_TEST_BIN=/opt/llama.cpp-prism/llama-bench SPEED_TEST_EXTRA_LIBS=/opt/llama.cpp`.
+- **`report.sh` cannot restart this server.** It is a transient unit, not a `llama-*` unit, so the mandatory restart is skipped with a warning. Restart `bonsai-test` by hand before a long run.
+- **Port 11500 is blocked by `ufw`.** A direct request hangs. Use the SSH tunnel from Setup.
+- **Free the GPU first.** On legion-t5, stop `llama-embed` and `llama-rerank`, and start them again after the test.
+
 ## Documenter role: preliminary
 
 7/10 PASS, bare, thinking OFF, single draw.
