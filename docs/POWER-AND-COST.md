@@ -345,6 +345,65 @@ A real rerank call carries 6,229 tokens (6.9 documents), from 1,522 calls in 6 h
 
 Limits of this measurement: other traffic ran on the same GPU during the rerank window (25 embedding calls and 11 rerank calls through the router), so the rerank value is an upper limit. The embedding window was almost clean (2 foreign calls, 22 tokens). The idle power of 17.7 W is higher than the 10 to 12 W of 2026-09-17, because 2 models now stay loaded.
 
+## Re-assessment after the Strix pentest (2026-09-25)
+
+The first sustained agentic load hit gaming-b650 on 2026-09-25: a Strix web pentest of Outline, model `qwen3.8-27b-local`, about 9 h 37 m, then a failure on a model stream idle timeout. It changes three things in the numbers above. Report: `outline-selfhost/pentest/`.
+
+### The run in numbers (from `LiteLLM_SpendLogs`, key `strix`)
+
+| Metric | Value |
+|---|---|
+| Requests | 250 (all local tier, no fallback) |
+| Prompt tokens | 17,793,896 |
+| Completion tokens | 155,382 |
+| Input to output ratio | about 114 to 1 |
+| litellm spend | EUR 0.7683 |
+| Duration | about 9 h 37 m |
+
+### Finding 1: prompt caching cuts the effective input cost far more than 8%
+
+The deployed rate is 2 times energy (input 0.000000064). At that rate the raw tokens cost about EUR 1.39. The recorded spend is EUR 0.77, about 55%. litellm discounts cached prompt tokens, and an agentic loop re-reads a large, stable prefix every turn, so the cache reuse is high.
+
+| Prompt size | Requests | Effective input rate (EUR/token) |
+|---|---|---|
+| under 20k | 3 | 0.000000064 (full 2x) |
+| 20k to 60k | 40 | 0.0000000216 |
+| over 60k | 206 | 0.0000000302 |
+
+The average effective input rate is 0.0000000292, below the 1x energy rate. So about 45% of the prompt work was cached, not 8%. The 8% figure under [History in litellm](#history-in-litellm-is-not-recalculated) holds for chat traffic. For a prefill-heavy agentic load, the cache saving is much larger and scales with prefix stability.
+
+### Finding 2: wall energy is higher than the token cost for a long run
+
+Wall power under load is about 342 W ((GPU 238 W measured + 70 W CPU/board/rest) / 0.90 PSU). Over 9.62 h that is about 3.29 kWh, about EUR 0.92 at 0.28 EUR per kWh.
+
+The wall energy (EUR 0.92) is higher than the litellm token cost (EUR 0.77), even with the 2x uplift. A long, stall-prone agentic run holds the GPU powered for hours, and the token metric does not count that idle-under-load time. **For an agentic or pentest load, price on time times power, not on tokens.** The per-token metric stays right for chat.
+
+### Finding 3: the 5.5M tokens per day baseline is a bursty average
+
+The last 7 days of gaming-b650 chat traffic are not flat:
+
+| Day | Prompt tokens | Completion tokens |
+|---|---|---|
+| 2026-09-18 | 66,939 | 12,686 |
+| 2026-09-19 | 10,240,934 | 644,270 |
+| 2026-09-20 | 17,451,066 | 1,339,962 |
+| 2026-09-21 | 14,066,270 | 565,023 |
+| 2026-09-22 | 1,559,420 | 85,061 |
+| 2026-09-23 | 2,012,475 | 205,744 |
+| 2026-09-24 | 1,714,124 | 189,932 |
+| 2026-09-25 | 18,260,439 | 195,108 (Strix day) |
+
+The daily input ranges from 1.5M to 18M tokens. One Strix pentest (17.8M input) equals about 3 heavy chat days or 10 light days. The per-day and per-1M numbers above are an average over this bursty range, not a steady rate.
+
+### Two caveats found
+
+- `request_duration_ms` is not clean wall-clock busy time. Summed per day it reaches 38 to 40 h on busy days, more than 24 h, because 2 slots run in parallel and the duration includes stream waits and the 300 s stalls. Do not use it for busy-hours. Use a GPU power logger.
+- The R9700 GPU idles at about 8 W and runs at about 238 W under load, both read from `/sys/class/drm/card1/device/hwmon/hwmon7/power1_average` with no root. gaming-b650 has no `nvidia-smi`.
+
+### Still open
+
+- Prefill versus decode energy per token, measured apart. A quick `power1_average` sampler gave spurious reads (a 28 GW spike), so it needs a proper harness that filters bad reads and sustains each phase. Script: `bench/power/r9700-watt-log.sh`.
+
 ## Limits of this measurement
 
 - **Energy cost only.** The cost values leave out hardware write-off, idle power and other ownership costs (see [What the cost values do not include](#what-the-cost-values-do-not-include)).
