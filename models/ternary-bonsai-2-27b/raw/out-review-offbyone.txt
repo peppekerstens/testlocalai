@@ -1,0 +1,10 @@
+```json
+{
+  "bugs": [
+    {
+      "line": "for (int start = 0; start <= items.Count; start += pageSize)",
+      "issue": "When items.Count is exactly divisible by pageSize (e.g. 20 items, pageSize 10), the loop runs one extra time: start=0, 10, 20. At start=20 the inner loop's condition (i < start + pageSize && i < items.Count) is false immediately, so an empty List<T> is added to pages. The result contains a trailing empty page that should not exist."
+    }
+  ]
+}
+```

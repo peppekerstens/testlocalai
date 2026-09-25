@@ -1,0 +1,3 @@
+```json
+{ "bugs": [ { "line": "var json = _client.GetAsync($\"service/tickets?companyId={companyId}\").Result;", "issue": "Calling .Result on a Task blocks the calling thread until the async operation completes. In a web server context (e.g., ASP.NET Core), this blocks a thread from the thread pool, which can cause thread pool starvation and deadlocks under load, especially if the thread pool is exhausted or the async operation internally waits on the same thread pool (e.g., via ConfigureAwait(false) or other synchronization contexts). This is a classic anti-pattern in async C# and can lead to performance degradation or hangs." } ] }
+```

@@ -1,0 +1,10 @@
+```json
+{
+  "bugs": [
+    {
+      "line": "catch (Exception)",
+      "issue": "When the config file is missing (FileNotFoundException) or malformed (e.g., invalid JSON, IOException), the catch block swallows the exception and returns an empty ObfuscationConfig. This silently disables all obfuscation/redaction rules for every response, meaning sensitive data is exposed in production without any error being surfaced to the operator."
+    }
+  ]
+}
+```

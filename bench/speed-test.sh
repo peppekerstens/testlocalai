@@ -44,8 +44,13 @@ EXTRA_ARGS=("$@")
 # (/opt/llama.cpp/, the pattern both legion-t5-llamacpp/ and
 # gaming-b650-llamacpp/ use for the server binary), fall back to a
 # from-source build tree if that is what exists there instead.
+# SPEED_TEST_BIN=<path on host> picks another build, e.g. the PrismML fork
+# in /opt/llama.cpp-prism/ for Ternary Bonsai 2 (the mainline build refuses
+# PTQ1_0). SPEED_TEST_EXTRA_LIBS=<dir> adds a library dir after the binary's
+# own dir: the fork CUDA tarball has no libcudart/libcublas, so legion-t5
+# needs /opt/llama.cpp there.
 BENCH_BIN=$(ssh -o BatchMode=yes "$HOST" '
-  for c in /opt/llama.cpp/llama-bench ~/llama.cpp-src/build/bin/llama-bench; do
+  for c in '"${SPEED_TEST_BIN:-}"' /opt/llama.cpp/llama-bench ~/llama.cpp-src/build/bin/llama-bench; do
     [ -x "$c" ] && { echo "$c"; exit 0; }
   done
   exit 1
@@ -72,5 +77,5 @@ if [ -n "$RUNNING" ]; then
 fi
 
 echo "-> running llama-bench on $HOST: $MODEL_PATH ${EXTRA_ARGS[*]:-}"
-LIB_DIR=$(dirname "$BENCH_BIN")
+LIB_DIR=$(dirname "$BENCH_BIN")${SPEED_TEST_EXTRA_LIBS:+:$SPEED_TEST_EXTRA_LIBS}
 ssh -o BatchMode=yes "$HOST" "LD_LIBRARY_PATH='$LIB_DIR' '$BENCH_BIN' -m '$MODEL_PATH' ${EXTRA_ARGS[*]:-}"

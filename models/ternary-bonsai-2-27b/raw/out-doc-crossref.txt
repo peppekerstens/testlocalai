@@ -1,0 +1,1 @@
+No, a contact's email address is not visible to the AI assistant in its raw form; it is obfuscated and replaced with `{token}@obfuscated.invalid`. If you want to see exactly what gets hidden, you can ask the assistant to call `describe_obfuscation_policy` to get a field-by-field breakdown of the current obfuscation settings.

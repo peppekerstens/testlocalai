@@ -1,0 +1,44 @@
+```csharp
+using System.Text.RegularExpressions;
+
+namespace Bench.Task6;
+
+public sealed class PatternRule
+{
+    public string Name { get; set; } = "";
+    public string Regex { get; set; } = "";
+    public string Replacement { get; set; } = "";
+}
+
+public sealed class Redactor
+{
+    public string Redact(string input, IReadOnlyList<PatternRule> rules)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return string.Empty;
+        }
+
+        string result = input;
+
+        foreach (var rule in rules)
+        {
+            if (rule == null || string.IsNullOrEmpty(rule.Regex))
+            {
+                continue;
+            }
+
+            try
+            {
+                result = Regex.Replace(result, rule.Regex, rule.Replacement ?? string.Empty);
+            }
+            catch (ArgumentException)
+            {
+                continue;
+            }
+        }
+
+        return result;
+    }
+}
+```

@@ -1,0 +1,10 @@
+## Error behavior (C# port)
+
+The C# tool handlers do not catch exceptions themselves; instead, the MCP host intercepts any unhandled exception and wraps it in a single content item flagged with `isError: true`.
+
+```json
+{ "content": [{ "type": "text", "text": "<message>" }], "isError": true }
+```
+
+- **Invalid input**: The C# host throws an `ArgumentException` before the handler executes when a parameter fails validation, producing a message shaped `Input validation error: Invalid arguments for tool <name>: <validation detail>`.
+- **Handler-thrown errors**: The C# ConnectWise client throws a `ConnectWiseException` with the message `ConnectWise API error: <status> <statusText>` for any non-2xx HTTP response, or an `HttpRequestException` if the ConnectWise endpoint is unreachable; there is no retry logic and no error-code taxonomy.

@@ -30,29 +30,22 @@ public sealed class BatchProcessor
         Func<TItem, CancellationToken, Task<TResult>> operation,
         CancellationToken cancellationToken = default)
     {
-        if (items == null || operation == null)
-            throw new ArgumentNullException(null, "items and operation must not be null");
+        if (items == null) throw new ArgumentNullException(nameof(items));
+        if (operation == null) throw new ArgumentNullException(nameof(operation));
 
         var itemList = items.ToList();
-        var tasks = new List<Task<BatchResult<TResult>>>();
-
-        foreach (var item in itemList)
+        var tasks = itemList.Select(async item =>
         {
-            tasks.Add(async () =>
+            try
             {
-                try
-                {
-                    var result = await operation(item, cancellationToken);
-                    return BatchResult<TResult>.Success(result);
-                }
-                catch (Exception ex)
-                {
-                    return BatchResult<TResult>.Failure(ex);
-                }
-            });
-        }
+                return BatchResult<TResult>.Success(await operation(item, cancellationToken));
+            }
+            catch (Exception ex)
+            {
+                return BatchResult<TResult>.Failure(ex);
+            }
+        }).ToList();
 
-        var results = await Task.WhenAll(tasks);
-        return results.ToList();
+        return await Task.WhenAll(tasks);
     }
 }

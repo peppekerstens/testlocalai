@@ -1,0 +1,17 @@
+1. `env -i CW_COMPANY_ID=test CW_PUBLIC_KEY=test CW_PRIVATE_KEY=test CW_CLIENT_ID=test dotnet run --project src/ConnectwiseMcp`
+   Expected: process exits immediately with a non-zero code and an error mentioning a missing environment variable; no port 3000 is bound.
+
+2. `env -i CW_COMPANY_ID=test CW_PUBLIC_KEY=test CW_PRIVATE_KEY=test CW_CLIENT_ID=test CW_OBFUSCATION_CONFIG=/tmp/invalid.json dotnet run --project src/ConnectwiseMcp`
+   Expected: process exits immediately with a non-zero code and an error mentioning invalid obfuscation config; no port 3000 is bound.
+
+3. `env CW_COMPANY_ID=test CW_PUBLIC_KEY=test CW_PRIVATE_KEY=test CW_CLIENT_ID=test CW_OBFUSCATION_CONFIG=/tmp/valid.json dotnet run --project src/ConnectwiseMcp &`
+   Expected: server starts and binds to port 3000; logs show successful startup and listening on the MCP endpoint.
+
+4. `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/mcp`
+   Expected: HTTP 200 response confirming the MCP endpoint is reachable and the server is actively listening.
+
+5. `curl -s -X POST http://127.0.0.1:3000/mcp -H "Content-Type: application/json" -H "Accept: application/json" -d '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{}},"id":1}' -i`
+   Expected: HTTP 200 response with a JSON body containing a `result` object and a response header `mcp-session-id` with a non-empty session identifier.
+
+6. `kill %1`
+   Expected: the background dotnet process terminates cleanly and port 3000 is released.

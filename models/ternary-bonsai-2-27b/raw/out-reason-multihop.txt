@@ -1,0 +1,5 @@
+1. Proximate mechanism: `redactDeep` only obfuscates fields that are explicitly listed for the entity in the obfuscation config, so it obfuscates `addressLine1` because that field is listed, but leaves `addressLine2` unchanged because that field is not listed.
+
+2. Root cause: `addressLine2` is missing from the company entity’s fields list in `src/config/obfuscation-rules.yaml` (`entities.company.fields`).
+
+3. Fix: Add `addressLine2` to `entities.company.fields` in `src/config/obfuscation-rules.yaml` so `redactDeep` is instructed to obfuscate it.

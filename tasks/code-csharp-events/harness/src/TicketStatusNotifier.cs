@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Array;
-
-public delegate void StatusChangedHandler(string ticketId, string oldStatus, string newStatus);
 
 namespace Bench.Events;
+
+public delegate void StatusChangedHandler(string ticketId, string oldStatus, string newStatus);
 
 public sealed class TicketStatusNotifier
 {
@@ -12,12 +10,28 @@ public sealed class TicketStatusNotifier
 
     public void Publish(string ticketId, string oldStatus, string newStatus)
     {
-        var exceptions = new List<Exception>();
-        foreach (var d in StatusChanged?.GetInvocationList() ?? Array.Empty<Delegate>())
+        var invocationList = StatusChanged?.GetInvocationList();
+        if (invocationList == null)
         {
-            try { ((StatusChangedHandler)d)(ticketId, oldStatus, newStatus); }
-            catch (Exception ex) { exceptions.Add(ex); }
+            return;
         }
-        if (exceptions.Count > 0) throw new AggregateException(exceptions);
+
+        var exceptions = new List<Exception>();
+        foreach (var d in invocationList)
+        {
+            try
+            {
+                ((StatusChangedHandler)d)(ticketId, oldStatus, newStatus);
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        }
+
+        if (exceptions.Count > 0)
+        {
+            throw new AggregateException(exceptions);
+        }
     }
 }

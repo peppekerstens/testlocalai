@@ -1,0 +1,10 @@
+```json
+{
+  "bugs": [
+    {
+      "line": "var writer = new StreamWriter(path);",
+      "issue": "The StreamWriter is never disposed. Because StreamWriter buffers writes internally, if an exception occurs during the foreach loop (e.g., a null reference in t.Id or t.Summary, or an IO error), the writer is abandoned without being disposed. Any buffered data that has not yet been flushed to disk is lost, and the underlying file handle is not released until the GC finalizes the object, which can lead to file handle leaks and incomplete/corrupt CSV output."
+    }
+  ]
+}
+```

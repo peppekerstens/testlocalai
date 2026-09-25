@@ -1,0 +1,1 @@
+The mode setting controls how obfuscated tokens are created. In consistent mode, the same real value always gets the same token. This lets you match up results from different requests. In session-random mode, the same real value gets a new token every time. You can never match up tokens in this mode. Only consistent mode guarantees that matching tokens mean the same value.

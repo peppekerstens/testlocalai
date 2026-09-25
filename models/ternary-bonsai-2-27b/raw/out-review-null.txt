@@ -1,0 +1,10 @@
+```json
+{
+  "bugs": [
+    {
+      "line": "output.DefaultContactName = company.DefaultContact.Name;",
+      "issue": "If company.DefaultContact is null (which the comment explicitly states is possible), this line throws a NullReferenceException at runtime."
+    }
+  ]
+}
+```

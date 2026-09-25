@@ -21,32 +21,41 @@ public sealed class InMemoryRepository<T> : IRepository<T>
     {
         if (id == null)
             throw new ArgumentNullException(nameof(id));
+
         if (_items.ContainsKey(id))
-            throw new ArgumentException("Key already exists", nameof(id));
+            throw new ArgumentException($"An item with the key '{id}' has already been added.", nameof(id));
+
         _items[id] = item;
     }
 
     public T? Get(string id)
     {
-        if (_items.TryGetValue(id, out var item))
-            return item;
-        return default(T);
+        if (id == null)
+            throw new ArgumentNullException(nameof(id));
+
+        return _items.TryGetValue(id, out var value) ? value : default;
     }
 
     public bool Update(string id, T item)
     {
-        if (!_items.ContainsKey(id))
-            return false;
-        _items[id] = item;
-        return true;
+        if (id == null)
+            throw new ArgumentNullException(nameof(id));
+
+        if (_items.TryGetValue(id, out _))
+        {
+            _items[id] = item;
+            return true;
+        }
+
+        return false;
     }
 
     public bool Remove(string id)
     {
-        if (!_items.ContainsKey(id))
-            return false;
-        _items.Remove(id);
-        return true;
+        if (id == null)
+            throw new ArgumentNullException(nameof(id));
+
+        return _items.Remove(id);
     }
 
     public IReadOnlyCollection<T> GetAll()

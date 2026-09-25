@@ -1,0 +1,3 @@
+1. Issue B — Critical — it affects every company on the server, has no workaround, and allows correlation of obfuscated values back to real entities, causing real data exposure.
+2. Issue A — Medium — it affects only company 77 and a workaround exists because get_ticket_details still works per ticket.
+3. Issue C — Low — it is cosmetic only with zero functional impact, so it has no client-data or core-functionality scope.

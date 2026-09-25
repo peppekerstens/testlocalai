@@ -1,0 +1,10 @@
+```json
+{
+  "bugs": [
+    {
+      "line": "return fieldRule != null || !redactionDisabled;",
+      "issue": "The operator is wrong. The comment requires BOTH conditions (rule exists AND not disabled), which is a logical AND, but the code uses a logical OR. Case 1 (fieldRule=null, redactionDisabled=false) returns true because !redactionDisabled is true, so a field with no rule configured is incorrectly redacted. Case 2 (fieldRule=\"some rule\", redactionDisabled=true) returns true because fieldRule != null is true, so a field whose redaction was explicitly disabled is still incorrectly redacted."
+    }
+  ]
+}
+```

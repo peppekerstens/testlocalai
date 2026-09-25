@@ -3,7 +3,6 @@ using System.Net.Http;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Net.HttpStatusCode;
 
 namespace Bench.Task3;
 

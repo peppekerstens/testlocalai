@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using System.Collections.Generic;
 
 namespace Bench.Task6;
 
@@ -19,21 +18,22 @@ public sealed class Redactor
             return string.Empty;
         }
 
-        if (rules == null || rules.Count == 0)
-        {
-            return input;
-        }
-
         string result = input;
+
         foreach (var rule in rules)
         {
+            if (rule == null || string.IsNullOrEmpty(rule.Regex))
+            {
+                continue;
+            }
+
             try
             {
-                result = Regex.Replace(result, rule.Regex, rule.Replacement);
+                result = Regex.Replace(result, rule.Regex, rule.Replacement ?? string.Empty);
             }
             catch (ArgumentException)
             {
-                // Skip invalid regex
+                continue;
             }
         }
 

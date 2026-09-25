@@ -1,0 +1,14 @@
+```json
+{
+  "bugs": [
+    {
+      "line": "var hasMore = all.Count <= start + pageSize;",
+      "issue": "The comparison is inverted. It should be 'all.Count > start + pageSize'. As written, 'HasMore' is true only when the current page is the last one (or beyond), and false when there are actually more items remaining. For example, with 10 items, pageIndex=0, pageSize=5: start=5, start+pageSize=10, 10<=10 is true, so HasMore=true even though page 0 is the last page. Conversely, with 11 items, pageIndex=0, pageSize=5: 11<=10 is false, so HasMore=false even though page 1 exists."
+    },
+    {
+      "line": "return company.DefaultContact.Name;",
+      "issue": "No null check on company.DefaultContact. The comment states it is optional and not every company has one. If company.DefaultContact is null, this throws a NullReferenceException instead of returning a safe value (e.g., null or empty string)."
+    }
+  ]
+}
+```

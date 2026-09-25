@@ -37,6 +37,12 @@ persist it" rule) — this index alone does not update the dashboard.
 | [`minicpm5-2b`](minicpm5-2b/) | code-emitter | ⚠️ Flaky 2026-09-17 — Confirm 11/9/10 of 14, no steering gain, 3 C# tasks always fail | `minicpm5-2b/README.md` |
 | [`minicpm5-2b`](minicpm5-2b/) | reasoner | ⚠️ Flaky 2026-09-17 — Confirm 6/6/5, no confirmed steering gain, weakest role | `minicpm5-2b/README.md` |
 | [`minicpm5-2b`](minicpm5-2b/) | documenter | ⚠️ Flaky 2026-09-17 — Confirm 7/6/6, no confirmed steering gain, 3 tasks always fail | `minicpm5-2b/README.md` |
+| [`ternary-bonsai-2-27b`](ternary-bonsai-2-27b/) | documenter | 🔬 Phase 1 only 2026-09-25 — 7/10 bare, thinking off, single draw, 1 of 3 failures is a verifier false fail | `ternary-bonsai-2-27b/README.md` |
+| [`ternary-bonsai-2-27b`](ternary-bonsai-2-27b/) | reasoner | 🔬 Phase 1 only 2026-09-25 — 7/10 bare at thinking low, single draw, runaway thinking on `reason-checklist` (passes with thinking off) | `ternary-bonsai-2-27b/README.md` |
+| [`ternary-bonsai-2-27b`](ternary-bonsai-2-27b/) | tool-use | 🔬 Phase 1 only 2026-09-25 — 10/10 bare, thinking off, single draw | `ternary-bonsai-2-27b/README.md` |
+| [`ternary-bonsai-2-27b`](ternary-bonsai-2-27b/) | extract | 🔬 Phase 1 only 2026-09-25 — 10/10 bare, thinking off, single draw | `ternary-bonsai-2-27b/README.md` |
+| [`ternary-bonsai-2-27b`](ternary-bonsai-2-27b/) | review | 🔬 Phase 1 only 2026-09-25 — 10/10 bare, thinking off, single draw | `ternary-bonsai-2-27b/README.md` |
+| [`ternary-bonsai-2-27b`](ternary-bonsai-2-27b/) | code-emitter | 🔬 Phase 1 only 2026-09-25 — 14/14 bare, thinking off, single draw | `ternary-bonsai-2-27b/README.md` |
 | [`lfm2.5-vl-450m`](lfm2.5-vl-450m/) | visual | 🚧 Scaffold only — model not downloaded, role not wired up | `lfm2.5-vl-450m/README.md` |
 | — (no model tested yet) | extract | Task suite built + blind-subagent-validated only — no real small-model run yet | `claude-sonnet-5/README.md` "Extract extension" |
 

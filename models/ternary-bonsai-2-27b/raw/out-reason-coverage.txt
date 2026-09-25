@@ -1,0 +1,15 @@
+1. A ticket with no `owner` entity must omit both `owner.id` and `owner.name`; the output object must not contain `owner.id: null`, `owner.name: null`, or an empty `owner` object.
+
+2. A ticket with no `company` entity must omit both `company.id` and `company.name`; the output object must not contain `company.id: null` or `company.name: null`.
+
+3. A ticket with no `contact` entity must omit both `contact.id` and `contact.name`; the output object must not contain `contact.id: null` or `contact.name: null`.
+
+4. For a ticket with a present company whose upstream `ticket.company.name` is `Acme Corp`, the output `company.name` must be the obfuscated value — a masked/redacted string, not the raw name — and must not equal `Acme Corp`, while `company.id` remains the passthrough numeric id.
+
+5. For a ticket whose upstream `ticket.status.name` is `Open`, the output `status` must be the string `Open`, not a raw status code or id such as `1`.
+
+6. For a ticket whose upstream `ticket.priority.name`, `ticket.type.name`, and `ticket.board.name` are `High`, `Bug`, and `Backlog`, the output `priority`, `type`, and `board` must be those string names, not raw lookup codes or ids.
+
+7. Even if the ConnectWise upstream response includes `dateResolved`, `severity`, and `slaStatus`, the emitted ticket objects must not contain any of those keys.
+
+8. For a `companyId` with zero tickets, the top-level output must be an empty JSON array `[]`, not `null`, an empty object, or an error.

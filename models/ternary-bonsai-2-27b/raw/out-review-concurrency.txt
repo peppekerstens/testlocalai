@@ -1,0 +1,14 @@
+```json
+{
+  "bugs": [
+    {
+      "line": "if (_cache.ContainsKey(key)) { return _cache[key]; }",
+      "issue": "The check-then-act pattern is not atomic. Two threads can both read the same key, both find it missing, both invoke the factory (e.g., two concurrent auth token requests), and both write to the dictionary. This causes redundant factory invocations and a race condition on the shared Dictionary."
+    },
+    {
+      "line": "_cache[key] = value;",
+      "issue": "Concurrent writes to a non-thread-safe Dictionary from multiple threads can corrupt the internal hash table (e.g., throw InvalidOperationException, lose entries, or cause infinite loops on enumeration), violating the stated requirement of handling multiple concurrent tool calls."
+    }
+  ]
+}
+```
