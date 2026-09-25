@@ -1,0 +1,23 @@
+== llama-chat state: failed, free VRAM 32432 MiB 2026-09-25T22:56:09+02:00
+== llama-bench bonsai 2026-09-25T22:56:09+02:00
+| model                          |       size |     params | backend    | ngl | type_k | type_v |  fa | dev          |            test |                  t/s |
+| qwen35 27B PTQ1_0 - 1.75 bpw ternary (group 128) |   5.53 GiB |    26.90 B | Vulkan     |  99 |   q8_0 |   q8_0 |   1 | Vulkan0      |           pp512 |        546.20 ± 0.56 |
+| qwen35 27B PTQ1_0 - 1.75 bpw ternary (group 128) |   5.53 GiB |    26.90 B | Vulkan     |  99 |   q8_0 |   q8_0 |   1 | Vulkan0      |           tg128 |          9.18 ± 0.07 |
+   samples 77, GPU power mean 289 W, max 300 W, llama-chat busy in 0 of 77 samples
+== llama-bench qwen35-4b-gsq 2026-09-25T22:57:27+02:00
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+ZeroDivisionError: division by zero
+== http bonsai ctx 262144 2026-09-25T22:57:28+02:00
+   health {"status":"ok"} free VRAM 17773 MiB 0 fit-warnings
+   off: finish stop, reasoning 0 chars, pp 49.6 tok/s, tg 9.1 tok/s (70 tok) | This typically happens because the `ssh` command is waiting for user input (like a password or a host key confirmation) in a non-interactive context, causing th
+   chat now: idle
+   low: finish stop, reasoning 1209 chars, pp 65.7 tok/s, tg 9.1 tok/s (312 tok) | It often stops because the first SSH command triggers an interactive prompt—like a password or host-key confirmation—that blocks the script or consumes its stdi
+   chat now: idle
+== http qwen35-4b-gsq ctx 262144 2026-09-25T22:58:18+02:00
+   health {"status":"ok"} free VRAM 25849 MiB 0 fit-warnings
+   off: finish stop, reasoning 0 chars, pp 149.7 tok/s, tg 122.8 tok/s (87 tok) | The script often stops because the `ssh` command fails to establish a connection or execute successfully, causing the loop to exit prematurely if the script is 
+   chat now: idle
+   low: finish length, reasoning 52564 chars, pp 45.7 tok/s, tg 151.6 tok/s (12000 tok) | 
+   chat now: idle
+== done 2026-09-25T22:59:46+02:00, free VRAM 32432 MiB

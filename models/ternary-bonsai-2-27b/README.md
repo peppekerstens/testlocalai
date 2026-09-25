@@ -39,6 +39,9 @@ All results are single draws, not reliability samples.
 - **`report.sh` cannot restart this server.** It is a transient unit, not a `llama-*` unit, so the mandatory restart is skipped with a warning. Restart `bonsai-test` by hand before a long run.
 - **Port 11500 is blocked by `ufw`.** A direct request hangs. Use the SSH tunnel from Setup.
 - **Free the GPU first.** On legion-t5, stop `llama-embed` and `llama-rerank`, and start them again after the test.
+- **Vulkan generation is slow.** On the R9700 the fork generates 9.2 tok/s, against 35.1 tok/s on the 3060 Ti. Prefill is fine. See the performance section.
+- **Neither host has a mainline `llama-bench`.** Use the fork's `llama-bench` for every model. It is mainline plus the Bonsai types.
+- **`Linger=no` for peppe on gaming-b650.** A `systemd-run --user` unit stops when the SSH session ends. Run a test server in the same SSH call as the test.
 
 ## Documenter role: preliminary
 
@@ -96,6 +99,23 @@ Thinking `low` is not safe for this model without a token cap: 2 of 10 tasks use
 | Full test, 64 tasks | 30 minutes (5 roles OFF: 7 minutes, reason at low: 23.5 minutes) |
 
 Comparison with `qwen3.8-27b-gsq-rco` (IQ3_S, 12.1 GB) on gaming-b650 (R9700, 32 GB): generation 38.7 to 38.9 tok/s at 296 to 299 W. Bonsai gives about 90 % of that speed on a 8 GB card, at about 62 % of the GPU power. The GPU power is from different sensors on different cards, so read it as a rough ratio. No wall-power or EUR measurement for this model yet.
+
+### RTX 3060 Ti (CUDA) against R9700 (Vulkan), measured 2026-09-25
+
+Same fork build 10709, same `llama-bench` settings (`-ngl 99 -fa 1 -ctk q8_0 -ctv q8_0`, pp512, tg128, 5 repeats). On gaming-b650 `llama-chat` was stopped, so nothing else ran on the R9700. Raw data and the run script: [`power/2026-09-25/`](power/2026-09-25/).
+
+| Value | RTX 3060 Ti 8 GB, CUDA | R9700 32 GB, Vulkan | R9700 against 3060 Ti |
+|---|---|---|---|
+| pp512 | 354.05 ± 2.10 tok/s | 546.20 ± 0.56 tok/s | 1.54 x |
+| tg128 | 35.14 ± 0.10 tok/s | 9.18 ± 0.07 tok/s | **0.26 x** |
+| GPU power, llama-bench | mean 183 W | mean 289 W (300 W cap) | |
+| HTTP generation, thinking off | 34.9 tok/s | 9.1 tok/s | |
+| Maximum context, alone on the card | 32,768 (7.1 of 7.8 GB) | 262,144 (17.8 GB free after load) | |
+| Maximum context next to `llama-chat` with 1 slot, 1.5 GB kept free | – | 110,592 (1,606 MiB free) | |
+
+- **Generation on Vulkan is 3.8 times slower than on the 3060 Ti, at 1.6 times the power.** The output is correct: the thinking-off answer is word for word the same on both cards. The prefill is faster on Vulkan. So the slow part is the `PTQ1_0` matrix-vector path in the Vulkan backend of the fork, which is new (branch `fix/ptq1_0-vulkan-supports-op`). The same R9700 generates 38.8 tok/s with the 27B GSQ-RCO model on mainline.
+- A first run with `llama-chat` busy on a 68,000-token prompt gave tg128 4.75 tok/s and pp512 325 tok/s. That run is not valid. Its power log is kept as `r9700-llama-bench-power-shared-with-llama-chat.log`.
+- Verdict: on the R9700, Bonsai 2 is not useful today. Use the 3060 Ti (CUDA), or wait for a faster Vulkan kernel in the fork.
 
 ## How to optimize (verify before trusting)
 

@@ -111,6 +111,21 @@ Clean measurement on `legion-t5` (RTX 3060 Ti 8 GB), direct to `llama-server`, `
 | Cost per 1M tokens, wall estimate | input EUR 0.008, output EUR 0.20 | output EUR 0.235 |
 | Cost per 1M tokens, GPU + CPU sensors | input EUR 0.007, output EUR 0.16 | output EUR 0.19 |
 
+### RTX 3060 Ti (CUDA) against R9700 (Vulkan), measured 2026-09-25
+
+`llama-bench` from the PrismML fork build 10709 on both hosts (neither host has a mainline `llama-bench`, and the fork is mainline plus extra types). Settings `-ngl 99 -fa 1 -ctk q8_0 -ctv q8_0`, pp512, tg128, 5 repeats. Nothing else ran on either card. Raw power data: [`power/2026-09-25/`](power/2026-09-25/).
+
+| Value | RTX 3060 Ti 8 GB, CUDA | R9700 32 GB, Vulkan | R9700 against 3060 Ti |
+|---|---|---|---|
+| pp512 | 2,865 ± 67 tok/s | 5,142 ± 680 tok/s | 1.79 x |
+| tg128 | 113.06 ± 0.31 tok/s | 160.72 ± 1.72 tok/s | 1.42 x |
+| GPU power | mean 144 W, max 200 W | mean 198 W, max 290 W (7 samples only, rough) | |
+| HTTP generation, thinking off, `-c 262144` | – | 122.8 tok/s (87 tokens) | |
+
+- The R9700 is faster for this model in both phases. The small model does not load the R9700 fully, so the gain is smaller than the card size suggests.
+- At thinking `low`, the 2-sentence check question ran to the 12,000-token cap (52,564 reasoning characters) on the R9700. That matches the known runaway reasoning of this model.
+- The 4B file is on gaming-b650 in `/opt/models/` since 2026-09-25. No service uses it there.
+
 > **Energy cost only, not TCO.** The EUR values leave out hardware write-off, idle power (about EUR 107 per year for this host) and other ownership costs. See [`docs/POWER-AND-COST.md`](../../docs/POWER-AND-COST.md#what-the-cost-values-do-not-include).
 
 Quality signals from the same run (single draws, not a reliability sample):
